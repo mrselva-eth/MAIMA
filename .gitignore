@@ -1,0 +1,64 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Do NOT push: secrets, build outputs, dependencies, or local artifacts.
+
+# ============================================
+# Dependencies — do not push
+# ============================================
+node_modules/
+.pnpm-store/
+
+# ============================================
+# Next.js — do not push
+# ============================================
+.next/
+out/
+build/
+
+# ============================================
+# Environment & secrets — do not push
+# ============================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+# Keep .env.example in repo (template for developers)
+!.env.example
+
+# ============================================
+# Debug & logs — do not push
+# ============================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# ============================================
+# IDE & OS — do not push
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Vercel — do not push
+# ============================================
+.vercel
+
+# ============================================
+# TypeScript — do not push
+# ============================================
+*.tsbuildinfo
+next-env.d.ts
+
+# ============================================
+# CRE workflow (intent-monitor) — do not push build artifacts
+# ============================================
+/intent-monitor/node_modules
+/intent-monitor/tmp.js
+/intent-monitor/tmp.wasm

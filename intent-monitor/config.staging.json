@@ -1,0 +1,4 @@
+{
+  "schedule": "*/30 * * * * *",
+  "apiBaseUrl": "http://localhost:3000"
+}

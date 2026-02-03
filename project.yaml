@@ -1,0 +1,17 @@
+# CRE project config (Chainlink Runtime Environment)
+# Used by: cre workflow simulate, cre workflow deploy
+# Run cre commands from this directory (repo root).
+
+name: intent-based-smart-wallet
+
+# RPC URLs for supported chains (required for simulate/deploy)
+staging-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://ethereum-sepolia-rpc.publicnode.com
+production-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: https://ethereum-sepolia-rpc.publicnode.com
+    - chain-name: ethereum-mainnet
+      url: https://eth.llamarpc.com
