@@ -103,7 +103,7 @@ importers:
         version: 5.9.0
       '@uniswap/smart-order-router':
         specifier: ^3.28.0
-        version: 3.59.0(bufferutil@4.1.0)(hardhat@2.28.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(jsbi@4.3.2)(utf-8-validate@5.0.10)
+        version: 3.59.0(bufferutil@4.1.0)(hardhat@2.28.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(jsbi@3.2.5)(utf-8-validate@5.0.10)
       '@uniswap/v3-sdk':
         specifier: ^3.12.1
         version: 3.27.0(hardhat@2.28.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))
@@ -135,11 +135,8 @@ importers:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       jsbi:
-        specifier: latest
-        version: 4.3.2
-      lenis:
-        specifier: ^1.3.17
-        version: 1.3.17(react@19.2.0)
+        specifier: 3.2.5
+        version: 3.2.5
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.2.0)
@@ -154,7 +151,7 @@ importers:
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       openai:
         specifier: ^4.52.0
-        version: 4.104.0(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)
+        version: 4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -210,6 +207,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.10)
+      baseline-browser-mapping:
+        specifier: ^2.9.19
+        version: 2.9.19
       postcss:
         specifier: ^8.5
         version: 8.5.6
@@ -3566,9 +3566,6 @@ packages:
   jsbi@3.2.5:
     resolution: {integrity: sha512-aBE4n43IPvjaddScbvWRA2YlTzKEynHzu7MqOyTipdHucf/VxS63ViCjxYRg86M8Rxwbt/GfzHl1kKERkt45fQ==}
 
-  jsbi@4.3.2:
-    resolution: {integrity: sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==}
-
   json-rpc-engine@6.1.0:
     resolution: {integrity: sha512-NEdLrtrq1jUZyfjkr9OCz9EzCNhnRyWtt1PAnvnhwy6e8XETS0Dtc+ZNCO2gvuAoKsIn2+vCSowXTYE4CkgnAQ==}
     engines: {node: '>=10.0.0'}
@@ -3592,20 +3589,6 @@ packages:
 
   keyvaluestorage-interface@1.0.0:
     resolution: {integrity: sha512-8t6Q3TclQ4uZynJY9IGr2+SsIGwK9JHcO6ootkHCGA0CrQCRy+VkouYNO2xicET6b9al7QKzpebNow+gkpCL8g==}
-
-  lenis@1.3.17:
-    resolution: {integrity: sha512-k9T9rgcxne49ggJOvXCraWn5dt7u2mO+BNkhyu6yxuEnm9c092kAW5Bus5SO211zUvx7aCCEtzy9UWr0RB+oJw==}
-    peerDependencies:
-      '@nuxt/kit': '>=3.0.0'
-      react: '>=17.0.0'
-      vue: '>=3.0.0'
-    peerDependenciesMeta:
-      '@nuxt/kit':
-        optional: true
-      react:
-        optional: true
-      vue:
-        optional: true
 
   lightningcss-android-arm64@1.30.2:
     resolution: {integrity: sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A==}
@@ -7757,7 +7740,7 @@ snapshots:
       tiny-invariant: 1.3.3
       toformat: 2.0.0
 
-  '@uniswap/smart-order-router@3.59.0(bufferutil@4.1.0)(hardhat@2.28.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(jsbi@4.3.2)(utf-8-validate@5.0.10)':
+  '@uniswap/smart-order-router@3.59.0(bufferutil@4.1.0)(hardhat@2.28.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(jsbi@3.2.5)(utf-8-validate@5.0.10)':
     dependencies:
       '@eth-optimism/sdk': 3.3.3(bufferutil@4.1.0)(ethers@5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
       '@types/brotli': 1.3.4
@@ -7781,7 +7764,7 @@ snapshots:
       ethers: 5.8.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       graphql: 15.10.1
       graphql-request: 3.7.0(graphql@15.10.1)
-      jsbi: 4.3.2
+      jsbi: 3.2.5
       lodash: 4.17.23
       mnemonist: 0.38.5
       node-cache: 5.1.2
@@ -9671,8 +9654,6 @@ snapshots:
 
   jsbi@3.2.5: {}
 
-  jsbi@4.3.2: {}
-
   json-rpc-engine@6.1.0:
     dependencies:
       '@metamask/safe-event-emitter': 2.0.0
@@ -9695,10 +9676,6 @@ snapshots:
       readable-stream: 3.6.2
 
   keyvaluestorage-interface@1.0.0: {}
-
-  lenis@1.3.17(react@19.2.0):
-    optionalDependencies:
-      react: 19.2.0
 
   lightningcss-android-arm64@1.30.2:
     optional: true
@@ -10011,7 +9988,7 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openai@4.104.0(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76):
+  openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76):
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -10021,7 +9998,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
     optionalDependencies:
-      ws: 8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       zod: 3.25.76
     transitivePeerDependencies:
       - encoding
@@ -10428,7 +10405,7 @@ snapshots:
       '@types/uuid': 8.3.4
       '@types/ws': 8.18.1
       buffer: 6.0.3
-      eventemitter3: 5.0.1
+      eventemitter3: 5.0.4
       uuid: 8.3.2
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:
