@@ -6,7 +6,9 @@
     "build": "next build --webpack",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "cre:simulate": "cre workflow simulate cre-intent --target staging-settings",
+    "cre:simulate:ci": "cre workflow simulate cre-intent --non-interactive --trigger-index 0 --target staging-settings"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -74,6 +76,7 @@
   "devDependencies": {
     "@chainlink/cre-sdk": "^1.0.0",
     "@tailwindcss/postcss": "^4.1.9",
+    "dotenv": "^16.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

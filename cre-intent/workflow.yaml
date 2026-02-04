@@ -1,9 +1,9 @@
-# CRE workflow config: intent-monitor
-# Target names are used with: cre workflow simulate intent-monitor --target staging-settings
+# CRE workflow config: cre-intent
+# Target names are used with: cre workflow simulate cre-intent --target staging-settings
 
 staging-settings:
   user-workflow:
-    workflow-name: "intent-monitor-staging"
+    workflow-name: "cre-intent-staging"
   workflow-artifacts:
     workflow-path: "./main.ts"
     config-path: "./config.staging.json"
@@ -11,7 +11,7 @@ staging-settings:
 
 production-settings:
   user-workflow:
-    workflow-name: "intent-monitor-production"
+    workflow-name: "cre-intent-production"
   workflow-artifacts:
     workflow-path: "./main.ts"
     config-path: "./config.production.json"

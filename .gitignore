@@ -57,8 +57,22 @@ Thumbs.db
 next-env.d.ts
 
 # ============================================
-# CRE workflow (intent-monitor) — do not push build artifacts
+# CRE workflow (cre-intent) — do not push build artifacts
 # ============================================
-/intent-monitor/node_modules
-/intent-monitor/tmp.js
-/intent-monitor/tmp.wasm
+/cre-intent/node_modules
+/cre-intent/tmp.js
+/cre-intent/tmp.wasm
+
+# ============================================
+# Deploy artifacts (optional: remove to commit addresses for frontend)
+# ============================================
+contracts-deployed-base-sepolia.json
+sol/contracts-deployed-base-sepolia.json
+
+# ============================================
+# sol/ — contracts subproject
+# ============================================
+sol/node_modules/
+sol/.env
+sol/cache/
+sol/artifacts/

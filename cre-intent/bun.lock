@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "intent-monitor",
+      "name": "cre-intent",
       "dependencies": {
         "@chainlink/cre-sdk": "^1.0.0",
       },

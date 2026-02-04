@@ -218,7 +218,7 @@ pnpm install`}
                 </h2>
                 <p className="text-muted-foreground mb-4">
                   CRE runs outside the app on a DON. This repo includes workflow templates (monitor, executor, incident-handler).
-                  The intent-monitor runs on a schedule, evaluates conditions, and updates status; the executor runs when intents are approved.
+                  The cre-intent workflow runs on a schedule, evaluates conditions, and updates status; the executor runs when intents are approved.
                 </p>
               </section>
 

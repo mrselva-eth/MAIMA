@@ -131,20 +131,23 @@ contract SafetyModule {
     }
 
     /**
-     * Trigger circuit breaker
+     * Trigger circuit breaker (internal)
      */
-    function triggerCircuitBreaker(string memory reason)
-        external
-        onlyOwner
-    {
+    function _triggerCircuitBreaker(string memory reason) internal {
         circuitBreaker = CircuitBreaker({
             triggered: true,
             triggeredAt: block.timestamp,
             reason: reason,
             recoveryTime: block.timestamp + CIRCUIT_BREAKER_RECOVERY
         });
-
         emit CircuitBreakerTriggered(reason, CIRCUIT_BREAKER_RECOVERY);
+    }
+
+    /**
+     * Trigger circuit breaker (external)
+     */
+    function triggerCircuitBreaker(string memory reason) external onlyOwner {
+        _triggerCircuitBreaker(reason);
     }
 
     // ============= Intent Controls =============
@@ -312,9 +315,7 @@ contract SafetyModule {
 
         // Trigger circuit breaker if too many failures
         if (metrics[intentId].failureCount >= 5) {
-            triggerCircuitBreaker(
-                string(abi.encodePacked("Too many failures for intent: ", intentId))
-            );
+            _triggerCircuitBreaker("Too many failures for intent");
         }
     }
 

@@ -5,6 +5,8 @@ A next-generation intent-based smart wallet with AI-powered automation, multisig
 **Repository:** [https://github.com/mrselva-eth/MAIMA](https://github.com/mrselva-eth/MAIMA)  
 **Default branch:** `main`
 
+**Project status:** Complete with CRE workflow **simulation**. Run the app (`pnpm dev`) and the cre-intent workflow (`pnpm cre:simulate`) in two terminals. See [docs/PROJECT_COMPLETE_SIMULATION.md](./docs/PROJECT_COMPLETE_SIMULATION.md).
+
 ## Key Features
 
 - **Intent-Based Execution** - Express goals in natural language, not transactions
@@ -72,7 +74,12 @@ A next-generation intent-based smart wallet with AI-powered automation, multisig
 │   ├── navbar.tsx        # Fixed navbar
 │   ├── footer.tsx        # Footer
 │   └── providers.tsx     # Wallet providers
-├── /contracts            # Solidity contracts
+├── /sol                  # Solidity contracts (Hardhat)
+│   ├── contracts/        # IntentRegistry, IntentWallet, SafetyModule, MockSafe
+│   ├── scripts/         # deploy-base-sepolia.js, verify-base-sepolia.js
+│   ├── hardhat.config.js
+│   ├── package.json     # Run deploy/verify from here
+│   └── .env.example     # ETH_PRIVATE_KEY, ETHERSCAN_API_KEY (copy to .env)
 ├── /lib
 │   ├── theme.ts          # Theme configuration
 │   ├── types.ts          # TypeScript types
@@ -88,12 +95,20 @@ A next-generation intent-based smart wallet with AI-powered automation, multisig
 
 CRE (Chainlink Runtime Environment) runs **outside** this app on a DON. This repo includes:
 
-- **`/workflows`** – Workflow templates (monitor, executor, incident-handler). Logic is ported to CRE SDK when deploying to [cre.chain.link](https://cre.chain.link).
-- **`/app/api/workflows/trigger`** – API called when intents are created; in production it notifies CRE (HTTP trigger).
-- **`@chainlink/cre-sdk`** (dev) – Official CRE SDK for authoring workflows; use with CRE CLI to build and deploy.
+- **`/cre-intent`** – CRE workflow (Cron → HTTP GET `/api/intents/active`). Build and **simulate** now; **deploy** when you have [Early Access](https://cre.chain.link/request-access).
+- **`/app/api/intents/active`** – Returns active intents for the monitor to poll.
+- **`@chainlink/cre-sdk`** (dev) – Official CRE SDK; use with CRE CLI to simulate and deploy.
 
-See **[docs/CRE_INTEGRATION.md](./docs/CRE_INTEGRATION.md)** for where CRE is used and how to deploy.  
-**CRE hackathon:** after `cre login`, follow **[docs/HACKATHON_NEXT_STEPS.md](./docs/HACKATHON_NEXT_STEPS.md)** to simulate and deploy the **intent-monitor** workflow.
+**Simulate (no approval required):** Install the [CRE CLI](https://docs.chain.link/cre/getting-started/cli-installation), run `cre login`, then from repo root:
+
+```bash
+pnpm dev          # in one terminal (so /api/intents/active is available)
+pnpm cre:simulate  # in another – run intent-monitor via simulation
+```
+
+See **[docs/CRE_INTEGRATION.md](./docs/CRE_INTEGRATION.md)** for where CRE is used.  
+**Quick path:** **[docs/HACKATHON_NEXT_STEPS.md](./docs/HACKATHON_NEXT_STEPS.md)** – simulate then deploy when you have Early Access.  
+**Deploy guide:** **[docs/DEPLOY_CRE.md](./docs/DEPLOY_CRE.md)** – full simulate + deploy steps.
 
 ## Getting Started
 
@@ -197,7 +212,25 @@ MAIMA uses a professional white & blue theme with AI highlighted in purple.
 
 Theme configuration is in `/lib/theme.ts` with CSS variables in `/app/globals.css`.
 
-## Smart Contracts
+## Smart Contracts (sol/)
+
+Contracts live in **`/sol`**. Deploy and verify from that folder using `ETH_PRIVATE_KEY` (and `ETHERSCAN_API_KEY` for verification).
+
+1. **Setup:**
+   ```bash
+   cd sol
+   cp .env.example .env
+   ```
+   Edit `sol/.env`: set `ETH_PRIVATE_KEY` (deployer wallet) and `ETHERSCAN_API_KEY` ([etherscan.io/myapikey](https://etherscan.io/myapikey)).
+
+2. **Install and run:**
+   ```bash
+   pnpm install
+   pnpm run deploy:base-sepolia   # deploys to Base Sepolia
+   pnpm run verify:base-sepolia   # verifies on Basescan
+   ```
+
+Deployment addresses are written to `sol/contracts-deployed-base-sepolia.json` (gitignored).
 
 ### IntentRegistry.sol
 
@@ -309,17 +342,18 @@ In Vercel dashboard:
 
 ## Documentation
 
-- [Chainlink CRE Integration](./docs/CHAINLINK_CRE.md)
-- [Smart Contracts](./docs/CONTRACTS.md)
-- [API Reference](./docs/API.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
+- [Project Complete (Simulation)](./docs/PROJECT_COMPLETE_SIMULATION.md) – Run the full project with CRE simulation
+- [CRE Integration](./docs/CRE_INTEGRATION.md) – Where CRE is used and how to simulate
+- [CRE: Simulate & Deploy (Hackathon)](./docs/HACKATHON_NEXT_STEPS.md) – Quick path for intent-monitor
+- [Deploy CRE Workflow](./docs/DEPLOY_CRE.md) – Full simulate + deploy guide
 
 ## What is not pushed (see `.gitignore`)
 
-- **Secrets:** `.env`, `.env.local`, and any file with real API keys or private keys
-- **Dependencies:** `node_modules/`, `.pnpm-store/`
+- **Secrets:** `.env`, `.env.local`, `sol/.env`, and any file with real API keys or private keys
+- **Dependencies:** `node_modules/`, `.pnpm-store/`, `sol/node_modules/`
 - **Build output:** `.next/`, `out/`, `build/`, Vercel `.vercel/`
-- **CRE build artifacts:** `intent-monitor/tmp.js`, `intent-monitor/tmp.wasm`, `intent-monitor/node_modules`
+- **CRE build artifacts:** `cre-intent/tmp.js`, `cre-intent/tmp.wasm`, `cre-intent/node_modules`
+- **Contracts (sol/):** `sol/.env`, `sol/contracts-deployed-base-sepolia.json`, `sol/cache/`, `sol/artifacts/`
 - **IDE/OS:** `.idea/`, `.vscode/`, `.DS_Store`, debug logs
 
 Use `.env.example` as a template; copy to `.env.local` and fill in your values locally.

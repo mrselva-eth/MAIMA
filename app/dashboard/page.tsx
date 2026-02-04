@@ -12,6 +12,8 @@ import {
   FileText,
   ListTodo,
   Zap,
+  PlayCircle,
+  Terminal,
 } from 'lucide-react';
 import { FlickeringGrid } from '@/components/flickering-grid';
 
@@ -134,6 +136,31 @@ export default function DashboardPage() {
               </Button>
             </Card>
           </div>
+
+          {/* CRE Simulation */}
+          <Card className="p-6 sm:p-8 border-[#1e40af]/15 bg-card/80 rounded-2xl mb-12">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <PlayCircle className="h-6 w-6" style={{ color: THEME_COLOR }} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-foreground text-lg mb-1">Chainlink CRE – cre-intent</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  The cre-intent workflow runs via <strong>simulation</strong>: it polls this app’s API for active intents. Run it locally in a second terminal.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 text-sm font-medium">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Simulation ready
+                  </span>
+                  <code className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-mono">
+                    <Terminal className="h-4 w-4 text-muted-foreground" />
+                    pnpm cre:simulate
+                  </code>
+                </div>
+              </div>
+            </div>
+          </Card>
 
           {/* Stats Section */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12">
