@@ -46,7 +46,7 @@ export default function Hero() {
             style={{ backgroundColor: THEME_COLOR }}
           >
             <Link
-              href="/dashboard"
+              href="/intents"
               className="flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
             >
               Launch App
@@ -65,7 +65,7 @@ export default function Hero() {
           style={{ backgroundColor: THEME_COLOR }}
         >
           <Link
-            href="/dashboard"
+            href="/intents"
             className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
           >
             Launch App

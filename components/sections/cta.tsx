@@ -24,8 +24,8 @@ export default function CTA() {
             className="h-12 px-8 text-base font-semibold rounded-lg"
             style={{ backgroundColor: '#1e40af' }}
           >
-            <Link href="/dashboard" className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity">
-              Launch Dashboard
+            <Link href="/intents" className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity">
+              Launch App
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>

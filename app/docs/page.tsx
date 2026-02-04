@@ -11,7 +11,6 @@ const SECTIONS = [
   { id: 'introduction', label: 'Introduction' },
   { id: 'getting-started', label: 'Getting Started' },
   { id: 'intents', label: 'Intents' },
-  { id: 'dashboard', label: 'Dashboard' },
   { id: 'api', label: 'API Reference' },
   { id: 'contracts', label: 'Smart Contracts' },
   { id: 'cre', label: 'Chainlink CRE' },
@@ -156,18 +155,6 @@ pnpm install`}
                 <p className="text-muted-foreground">
                   Connect your wallet, go to <Link href="/intents/create" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>Create Intent</Link>,
                   enter your goal, review the parsed intent, and sign. CRE monitors conditions and executes when met.
-                </p>
-              </section>
-
-              {/* Dashboard */}
-              <section id="dashboard" className="scroll-mt-24">
-                <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
-                  Dashboard
-                </h2>
-                <p className="text-muted-foreground mb-4">
-                  The <Link href="/dashboard" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>Dashboard</Link> shows
-                  quick actions (Create Intent, View Intents, Docs), stats (active, executed, pending, total value), and an empty state until you create intents.
-                  Use it as the hub for managing and monitoring all intents.
                 </p>
               </section>
 

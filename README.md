@@ -61,7 +61,6 @@ A next-generation intent-based smart wallet with AI-powered automation, multisig
 │   │   ├── /intents      # Intent management & parsing
 │   │   ├── /tokens       # Token quotes via Uniswap
 │   │   └── /workflows    # CRE workflow triggers
-│   ├── /dashboard        # Dashboard page
 │   ├── /intents
 │   │   ├── /create       # Create intent page
 │   │   └── /[id]         # Intent details page

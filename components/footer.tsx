@@ -42,11 +42,6 @@ export default function Footer() {
               </h3>
               <ul className="space-y-3 text-sm text-gray-400">
                 <li>
-                  <Link href="/dashboard" className="hover:text-[#60a5fa] transition-colors inline-block">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
                   <Link href="/intents" className="hover:text-[#60a5fa] transition-colors inline-block">
                   Intents
                 </Link>

@@ -12,7 +12,8 @@ import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 
 export default function CreateIntentPage() {
-  const { isConnected, address } = useAccount();
+  const { address, status } = useAccount();
+  const isConnectedState = status === 'connected' && Boolean(address);
   const [step, setStep] = useState<'input' | 'review' | 'confirm'>('input');
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ export default function CreateIntentPage() {
     }
   };
 
-  if (!isConnected) {
+  if (!isConnectedState) {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
@@ -147,7 +148,7 @@ export default function CreateIntentPage() {
                     variant="outline"
                     className="flex-1 bg-transparent"
                   >
-                    <Link href="/dashboard">Cancel</Link>
+                    <Link href="/intents">Cancel</Link>
                   </Button>
                   <Button
                     onClick={handleParseIntent}

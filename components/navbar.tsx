@@ -1,16 +1,43 @@
 'use client';
 
-import { useState } from 'react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useState, useRef, useEffect } from 'react';
+import { ConnectButton, type ConnectButtonCustomRenderProps } from '@rainbow-me/rainbowkit';
+import { useDisconnect } from 'wagmi';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Zap, ChevronDown } from 'lucide-react';
+import { Zap, ChevronDown, Copy, Check, LogOut } from 'lucide-react';
 
 const NAV_COLOR = '#1e40af';
+
+function shortenAddress(address: string) {
+  if (!address || address.length < 14) return address;
+  return `${address.slice(0, 5)}...${address.slice(-5)}`;
+}
 
 export default function Navbar() {
   const [logoError, setLogoError] = useState(false);
   const [nameError, setNameError] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { disconnect } = useDisconnect();
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleCopy = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-border shadow-sm z-50 w-full">
@@ -58,38 +85,30 @@ export default function Navbar() {
           )}
         </Link>
 
-        {/* Center: Nav links — #1e40af, underline on hover */}
-        <div className="hidden md:flex absolute left-0 right-0 top-0 h-full items-center justify-center gap-12">
-          <Link
-            href="/intents"
-            className="navbar-link text-sm font-medium whitespace-nowrap transition-colors"
-          >
-            Intents
-          </Link>
-          <Link
-            href="/dashboard"
-            className="navbar-link text-sm font-medium whitespace-nowrap transition-colors"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/docs"
-            className="navbar-link text-sm font-medium whitespace-nowrap transition-colors"
-          >
-            Docs
-          </Link>
-        </div>
-
-        {/* Right: Custom connect — single clean pill when connected */}
-        <div className="shrink-0 z-10">
+        {/* Right: Nav links (bold) + wallet — same gap between all three */}
+        <div className="flex items-center gap-7 sm:gap-9 shrink-0 z-10">
+          <div className="hidden sm:flex items-center gap-7 sm:gap-9">
+            <Link
+              href="/intents"
+              className="navbar-link text-sm font-bold whitespace-nowrap transition-colors"
+            >
+              Intents
+            </Link>
+            <Link
+              href="/docs"
+              className="navbar-link text-sm font-bold whitespace-nowrap transition-colors"
+            >
+              Docs
+            </Link>
+          </div>
+          <div className="relative" ref={dropdownRef}>
           <ConnectButton.Custom>
             {({
               account,
               chain,
               mounted,
-              openAccountModal,
               openConnectModal,
-            }) => {
+            }: ConnectButtonCustomRenderProps) => {
               if (!mounted) {
                 return (
                   <div className="h-10 w-24 rounded-full bg-gray-100 animate-pulse" aria-hidden />
@@ -98,31 +117,101 @@ export default function Navbar() {
               const connected = account && chain && account.address;
               if (connected) {
                 return (
-                  <button
-                    type="button"
-                    onClick={openAccountModal}
-                    className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:border-[#1e40af]/30 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 focus:ring-offset-2"
-                    aria-label="Account"
-                  >
-                    {account.ensAvatar ? (
-                      <img
-                        src={account.ensAvatar}
-                        alt=""
-                        className="h-6 w-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span
-                        className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium text-white"
-                        style={{ backgroundColor: NAV_COLOR }}
-                      >
-                        {account.displayName.slice(0, 2).toUpperCase()}
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen((o) => !o)}
+                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:border-[#1e40af]/30 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20 focus:ring-offset-2"
+                      aria-label="Account"
+                      aria-expanded={dropdownOpen}
+                    >
+                      {account.ensAvatar ? (
+                        <img
+                          src={account.ensAvatar}
+                          alt=""
+                          className="h-6 w-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium text-white"
+                          style={{ backgroundColor: NAV_COLOR }}
+                        >
+                          {account.displayName.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="max-w-[120px] truncate sm:max-w-[140px]">
+                        {account.displayName}
                       </span>
+                      <ChevronDown className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {/* Dropdown below navbar */}
+                    {dropdownOpen && (
+                      <div
+                        className="absolute right-0 top-full mt-4 w-64 rounded-lg border border-gray-200 bg-white py-3 shadow-lg"
+                        role="menu"
+                      >
+                        {/* Address row: online + short address + copy */}
+                        <div className="flex items-center justify-between gap-2 px-4 pb-3 mb-3 border-b border-gray-100">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="relative flex h-2.5 w-2.5 shrink-0" title="Connected">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+                            </span>
+                            <span className="text-sm font-mono text-gray-700 truncate">
+                              {shortenAddress(account.address)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(account.address)}
+                            className="shrink-0 p-1.5 rounded-md transition-colors hover:bg-[#1e40af]/10"
+                            style={{
+                              color: NAV_COLOR,
+                              backgroundColor: copied ? `${NAV_COLOR}14` : 'transparent',
+                            }}
+                            title={copied ? 'Copied' : 'Copy address'}
+                          >
+                            {copied ? (
+                              <Check className="h-4 w-4" strokeWidth={2.5} />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                        {/* Page links — theme blue hover */}
+                        <div className="px-2">
+                          <Link
+                            href="/intents"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center w-full rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#1e40af]/8 hover:text-[#1e40af]"
+                          >
+                            Intents
+                          </Link>
+                          <Link
+                            href="/docs"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center w-full rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-[#1e40af]/8 hover:text-[#1e40af]"
+                          >
+                            Docs
+                          </Link>
+                        </div>
+                        {/* Log out */}
+                        <div className="mt-2 pt-2 border-t border-gray-100 px-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              disconnect();
+                              setDropdownOpen(false);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Log out
+                          </button>
+                        </div>
+                      </div>
                     )}
-                    <span className="max-w-[120px] truncate sm:max-w-[140px]">
-                      {account.displayName}
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />
-                  </button>
+                  </>
                 );
               }
               return (
@@ -136,7 +225,8 @@ export default function Navbar() {
                 </button>
               );
             }}
-          </ConnectButton.Custom>
+            </ConnectButton.Custom>
+          </div>
         </div>
       </div>
     </nav>
