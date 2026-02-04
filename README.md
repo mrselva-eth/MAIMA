@@ -100,10 +100,15 @@ CRE (Chainlink Runtime Environment) runs **outside** this app on a DON. This rep
 
 **Simulate (no approval required):** Install the [CRE CLI](https://docs.chain.link/cre/getting-started/cli-installation), run `cre login`, then from repo root:
 
-```bash
-pnpm dev          # in one terminal (so /api/intents/active is available)
-pnpm cre:simulate  # in another – run intent-monitor via simulation
-```
+1. **Start the app first** so the workflow can reach `http://localhost:3000/api/intents/active`:
+   ```bash
+   pnpm dev
+   ```
+2. **In a second terminal**, run the cre-intent workflow simulation:
+   ```bash
+   pnpm cre:simulate
+   ```
+   Select the cron trigger when prompted. The workflow will call your API and log the active intent count. This proves the CRE integration works. **Next:** when you have [Early Access](https://cre.chain.link/request-access), run `cre workflow deploy cre-intent` to deploy to a DON.
 
 See **[docs/CRE_INTEGRATION.md](./docs/CRE_INTEGRATION.md)** for where CRE is used.  
 **Quick path:** **[docs/HACKATHON_NEXT_STEPS.md](./docs/HACKATHON_NEXT_STEPS.md)** – simulate then deploy when you have Early Access.  

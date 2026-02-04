@@ -6,6 +6,10 @@
 
 import type { Intent } from './types';
 
-export type StoredIntent = Intent & { walletAddress?: string };
+export type StoredIntent = Intent & {
+  walletAddress?: string;
+  executedAt?: string;
+  executionResult?: { type: string; message: string; txData?: unknown; quote?: unknown };
+};
 
 export const intentStorage = new Map<string, StoredIntent>();

@@ -1,10 +1,16 @@
 /**
- * Intent Monitor – CRE workflow (Chainlink Runtime Environment)
+ * Intent Monitor + Executor – CRE workflow (Chainlink Runtime Environment)
  *
  * Trigger: Cron (every 30s staging / every 10min production)
- * Action: GET apiBaseUrl/api/intents/active, log count, return result
+ * Actions (in order):
+ *   1. GET apiBaseUrl/api/intents/active → list of active intents (swap / stake / bridge)
+ *   2. For each active intent: POST apiBaseUrl/api/intents/execute { intentId }
+ *      - Swap: app uses Uniswap to build tx (simulation; relayer submits in prod)
+ *      - Stake / Bridge: app stubs; wire to protocols when ready
+ *   3. Return activeCount, executed count, and per-intent results.
  *
- * For hackathon: compile with CRE CLI, simulate locally, then deploy to CRE.
+ * Features: "Swap 100 USDC to ETH at best rate", "Stake 50 SOL monthly if balance > $1000",
+ *           "Bridge 500 USDT from Ethereum to Arbitrum"
  */
 
 import {
@@ -22,8 +28,12 @@ type Config = {
   apiBaseUrl: string;
 };
 
+type IntentItem = { id: string; type?: string; status?: string };
+
 type MonitorResult = {
   activeCount: number;
+  executed: number;
+  results: Array<{ intentId: string; success: boolean; type?: string; message?: string }>;
   timestamp: number;
 };
 
@@ -32,26 +42,80 @@ const initWorkflow = (config: Config) => {
   return [handler(cron.trigger({ schedule: config.schedule }), onCronTrigger)];
 };
 
-function fetchActiveIntentCount(nodeRuntime: NodeRuntime<Config>): number {
+function fetchActiveIntentsAndExecute(nodeRuntime: NodeRuntime<Config>): Omit<MonitorResult, "timestamp"> {
   const httpClient = new HTTPClient();
-  const url = `${nodeRuntime.config.apiBaseUrl}/api/intents/active`;
-  const resp = httpClient
-    .sendRequest(nodeRuntime, { url, method: "GET" })
+  const baseUrl = nodeRuntime.config.apiBaseUrl;
+
+  const activeUrl = `${baseUrl}/api/intents/active`;
+  const activeResp = httpClient
+    .sendRequest(nodeRuntime, { url: activeUrl, method: "GET" })
     .result();
-  const bodyText = new TextDecoder().decode(resp.body);
-  const data = JSON.parse(bodyText) as { success?: boolean; count?: number };
-  const count = typeof data.count === "number" ? data.count : 0;
-  return count;
+  const activeText = new TextDecoder().decode(activeResp.body);
+  const activeData = JSON.parse(activeText) as {
+    success?: boolean;
+    count?: number;
+    intents?: IntentItem[];
+  };
+
+  const intents: IntentItem[] = Array.isArray(activeData.intents) ? activeData.intents : [];
+  const activeCount = typeof activeData.count === "number" ? activeData.count : intents.length;
+
+  const results: MonitorResult["results"] = [];
+
+  for (const intent of intents) {
+    if (!intent?.id) continue;
+    try {
+      const executeUrl = `${baseUrl}/api/intents/execute`;
+      const body = new TextEncoder().encode(JSON.stringify({ intentId: intent.id }));
+      const executeResp = httpClient
+        .sendRequest(nodeRuntime, {
+          url: executeUrl,
+          method: "POST",
+          body,
+          headers: { "Content-Type": "application/json" },
+        })
+        .result();
+      const executeText = new TextDecoder().decode(executeResp.body);
+      const executeData = JSON.parse(executeText) as {
+        success?: boolean;
+        intentId?: string;
+        type?: string;
+        message?: string;
+      };
+      results.push({
+        intentId: intent.id,
+        success: Boolean(executeData.success),
+        type: executeData.type,
+        message: executeData.message,
+      });
+    } catch (err) {
+      results.push({
+        intentId: intent.id,
+        success: false,
+        type: intent.type,
+        message: err instanceof Error ? err.message : "Execute request failed",
+      });
+    }
+  }
+
+  const executed = results.filter((r) => r.success).length;
+
+  return {
+    activeCount,
+    executed,
+    results,
+  };
 }
 
 function onCronTrigger(runtime: Runtime<Config>): MonitorResult {
   runtime.log("Intent Monitor: workflow triggered.");
-  const activeCount = runtime
-    .runInNodeMode(fetchActiveIntentCount, consensusMedianAggregation())
+  const out = runtime
+    .runInNodeMode(fetchActiveIntentsAndExecute, consensusMedianAggregation())
     ().result();
-  runtime.log(`Active intents: ${activeCount}`);
+  runtime.log(`Active intents: ${out.activeCount}`);
+  runtime.log(`Executed: ${out.executed}`);
   return {
-    activeCount,
+    ...out,
     timestamp: Date.now(),
   };
 }

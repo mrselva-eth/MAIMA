@@ -12,6 +12,8 @@ import {
   IntentList,
   IntentsEmpty,
   IntentsLoading,
+  HowItWorks,
+  SimulationWidget,
   THEME_COLOR,
   type Intent,
 } from '@/components/intents';
@@ -20,6 +22,7 @@ export default function IntentsPage() {
   const { address, status } = useAccount();
   const [intents, setIntents] = useState<Intent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [simulationOpen, setSimulationOpen] = useState(false);
   const fetchingRef = useRef(false);
 
   const isConnectedState = status === 'connected' && Boolean(address);
@@ -72,8 +75,10 @@ export default function IntentsPage() {
         />
 
         <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-6 py-5 min-h-0">
-          <IntentsPageHeader />
-
+          <IntentsPageHeader onRunSimulation={() => setSimulationOpen(true)} />
+          <div className="shrink-0 mt-2">
+            <HowItWorks />
+          </div>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 min-h-0 mt-4">
             {/* Left: vertical stats + fills remaining height on desktop */}
             <aside className="flex flex-col gap-2 w-full sm:w-44 shrink-0 sm:min-h-0">
@@ -120,6 +125,9 @@ export default function IntentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Simulation widget: bottom-right, V0-style working animation + step tracking */}
+      <SimulationWidget open={simulationOpen} onClose={() => setSimulationOpen(false)} />
     </div>
   );
 }

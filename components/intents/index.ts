@@ -8,5 +8,8 @@ export { IntentListItem } from './IntentListItem';
 export type { IntentListItemProps } from './IntentListItem';
 export { IntentsEmpty } from './IntentsEmpty';
 export { IntentsLoading } from './IntentsLoading';
+export { HowItWorks } from './HowItWorks';
+export { SimulationWidget } from './SimulationWidget';
+export type { SimulationWidgetProps } from './SimulationWidget';
 export { THEME_COLOR, STATUS_CONFIG } from './constants';
 export type { Intent, IntentStatus } from './constants';
