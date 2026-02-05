@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { OrbitsBackground } from '@/components/orbits-background';
+import { OrbitsBackground } from '@/components/design/orbits-background';
 
 const THEME_COLOR = '#1e40af';
 
@@ -28,8 +28,8 @@ export default function Hero() {
             />
           </div>
           <p className="text-base text-gray-600 max-w-md leading-relaxed sm:text-lg">
-            Machine-AI for Managed Actions. An intent-based smart wallet that turns your goals into
-            executable intents—with multisig security, real-time monitoring, and on-chain execution.
+            DeFi optimistic solution handler. Describe swap or bridge needs in natural language; MAIMA AI analyzes and returns
+            a complete report—accuracy, gas fee, optimistic estimates. Track protocols in the app and choose the best option. Deploy workflows with Chainlink when you have Early Access.
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function Hero() {
             style={{ backgroundColor: THEME_COLOR }}
           >
             <Link
-              href="/intents"
+              href="/app"
               className="flex items-center gap-2 text-white hover:opacity-90 transition-opacity"
             >
               Launch App
@@ -65,7 +65,7 @@ export default function Hero() {
           style={{ backgroundColor: THEME_COLOR }}
         >
           <Link
-            href="/intents"
+            href="/app"
             className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity"
           >
             Launch App

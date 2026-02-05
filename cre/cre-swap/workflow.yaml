@@ -1,0 +1,18 @@
+# CRE workflow: swap (separate folder)
+# Simulate: cre workflow simulate cre-swap --target staging-settings
+
+staging-settings:
+  user-workflow:
+    workflow-name: "swap-staging"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.staging.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "swap-production"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.production.json"
+    secrets-path: ""

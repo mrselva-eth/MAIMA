@@ -88,7 +88,7 @@ export async function getSwapQuote(
       price: '0', // Current execution price
       priceImpact: 0, // Price impact percentage
       route: [], // Route array of pools
-      gasEstimate: '0', // Gas estimate from simulation
+      gasEstimate: '0', // Gas estimate
     };
 
     return quote;

@@ -5,28 +5,28 @@ import Image from 'next/image';
 
 const steps = [
   {
-    title: 'Express Intent',
-    desc: 'Say what you want in plain language. Describe your goal and MAIMA turns it into an executable intent.',
+    title: 'Describe Swap or Bridge',
+    desc: 'Say what you need in plain language. e.g. "Swap 100 USDC to ETH" or "Bridge 500 USDT to Arbitrum".',
   },
   {
-    title: 'AI Processing',
-    desc: 'Parsed into executable actions. Natural language is interpreted and structured for on-chain execution.',
+    title: 'MAIMA Analysis',
+    desc: 'AI analyzes your request and prepares a report: accuracy, gas estimate, optimistic execution.',
   },
   {
-    title: 'Multisig Approval',
-    desc: 'High-risk intents need multi-signature. Your team approves before execution.',
+    title: 'Top Bridges & Swaps',
+    desc: 'Report includes top bridges and top swaps. Best options for your need.',
   },
   {
-    title: 'CRE Monitoring',
-    desc: 'Chainlink monitors conditions 24/7. Real-time data triggers when your intent can be fulfilled.',
+    title: 'CRE Workflows',
+    desc: 'Chainlink workflows (cre-maima, cre-bridge, cre-swap) under cre/ run on a schedule. Based on your request, the workflow gets active.',
   },
   {
-    title: 'Auto Execution',
-    desc: 'Executes on-chain when conditions are met. No manual steps—fully automated.',
+    title: 'Process Tracking',
+    desc: 'Track protocol checks in the app, choose a protocol, and get the result. All visible in the tracking panel.',
   },
   {
-    title: 'Verification',
-    desc: 'On-chain audit trail. Transparent and verifiable from start to finish.',
+    title: 'Deploy with Chainlink',
+    desc: 'Deploy workflows to Chainlink when you have Early Access. Report and tracking in the app today.',
   },
 ];
 

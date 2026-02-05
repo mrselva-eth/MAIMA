@@ -7,8 +7,10 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "cre:simulate": "cre workflow simulate cre-intent --target staging-settings",
-    "cre:simulate:ci": "cre workflow simulate cre-intent --non-interactive --trigger-index 0 --target staging-settings"
+    "cre:simulate": "cre workflow simulate cre/cre-maima --target staging-settings",
+    "cre:simulate:bridge": "cre workflow simulate cre/cre-bridge --target staging-settings",
+    "cre:simulate:swap": "cre workflow simulate cre/cre-swap --target staging-settings",
+    "cre:simulate:ci": "cre workflow simulate cre/cre-maima --non-interactive --trigger-index 0 --target staging-settings"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

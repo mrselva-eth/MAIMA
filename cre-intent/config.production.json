@@ -1,4 +1,0 @@
-{
-  "schedule": "0 */10 * * * *",
-  "apiBaseUrl": "https://maimacre.vercel.app/"
-}

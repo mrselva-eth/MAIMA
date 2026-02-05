@@ -12,10 +12,10 @@ export default function CTA() {
           className="text-4xl font-bold text-[#1e40af] sm:text-5xl md:text-6xl"
           style={{ fontFamily: 'var(--font-gagalin), sans-serif' }}
         >
-          Ready to Automate Your Crypto?
+          Ready to Try MAIMA?
         </h2>
         <p className="text-gray-600 text-base sm:text-lg max-w-xl mx-auto">
-          Express your goals, not your transactions.
+          Describe your swap or bridge—get a report and track protocols in the app.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
           <Button
@@ -24,7 +24,7 @@ export default function CTA() {
             className="h-12 px-8 text-base font-semibold rounded-lg"
             style={{ backgroundColor: '#1e40af' }}
           >
-            <Link href="/intents" className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity">
+            <Link href="/app" className="flex items-center justify-center gap-2 text-white hover:opacity-90 transition-opacity">
               Launch App
               <ArrowRight className="w-5 h-5" />
             </Link>
@@ -32,9 +32,10 @@ export default function CTA() {
           <Button
             size="lg"
             variant="outline"
+            asChild
             className="h-12 px-8 text-base font-semibold rounded-lg border-2 border-[#1e40af] text-[#1e40af] bg-transparent hover:bg-[#1e40af] hover:text-white transition-colors"
           >
-            Read Documentation
+            <Link href="/docs">Read Documentation</Link>
           </Button>
         </div>
       </div>

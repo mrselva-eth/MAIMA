@@ -1,0 +1,18 @@
+# CRE workflow: maima (main)
+# Simulate: cre workflow simulate cre-maima --target staging-settings
+
+staging-settings:
+  user-workflow:
+    workflow-name: "maima-staging"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.staging.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "maima-production"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.production.json"
+    secrets-path: ""

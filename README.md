@@ -1,396 +1,128 @@
-# MAIMA - Machine-AI for Managed Actions
+# MAIMA — DeFi Optimistic Solution Handler
 
-A next-generation intent-based smart wallet with AI-powered automation, multisig security, and real-time Chainlink CRE execution. Express goals in natural language, not transactions.
+MAIMA analyzes your swap and bridge needs and returns a **report** (accuracy, gas fee, optimistic estimates). Describe what you want in natural language, see **process tracking** (protocols checked, choose one), and get the best option. Deploy workflows to Chainlink when you have Early Access.
 
 **Repository:** [https://github.com/mrselva-eth/MAIMA](https://github.com/mrselva-eth/MAIMA)  
 **Default branch:** `main`
 
-**Project status:** Complete with CRE workflow **simulation**. Run the app (`pnpm dev`) and the cre-intent workflow (`pnpm cre:simulate`) in two terminals. See [docs/PROJECT_COMPLETE_SIMULATION.md](./docs/PROJECT_COMPLETE_SIMULATION.md).
+## Key features
 
-## Key Features
+- **Chat interface (App)** – Describe swap or bridge in natural language (e.g. “Swap 100 USDC to ETH”, “Bridge 500 USDT from Ethereum to Arbitrum”). **Wallet connect required** to access the app.
+- **Report** – Accuracy, gas fee estimate, optimistic execution, and top bridges/swaps.
+- **Process tracking** – In the app, track protocols as they’re checked, then choose one and see the result.
+- **CRE workflows** – Under `cre/`: **cre-maima** (main), **cre-bridge**, **cre-swap**. Each runs on a schedule and polls `/api/maima/requests`; the AI report is generated in the app chat.
 
-- **Intent-Based Execution** - Express goals in natural language, not transactions
-- **AI-Powered Parsing** - OpenAI GPT-4o-mini converts intents to executable actions
-- **Multisig Security** - High-risk intents require multiple signatures
-- **Real-Time Monitoring** - Chainlink CRE monitors conditions 24/7
-- **Non-Custodial** - Your keys stay yours, no backend key storage
-- **Uniswap Integration** - Automated swaps via SmartOrderRouter
-- **Audit Trail** - Every execution is logged on-chain and verifiable
-- **Professional UI** - Clean white & blue design with AI accent color (purple)
-
-## Architecture
+## Project structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (Next.js)                       │
-│  - Intent Builder (natural language input)                  │
-│  - Dashboard & Monitoring                                   │
-│  - Wallet Connection (RainbowKit)                           │
-└────────────────┬────────────────────────────────────────────┘
-                 │
-         ┌───────▼────────┐
-         │   Backend API  │
-         ├────────────────┤
-         │ Intent Parser  │ ◄── OpenAI API
-         │ Token Quotes   │ ◄── Uniswap SDK
-         │ Validator      │
-         └───────┬────────┘
-                 │
-      ┌──────────▼──────────┐
-      │  Smart Contracts    │
-      ├─────────────────────┤
-      │ IntentRegistry.sol  │
-      │ IntentWallet.sol    │
-      │ SafetyModule.sol    │
-      └──────────┬──────────┘
-                 │
-      ┌──────────▼──────────┐
-      │  Chainlink CRE      │
-      ├─────────────────────┤
-      │ Monitor Workflow    │
-      │ Executor Workflow   │
-      │ Incident Handler    │
-      └─────────────────────┘
+├── app/
+│   ├── app/                 # Chat interface (wallet-gated)
+│   ├── api/
+│   │   ├── maima/           # /api/maima/requests, /api/maima/analyze
+│   │   ├── tokens/          # Token quotes (optional)
+│   │   └── workflows/       # Workflow triggers (optional)
+│   ├── docs/                # Documentation
+│   ├── page.tsx             # Home
+│   └── layout.tsx
+├── components/
+│   ├── app/                 # BackgroundCircles, ProcessTrackingPanel, RequireWallet
+│   ├── design/              # background-beams, flickering-grid, orbits-background, motion-carousel
+│   ├── sections/            # navbar, footer, hero, features, how-it-works, cta, maima-image-section
+│   └── ui/                  # Shared UI components
+├── lib/
+│   ├── maima-requests.ts    # In-memory request store
+│   ├── maima-types.ts       # Report types
+│   ├── wallet-config.ts
+│   └── ...
+├── cre/
+│   ├── cre-maima/           # Main CRE workflow
+│   ├── cre-bridge/          # Bridge CRE workflow
+│   └── cre-swap/            # Swap CRE workflow
+└── project.yaml             # CRE project config
 ```
 
-## Project Structure
-
-```
-├── /app
-│   ├── /api              # Backend API routes
-│   │   ├── /intents      # Intent management & parsing
-│   │   ├── /tokens       # Token quotes via Uniswap
-│   │   └── /workflows    # CRE workflow triggers
-│   ├── /intents
-│   │   ├── /create       # Create intent page
-│   │   └── /[id]         # Intent details page
-│   ├── layout.tsx        # Root layout with providers
-│   ├── page.tsx          # Home page
-│   └── globals.css       # Global styles & theme
-├── /components
-│   ├── /sections         # Page sections (Hero, Features, etc)
-│   ├── /ui               # shadcn/ui components
-│   ├── navbar.tsx        # Fixed navbar
-│   ├── footer.tsx        # Footer
-│   └── providers.tsx     # Wallet providers
-├── /sol                  # Solidity contracts (Hardhat)
-│   ├── contracts/        # IntentRegistry, IntentWallet, SafetyModule, MockSafe
-│   ├── scripts/         # deploy-base-sepolia.js, verify-base-sepolia.js
-│   ├── hardhat.config.js
-│   ├── package.json     # Run deploy/verify from here
-│   └── .env.example     # ETH_PRIVATE_KEY, ETHERSCAN_API_KEY (copy to .env)
-├── /lib
-│   ├── theme.ts          # Theme configuration
-│   ├── types.ts          # TypeScript types
-│   ├── uniswap.ts        # Uniswap integration
-│   └── wallet-config.ts  # Wagmi/RainbowKit config
-├── /intent-monitor       # CRE SDK workflow (Cron + HTTP → /api/intents/active)
-├── /workflows            # CRE workflow templates (executor, incident-handler)
-├── /docs                 # Documentation (incl. CRE_INTEGRATION.md)
-└── .env.example          # Environment variables template
-```
-
-### Chainlink CRE
-
-CRE (Chainlink Runtime Environment) runs **outside** this app on a DON. This repo includes:
-
-- **`/cre-intent`** – CRE workflow (Cron → HTTP GET `/api/intents/active`). Build and **simulate** now; **deploy** when you have [Early Access](https://cre.chain.link/request-access).
-- **`/app/api/intents/active`** – Returns active intents for the monitor to poll.
-- **`@chainlink/cre-sdk`** (dev) – Official CRE SDK; use with CRE CLI to simulate and deploy.
-
-**Simulate (no approval required):** Install the [CRE CLI](https://docs.chain.link/cre/getting-started/cli-installation), run `cre login`, then from repo root:
-
-1. **Start the app first** so the workflow can reach `http://localhost:3000/api/intents/active`:
-   ```bash
-   pnpm dev
-   ```
-2. **In a second terminal**, run the cre-intent workflow simulation:
-   ```bash
-   pnpm cre:simulate
-   ```
-   Select the cron trigger when prompted. The workflow will call your API and log the active intent count. This proves the CRE integration works. **Next:** when you have [Early Access](https://cre.chain.link/request-access), run `cre workflow deploy cre-intent` to deploy to a DON.
-
-See **[docs/CRE_INTEGRATION.md](./docs/CRE_INTEGRATION.md)** for where CRE is used.  
-**Quick path:** **[docs/HACKATHON_NEXT_STEPS.md](./docs/HACKATHON_NEXT_STEPS.md)** – simulate then deploy when you have Early Access.  
-**Deploy guide:** **[docs/DEPLOY_CRE.md](./docs/DEPLOY_CRE.md)** – full simulate + deploy steps.
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
-- MetaMask or compatible Web3 wallet
+- pnpm (or npm)
+- Web3 wallet (e.g. MetaMask) for the App
 
 ### Installation
 
-1. Clone the repository (branch `main`):
-```bash
-git clone https://github.com/mrselva-eth/MAIMA.git
-cd MAIMA
-```
-
-2. Install dependencies:
-```bash
-pnpm install
-# or: npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
-
-4. Fill in required variables in `.env.local` (see `.env.example` for all options):
-   - `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` — [WalletConnect Cloud](https://cloud.walletconnect.com)
-   - `OPENAI_API_KEY` or `OPENROUTER_API_KEY` — for AI intent parsing ([OpenAI](https://platform.openai.com/api-keys) or [OpenRouter](https://openrouter.ai))
-
-5. Run development server:
-```bash
-npm run dev
-```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Usage
-
-### Creating an Intent
-
-1. Connect your wallet using RainbowKit
-2. Navigate to "Create Intent"
-3. Describe what you want to do in natural language:
-   - "Swap 100 USDC to ETH at best rate within 1 hour"
-   - "Stake 50 SOL monthly if balance is above $1000"
-   - "Bridge 500 USDT from Ethereum to Arbitrum"
-4. Review the parsed intent and confirm
-5. Sign the intent with your wallet
-6. CRE monitors conditions and executes automatically
-
-### Intent Lifecycle
-
-```
-Created ─► Validated ─► Active ─► Monitored ─► Executed ─► Finalized
-                                                  │
-                                                  └─► Expired/Revoked
-```
-
-## API Endpoints
-
-### Intents
-
-- `GET /api/intents?address=0x...` - List user intents
-- `POST /api/intents` - Create new intent
-- `GET /api/intents/[id]` - Get intent details
-- `PATCH /api/intents/[id]` - Update intent
-
-### Intent Parsing
-
-- `POST /api/intents/parse` - Parse natural language to intent
-  ```json
-  {
-    "userInput": "Swap 100 USDC to ETH at best rate",
-    "walletAddress": "0x..."
-  }
-  ```
-
-### Token Quotes
-
-- `GET /api/tokens/quote?tokenIn=ETH&tokenOut=USDC&amount=1` - Get swap quote
-
-### Workflows
-
-- `POST /api/workflows/trigger` - Trigger CRE workflow
-
-## Theme System
-
-MAIMA uses a professional white & blue theme with AI highlighted in purple.
-
-### Color Palette
-
-- **Primary**: `#1e40af` (Deep Blue)
-- **Secondary**: `#0f172a` (Dark Slate)
-- **AI/Accent**: `#7c3aed` (Vibrant Purple)
-- **Success**: `#10b981` (Emerald)
-- **Warning**: `#f59e0b` (Amber)
-- **Error**: `#ef4444` (Red)
-
-Theme configuration is in `/lib/theme.ts` with CSS variables in `/app/globals.css`.
-
-## Smart Contracts (sol/)
-
-Contracts live in **`/sol`**. Deploy and verify from that folder using `ETH_PRIVATE_KEY` (and `ETHERSCAN_API_KEY` for verification).
-
-1. **Setup:**
+1. Clone and install:
    ```bash
-   cd sol
+   git clone https://github.com/mrselva-eth/MAIMA.git
+   cd MAIMA
+   pnpm install
+   ```
+
+2. Environment:
+   ```bash
    cp .env.example .env
    ```
-   Edit `sol/.env`: set `ETH_PRIVATE_KEY` (deployer wallet) and `ETHERSCAN_API_KEY` ([etherscan.io/myapikey](https://etherscan.io/myapikey)).
+   Set at least **NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID** (from [WalletConnect Cloud](https://cloud.walletconnect.com)) so the App and wallet connect work. Other variables in `.env.example` are optional (OpenAI, OpenRouter, API base URL, Uniswap router, CRE key, ElizaOS).
 
-2. **Install and run:**
+3. Run the app:
    ```bash
-   pnpm install
-   pnpm run deploy:base-sepolia   # deploys to Base Sepolia
-   pnpm run verify:base-sepolia   # verifies on Basescan
+   pnpm dev
    ```
+   Open [http://localhost:3000](http://localhost:3000). Use **App** for the chat (connect your wallet when prompted).
 
-Deployment addresses are written to `sol/contracts-deployed-base-sepolia.json` (gitignored).
+## Environment variables
 
-### IntentRegistry.sol
+| Variable | Required | Description |
+|---------|----------|-------------|
+| `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | Yes (for App) | WalletConnect project ID (RainbowKit) |
+| `OPENAI_API_KEY` | No | OpenAI API key |
+| `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | No | OpenRouter for model routing |
+| `NEXT_PUBLIC_API_BASE_URL` | No | Base URL for API (default `http://localhost:3000`) |
+| `NEXT_PUBLIC_UNISWAP_ROUTER_ADDRESS` | No | Uniswap V3 router address |
+| `CRE_ETH_PRIVATE_KEY` | No | For CRE workflow simulation |
+| `ELIZAOS_API_KEY` | No | ElizaOS integration |
 
-Stores intent metadata and manages lifecycle states.
+## API
 
-```solidity
-struct Intent {
-  uint256 id;
-  address creator;
-  uint8 intentType;
-  bytes32 constraintHash;
-  uint256 expiry;
-  uint8 status;
-}
-```
+- **GET /api/maima/requests** – Active requests (used by CRE workflows).
+- **POST /api/maima/analyze** – Send a prompt, get a report.
+  ```json
+  { "prompt": "Swap 100 USDC to ETH at best rate" }
+  ```
+  Response: `accuracy`, `gasFeeEstimate`, `optimisticEstimate`, `topBridges`, `topSwaps`, `summary`.
 
-### IntentWallet.sol
+## Chainlink CRE
 
-Executes intents via authorized CRE caller with rate limiting.
+- **cre/cre-maima** – Main workflow; polls `/api/maima/requests`.
+- **cre/cre-bridge** – Bridge workflow.
+- **cre/cre-swap** – Swap workflow.
 
-```solidity
-function executeIntent(uint256 intentId, bytes calldata callData)
-  onlyAuthorized
-  rateLimit
-  external
-```
-
-### SafetyModule.sol
-
-Emergency controls, circuit breaker, whitelisting, time locks.
-
-## Chainlink CRE Integration
-
-### Intent Monitor Workflow
-
-- Runs every 10 minutes via Cron trigger
-- Evaluates price conditions, balances, time windows
-- Uses DON consensus
-- Updates intent status
-
-### Intent Executor Workflow
-
-- Triggered by HTTP webhook on approval
-- Constructs calldata via Uniswap SDK
-- Executes on-chain via IntentWallet
-- Emits execution proof event
-
-### Incident Handler Workflow
-
-- Monitors for abnormal behavior
-- Detects failed executions, price anomalies
-- Pauses intents if risk detected
-- Triggers emergency protocols
-
-## Security Considerations
-
-1. **No Private Keys in Backend** - All key management is wallet-based
-2. **Multisig Enforcement** - Critical actions require multiple signatures
-3. **On-Chain Validation** - All constraints validated on-chain
-4. **Rate Limiting** - Prevent transaction spam
-5. **Time Locks** - Delay for emergency actions
-6. **RLS Policies** - If using Supabase, enforce row-level security
-
-## Environment Variables Reference
-
-See `.env.example` for all available variables:
-
-- `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` - WalletConnect project ID (required)
-- `OPENAI_API_KEY` - OpenAI API key for intent parsing (required)
-- `NEXT_PUBLIC_API_BASE_URL` - API base URL
-- `NEXT_PUBLIC_UNISWAP_ROUTER_ADDRESS` - Uniswap router address
-
-## Development
-
-### Running Tests
+**Simulate:** Install [CRE CLI](https://docs.chain.link/cre/getting-started/cli-installation). With the app running (`pnpm dev`):
 
 ```bash
-npm run test
+pnpm cre:simulate           # maima
+pnpm cre:simulate:bridge    # bridge
+pnpm cre:simulate:swap      # swap
 ```
 
-### Building for Production
+## Scripts
 
-```bash
-npm run build
-npm start
-```
+| Command | Description |
+|---------|--------------|
+| `pnpm dev` | Start dev server |
+| `pnpm build` | Production build |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm cre:simulate` | Simulate main CRE workflow |
+| `pnpm cre:simulate:bridge` | Simulate bridge workflow |
+| `pnpm cre:simulate:swap` | Simulate swap workflow |
 
-### Code Formatting
+## Next steps
 
-```bash
-npm run lint
-npm run format
-```
-
-## Deployment
-
-### Deploy to Vercel
-
-```bash
-vercel
-```
-
-### Set Environment Variables
-
-In Vercel dashboard:
-1. Go to Project Settings → Environment Variables
-2. Add all variables from `.env.example`
-3. Redeploy
-
-## Documentation
-
-- [Project Complete (Simulation)](./docs/PROJECT_COMPLETE_SIMULATION.md) – Run the full project with CRE simulation
-- [CRE Integration](./docs/CRE_INTEGRATION.md) – Where CRE is used and how to simulate
-- [CRE: Simulate & Deploy (Hackathon)](./docs/HACKATHON_NEXT_STEPS.md) – Quick path for intent-monitor
-- [Deploy CRE Workflow](./docs/DEPLOY_CRE.md) – Full simulate + deploy guide
-
-## What is not pushed (see `.gitignore`)
-
-- **Secrets:** `.env`, `.env.local`, `sol/.env`, and any file with real API keys or private keys
-- **Dependencies:** `node_modules/`, `.pnpm-store/`, `sol/node_modules/`
-- **Build output:** `.next/`, `out/`, `build/`, Vercel `.vercel/`
-- **CRE build artifacts:** `cre-intent/tmp.js`, `cre-intent/tmp.wasm`, `cre-intent/node_modules`
-- **Contracts (sol/):** `sol/.env`, `sol/contracts-deployed-base-sepolia.json`, `sol/cache/`, `sol/artifacts/`
-- **IDE/OS:** `.idea/`, `.vscode/`, `.DS_Store`, debug logs
-
-Use `.env.example` as a template; copy to `.env.local` and fill in your values locally.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (from `main`)
-3. Submit a pull request
+1. Replace top bridges/swaps with your team’s data when ready.
+2. Add real swap/bridge execution via your chosen APIs/SDKs.
+3. Deploy CRE workflows when you have [Chainlink Early Access](https://cre.chain.link/request-access).
 
 ## License
 
-MIT License - see LICENSE file for details
-
-## Support
-
-- **Repo:** [github.com/mrselva-eth/MAIMA](https://github.com/mrselva-eth/MAIMA)
-- Open an issue or discussion on GitHub for bugs and questions
-
-## Roadmap
-
-- [ ] Mainnet deployment
-- [ ] Advanced constraint logic
-- [ ] Cross-chain intent support
-- [ ] Yield farming intents
-- [ ] DAO governance integration
-- [ ] Mobile app
-- [ ] Browser extension
-
-## Disclaimer
-
-MAIMA is provided as-is without warranty. Always audit smart contracts before deploying to mainnet. Not investment advice.
-
----
-
-**Built with ❤️ for the Chainlink CRE Hackathon**
+See repository.

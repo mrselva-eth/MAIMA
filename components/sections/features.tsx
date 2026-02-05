@@ -4,12 +4,12 @@ import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 
 const FEATURES = [
-  { image: '/images/features/f1.png', title: 'Intent Parser', desc: 'Natural language → executable intents.' },
-  { image: '/images/features/f2.png', title: 'Multisig Security', desc: 'High-risk intents need multi-approval.' },
-  { image: '/images/features/f3.png', title: 'Real-Time Execution', desc: 'CRE monitors 24/7, executes on-chain.' },
-  { image: '/images/features/f4.png', title: 'Intent Lifecycle', desc: 'Validate → Monitor → Execute → Finalize.' },
-  { image: '/images/features/f5.png', title: 'Non-Custodial', desc: 'Your keys. No backend custody.' },
-  { image: '/images/features/f6.png', title: 'Automated Strategies', desc: 'Swaps, staking, rebalancing.' },
+  { image: '/images/features/f1.png', title: 'Chat Interface', desc: 'Describe swap or bridge in natural language.' },
+  { image: '/images/features/f2.png', title: 'Report', desc: 'Accuracy, gas fee, optimistic estimates.' },
+  { image: '/images/features/f3.png', title: 'Top Bridges & Swaps', desc: 'Best options for your need.' },
+  { image: '/images/features/f4.png', title: 'CRE Workflows', desc: 'cre-maima (main), cre-bridge, cre-swap under cre/.' },
+  { image: '/images/features/f5.png', title: 'Process Tracking', desc: 'See protocols checked in the app and choose one.' },
+  { image: '/images/features/f6.png', title: 'DeFi Optimistic', desc: 'Swap & bridge analysis by MAIMA AI.' },
 ] as const;
 
 export default function Features() {

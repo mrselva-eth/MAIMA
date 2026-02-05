@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Navbar from '@/components/navbar';
+import Navbar from '@/components/sections/navbar';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 
@@ -10,9 +10,8 @@ const THEME_COLOR = '#1e40af';
 const SECTIONS = [
   { id: 'introduction', label: 'Introduction' },
   { id: 'getting-started', label: 'Getting Started' },
-  { id: 'intents', label: 'Intents' },
+  { id: 'app', label: 'App (Chat)' },
   { id: 'api', label: 'API Reference' },
-  { id: 'contracts', label: 'Smart Contracts' },
   { id: 'cre', label: 'Chainlink CRE' },
   { id: 'security', label: 'Security' },
 ];
@@ -93,16 +92,16 @@ export default function DocsPage() {
                   Documentation
                 </h1>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  MAIMA (Machine-AI for Managed Actions) is an intent-based smart wallet with
-                  AI-powered automation, multisig security, and real-time Chainlink CRE execution.
-                  Express goals in natural language—not raw transactions.
+                  MAIMA is a DeFi optimistic solution handler. Describe swap or bridge needs in natural language;
+                  MAIMA AI analyzes and returns a report with accuracy, gas fee, and optimistic estimates.
+                  Use process tracking in the app to see protocols checked and choose the best option.
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground mb-8">
-                  <li>Intent-based execution from natural language</li>
-                  <li>AI-powered parsing (OpenAI / OpenRouter)</li>
-                  <li>Multisig for high-risk intents</li>
-                  <li>Chainlink CRE monitoring and execution</li>
-                  <li>Non-custodial; your keys stay yours</li>
+                  <li>Chat interface for swap/bridge requests</li>
+                  <li>Report: accuracy, gas estimate, optimistic execution</li>
+                  <li>Process tracking: protocols listed, checked, then choose one</li>
+                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: maima (main), bridge, swap</li>
+                  <li>Deploy workflows to Chainlink when you have Early Access</li>
                 </ul>
               </section>
 
@@ -125,7 +124,7 @@ pnpm install`}
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
                   <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — WalletConnect Cloud</li>
-                  <li><code className="bg-muted px-1 rounded text-sm">OPENAI_API_KEY</code> or <code className="bg-muted px-1 rounded text-sm">OPENROUTER_API_KEY</code> — for intent parsing</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — for wallet connect (optional)</li>
                 </ul>
                 <p className="text-muted-foreground">
                   Run <code className="bg-muted px-1.5 py-0.5 rounded text-sm">pnpm dev</code> and open{' '}
@@ -135,26 +134,20 @@ pnpm install`}
                 </p>
               </section>
 
-              {/* Intents */}
-              <section id="intents" className="scroll-mt-24">
+              {/* App (Chat) */}
+              <section id="app" className="scroll-mt-24">
                 <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
-                  Intents
+                  App (Chat)
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  Create an intent by describing what you want in plain language. Examples:
+                  Open <Link href="/app" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>App</Link> to use the chat interface. Examples:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
                   <li>&quot;Swap 100 USDC to ETH at best rate within 1 hour&quot;</li>
-                  <li>&quot;Stake 50 SOL monthly if balance is above $1000&quot;</li>
                   <li>&quot;Bridge 500 USDT from Ethereum to Arbitrum&quot;</li>
                 </ul>
-                <p className="text-muted-foreground mb-2">Lifecycle:</p>
-                <p className="text-muted-foreground font-mono text-sm bg-muted/50 rounded-lg p-3 mb-4">
-                  Created → Validated → Active → Monitored → Executed → Finalized
-                </p>
                 <p className="text-muted-foreground">
-                  Connect your wallet, go to <Link href="/intents/create" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>Create Intent</Link>,
-                  enter your goal, review the parsed intent, and sign. CRE monitors conditions and executes when met.
+                  MAIMA returns a report with accuracy, gas fee estimate, optimistic execution, and top bridges/swaps. Use the tracking panel to see protocols checked and choose one for your request.
                 </p>
               </section>
 
@@ -166,36 +159,15 @@ pnpm install`}
                 <p className="text-muted-foreground mb-4">Key endpoints:</p>
                 <ul className="space-y-3 text-muted-foreground mb-4">
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/intents?address=0x...</code> — List user intents
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/requests</code> — Active requests (for CRE)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/intents</code> — Create intent
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt, get report (accuracy, gas, optimistic, top bridges/swaps)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/intents/[id]</code> — Get intent details
-                  </li>
-                  <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/intents/parse</code> — Parse natural language to intent
-                  </li>
-                  <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/tokens/quote?tokenIn=ETH&tokenOut=USDC&amount=1</code> — Swap quote
-                  </li>
-                  <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/workflows/trigger</code> — Trigger CRE workflow
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/tokens/quote?tokenIn=ETH&tokenOut=USDC&amount=1</code> — Swap quote (optional)
                   </li>
                 </ul>
-              </section>
-
-              {/* Smart Contracts */}
-              <section id="contracts" className="scroll-mt-24">
-                <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
-                  Smart Contracts
-                </h2>
-                <p className="text-muted-foreground mb-4">
-                  <strong className="text-foreground">IntentRegistry</strong> — Stores intent metadata and lifecycle.{' '}
-                  <strong className="text-foreground">IntentWallet</strong> — Executes intents via authorized CRE caller with rate limiting.{' '}
-                  <strong className="text-foreground">SafetyModule</strong> — Emergency controls, circuit breaker, whitelisting, time locks.
-                </p>
               </section>
 
               {/* Chainlink CRE */}
@@ -204,8 +176,8 @@ pnpm install`}
                   Chainlink CRE
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  CRE runs outside the app on a DON. This repo includes workflow templates (monitor, executor, incident-handler).
-                  The cre-intent workflow runs on a schedule, evaluates conditions, and updates status; the executor runs when intents are approved.
+                  Three workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: <strong className="text-foreground">cre-maima</strong> (main), <strong className="text-foreground">cre-bridge</strong>, <strong className="text-foreground">cre-swap</strong>.
+                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/requests</code>. Based on user requests, the workflow gets active and the AI report is generated in the app chat. Deploy to Chainlink when you have Early Access.
                 </p>
               </section>
 
@@ -215,10 +187,8 @@ pnpm install`}
                   Security
                 </h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-8">
-                  <li>No private keys in the backend; wallet-based only</li>
-                  <li>Multisig for critical actions</li>
-                  <li>On-chain validation of constraints</li>
-                  <li>Rate limiting and time locks</li>
+                  <li>Deploy workflows to Chainlink when ready for production</li>
+                  <li>Wallet connect optional; no keys in backend</li>
                 </ul>
               </section>
             </div>

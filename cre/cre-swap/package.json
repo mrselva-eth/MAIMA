@@ -1,0 +1,9 @@
+{
+  "name": "cre-swap",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.0.0"
+  }
+}

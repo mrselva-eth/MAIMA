@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import FlickeringGrid from '@/components/flickering-grid';
+import FlickeringGrid from '@/components/design/flickering-grid';
 
 /**
  * Standalone full-page section: is.png image with flickering grid on top.
