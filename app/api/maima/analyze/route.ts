@@ -1,80 +1,151 @@
-/**
- * POST /api/maima/analyze
- * DeFi optimistic solution handler: user prompt → MAIMA AI report.
- * Report: accuracy, gas fee, optimistic estimates. Top 5 bridges/swaps TBD by team.
- * Swap/bridge execution (30%) when deployed.
- */
+export const runtime = 'nodejs'
 
-import { NextRequest, NextResponse } from 'next/server';
-import { maimaRequests } from '@/lib/maima-requests';
-import type { AnalyzeReport } from '@/lib/maima-types';
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  createConfig,
+  getRoutes,
+  type RoutesRequest,
+} from '@lifi/sdk'
 
-function detectType(prompt: string): 'swap' | 'bridge' | 'both' {
-  const p = prompt.toLowerCase();
-  const hasSwap = /\bswap\b|exchange|trade\b/.test(p);
-  const hasBridge = /\bbridge\b|transfer.*chain|cross-chain/.test(p);
-  if (hasSwap && hasBridge) return 'both';
-  if (hasBridge) return 'bridge';
-  return 'swap';
+// ==================================================
+// LI.FI CONFIG
+// ==================================================
+createConfig({
+  integrator: 'terminal-intent-demo',
+  apiKey: process.env.LIFI_API_KEY as string,
+})
+
+// ==================================================
+// CONSTANTS
+// ==================================================
+const CHAINS = {
+  BASE: 8453,
+  ARBITRUM: 42161,
+} as const
+
+const TOKENS = {
+  ETH: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+  BASE_USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+} as const
+
+type AnalyzeReport = {
+  topBridges: {
+    name: string
+    routeId: string
+    score: number
+  }[]
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
-
-    if (!prompt) {
-      return NextResponse.json(
-        { success: false, error: 'Missing prompt' },
-        { status: 400 }
-      );
+    if (!process.env.LIFI_API_KEY) {
+      throw new Error('LIFI_API_KEY missing')
     }
 
-    const type = detectType(prompt);
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {
+      body = {}
+    }
 
-    // Generate report (accuracy, gas, optimistic). Top 5 list TBD by team.
-    const report: AnalyzeReport = {
-      accuracy: '94%',
-      gasFeeEstimate: '0.002–0.005 ETH',
-      optimisticEstimate: 'Best execution within 1–2 blocks',
-      topBridges: [
-        { name: 'Stargate', score: '98%', note: 'Low fee, fast' },
-        { name: 'Across', score: '96%', note: 'Optimistic' },
-        { name: 'Hop', score: '95%', note: 'Multi-chain' },
-        { name: 'Synapse', score: '93%', note: 'Wide coverage' },
-        { name: 'Celer cBridge', score: '92%', note: 'Liquidity depth' },
-      ],
-      topSwaps: [
-        { name: 'Uniswap V3', score: '97%', note: 'Best rate' },
-        { name: '1inch', score: '96%', note: 'Aggregator' },
-        { name: 'Curve', score: '95%', note: 'Stables' },
-        { name: 'KyberSwap', score: '94%', note: 'Dynamic' },
-        { name: 'Paraswap', score: '93%', note: 'Multi-hop' },
-      ],
-      summary: `Based on your request: "${prompt.slice(0, 80)}${prompt.length > 80 ? '…' : ''}". Analysis complete. Swap/bridge execution (30%) when deployed.`,
-      timestamp: Date.now(),
-    };
+    const intent: '1' | '2' | '3' | '4' | undefined = body?.intent
 
-    const id = `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    maimaRequests.set(id, {
-      id,
-      prompt,
-      type,
-      createdAt: new Date().toISOString(),
-      report,
-    });
+    if (!intent) {
+      return NextResponse.json(
+        { success: false, error: 'Intent missing' },
+        { status: 400 }
+      )
+    }
+
+    let routeParams: RoutesRequest
+
+    switch (intent) {
+      case '1': // ETH → USDC (Base)
+        routeParams = {
+          fromChainId: CHAINS.BASE,
+          toChainId: CHAINS.BASE,
+          fromTokenAddress: TOKENS.ETH,
+          toTokenAddress: TOKENS.BASE_USDC,
+          fromAmount: '100000000000000000',
+        }
+        break
+
+      case '2': // USDC → ETH (Base)
+        routeParams = {
+          fromChainId: CHAINS.BASE,
+          toChainId: CHAINS.BASE,
+          fromTokenAddress: TOKENS.BASE_USDC,
+          toTokenAddress: TOKENS.ETH,
+          fromAmount: '1000000',
+        }
+        break
+
+      case '3': // Base → Arbitrum
+        routeParams = {
+          fromChainId: CHAINS.BASE,
+          toChainId: CHAINS.ARBITRUM,
+          fromTokenAddress: TOKENS.ETH,
+          toTokenAddress: TOKENS.ETH,
+          fromAmount: '100000000000000000',
+        }
+        break
+
+      case '4': // Arbitrum → Base
+        routeParams = {
+          fromChainId: CHAINS.ARBITRUM,
+          toChainId: CHAINS.BASE,
+          fromTokenAddress: TOKENS.ETH,
+          toTokenAddress: TOKENS.ETH,
+          fromAmount: '100000000000000000',
+        }
+        break
+
+      default:
+        throw new Error('Invalid intent')
+    }
+
+    const result = await getRoutes({
+      ...routeParams,
+      options: {
+        slippage: 0.5,
+        order: 'RECOMMENDED',
+      },
+    })
+
+    const routes = result.routes.slice(0, 3)
+
+    const topBridges = routes.map((route) => {
+      const totalTime = route.steps.reduce(
+        (sum, step) =>
+          sum + (step.estimate.executionDuration ?? 0),
+        0
+      )
+
+      const score = Math.max(
+        1,
+        Math.round(
+          1000 / (totalTime + Number(route.gasCostUSD ?? 1))
+        )
+      )
+
+      return {
+        name: route.steps.map((s) => s.tool).join(' → '),
+        routeId: route.id,
+        score,
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      requestId: id,
-      type,
-      report,
-    });
-  } catch (error) {
-    console.error('[maima/analyze] Error:', error);
+      report: { topBridges },
+    })
+  } catch (err: any) {
+    console.error('ANALYZE ERROR:', err.message)
+
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Analysis failed' },
+      { success: false, error: err.message },
       { status: 500 }
-    );
+    )
   }
 }
