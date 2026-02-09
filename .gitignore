@@ -23,6 +23,7 @@ build/
 .env.test.local
 .env.production.local
 .env*.local
+.env.example
 # Keep .env.example in repo (template for developers)
 !.env.example
 
