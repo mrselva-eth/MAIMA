@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { AnalyzeReport } from '@/lib/maima-types';
+import { useSendTransaction } from 'wagmi';
 
 export type TrackingPhase = 'steps' | 'checking' | 'choose' | 'execute' | 'done';
 
@@ -28,6 +29,8 @@ export function ProcessTrackingPanel({
   const logRef = useRef<HTMLDivElement>(null);
 
   const bridges = report?.topBridges ?? [];
+
+  const { sendTransactionAsync } = useSendTransaction();
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +59,64 @@ export function ProcessTrackingPanel({
     logRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
+  const executeRoute = async (bridge: any) => {
+    try {
+      setPhase('execute');
+      setLogs((l) => [
+        ...l,
+        `[${formatTime()}] Requesting transaction data…`,
+      ]);
+
+      const res = await fetch('/api/maima/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routeId: bridge.routeId }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      const tx = data.tx;
+
+      setLogs((l) => [
+        ...l,
+        `[${formatTime()}] Sending transaction to wallet…`,
+      ]);
+
+      const hash = await sendTransactionAsync({
+        to: tx.to,
+        data: tx.data,
+        value: tx.value ? BigInt(tx.value) : 0n,
+      });
+
+      setLogs((l) => [
+        ...l,
+        `[${formatTime()}] Transaction sent: ${hash}`,
+      ]);
+
+      setPhase('done');
+
+      onComplete({
+        protocol: bridge.name,
+        pair: 'Bridge',
+        fee: 'Auto',
+        inputAmount: '—',
+        outputAmount: '—',
+        txHash: hash,
+        approvalHash: hash,
+      });
+    } catch (err: any) {
+      console.error(err);
+      setLogs((l) => [
+        ...l,
+        `[${formatTime()}] Execution failed: ${err.message}`,
+      ]);
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -75,22 +136,19 @@ export function ProcessTrackingPanel({
 
         {phase === 'choose' && (
           <div className="mt-3 space-y-2">
-            <div className="text-green-400 text-xs">Top bridges suggested by LI.FI</div>
+            <div className="text-green-400 text-xs">
+              Top bridges suggested by LI.FI
+            </div>
             {bridges.map((b: any, i: number) => (
               <button
                 key={i}
                 onClick={() => {
                   setSelected(i);
-                  setPhase('execute');
-                  setLogs((l) => [...l, `[${formatTime()}] Selected ${b.name}`]);
-
-                  setTimeout(() => {
-                    setPhase('done');
-                    onComplete({
-                      protocol: b.name,
-                      routeId: b.routeId,
-                    });
-                  }, 2000);
+                  setLogs((l) => [
+                    ...l,
+                    `[${formatTime()}] Selected ${b.name}`,
+                  ]);
+                  executeRoute(b);
                 }}
                 className="w-full text-left border border-white/10 rounded p-2 hover:bg-white/10"
               >
@@ -107,7 +165,9 @@ export function ProcessTrackingPanel({
         )}
 
         {phase === 'done' && (
-          <div className="mt-3 text-green-400">Execution completed.</div>
+          <div className="mt-3 text-green-400">
+            Execution completed.
+          </div>
         )}
 
         <div ref={logRef} />
