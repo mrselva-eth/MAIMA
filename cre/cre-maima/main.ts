@@ -48,8 +48,8 @@ function fetchRequests(nodeRuntime: NodeRuntime<Config>): Omit<MaimaResult, "tim
 function onCronTrigger(runtime: Runtime<Config>): MaimaResult {
   runtime.log("MAIMA workflow triggered.");
   const out = runtime
-    .runInNodeMode(fetchRequests, consensusMedianAggregation())
-    ().result();
+    .runInNodeMode(fetchRequests)
+    .result();
   runtime.log(`Active requests: ${out.activeRequests}`);
   return {
     ...out,

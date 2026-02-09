@@ -46,7 +46,7 @@ function runSwap(nodeRuntime: NodeRuntime<Config>): SwapResult {
 
 function onTrigger(runtime: Runtime<Config>): SwapResult {
   runtime.log("Swap workflow running.");
-  const result = runtime.runInNodeMode(runSwap, consensusMedianAggregation)().result();
+  const result = runtime.runInNodeMode(runSwap, consensusMedianAggregation()).result();
   runtime.log(JSON.stringify(result));
   return result;
 }
