@@ -2,15 +2,45 @@
  * MAIMA Type Definitions
  */
 
-export type IntentType = 'swap' | 'stake' | 'bridge' | 'yield' | 'rebalance' | 'custom';
+/* =========================
+   INTENT CORE
+========================= */
 
-export type IntentStatus = 'created' | 'validated' | 'active' | 'executed' | 'expired' | 'revoked';
+export type IntentType =
+  | 'swap'
+  | 'stake'
+  | 'bridge'
+  | 'yield'
+  | 'rebalance'
+  | 'custom';
+
+export type IntentStatus =
+  | 'created'
+  | 'validated'
+  | 'active'
+  | 'executed'
+  | 'expired'
+  | 'revoked';
 
 export interface IntentConstraint {
   type: 'minAmount' | 'maxAmount' | 'priceLimit' | 'timeWindow' | 'slippage';
   value: string | number;
   unit?: string;
 }
+
+export interface IntentBase {
+  id?: string;
+  description: string;
+  status?: IntentStatus;
+  createdAt?: string;
+  expiresAt?: string;
+  fallback?: string;
+  constraints: IntentConstraint[];
+}
+
+/* =========================
+   INTENT VARIANTS
+========================= */
 
 export interface IntentSwap {
   type: 'swap';
@@ -38,17 +68,11 @@ export interface IntentBridge {
   constraints: IntentConstraint[];
 }
 
-export interface IntentBase {
-  id?: string;
-  description: string;
-  status?: IntentStatus;
-  createdAt?: string;
-  expiresAt?: string;
-  fallback?: string;
-  constraints: IntentConstraint[];
-}
-
 export type Intent = (IntentSwap | IntentStake | IntentBridge) & IntentBase;
+
+/* =========================
+   AI PARSING
+========================= */
 
 export interface AIIntentParseRequest {
   userInput: string;
@@ -61,6 +85,10 @@ export interface AIIntentParseResponse {
   error?: string;
   confidence?: number;
 }
+
+/* =========================
+   TOKEN / QUOTES
+========================= */
 
 export interface TokenData {
   address: string;
@@ -80,6 +108,53 @@ export interface SwapQuote {
   route: string[];
   gasEstimate: string;
 }
+
+/* =========================
+   LI.FI ANALYZE (NEW)
+========================= */
+
+export interface BridgeOption {
+  /** Bridge / protocol name (from LI.FI toolDetails.name) */
+  name: string;
+
+  /** Logo from LI.FI */
+  logo?: string;
+
+  /** Estimated gas cost in USD */
+  gasUSD?: string;
+
+  /** Estimated execution time in seconds */
+  duration?: number | null;
+
+  /** LI.FI tags: CHEAPEST, FASTEST, RECOMMENDED */
+  tags?: string[];
+}
+
+export interface SwapOption {
+  name: string;
+  gasUSD?: string;
+  priceImpact?: number;
+  route?: string[];
+}
+
+/**
+ * Response returned by /api/maima/analyze
+ * Used directly by ProcessTrackingPanel
+ */
+export interface AnalyzeReport {
+  topBridges: BridgeOption[];
+  topSwaps?: SwapOption[];
+
+  /**
+   * Full LI.FI routes (kept for execution phase)
+   * Used when user selects a bridge
+   */
+  rawRoutes: any[];
+}
+
+/* =========================
+   EXECUTION / GOVERNANCE
+========================= */
 
 export interface MultisigApproval {
   signer: string;
