@@ -59,7 +59,9 @@ function useEmblaControls(emblaApi: EmblaCarouselType | undefined): EmblaControl
     if (!emblaApi) return;
     onInit(emblaApi);
     emblaApi.on('reInit', onInit).on('select', onSelect);
-    return () => emblaApi.off('reInit', onInit).off('select', onSelect);
+    return () => {
+      emblaApi.off('reInit', onInit).off('select', onSelect);
+    };
   }, [emblaApi, onInit, onSelect]);
 
   return {
