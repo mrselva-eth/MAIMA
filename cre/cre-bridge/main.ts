@@ -48,9 +48,10 @@ function runBridge(nodeRuntime: NodeRuntime<Config>): BridgeResult {
 
 function onTrigger(runtime: Runtime<Config>): BridgeResult {
   runtime.log("Bridge workflow running.");
-  const result = runtime.runInNodeMode(runBridge).result();
+  const result = runtime.runInNodeMode(runBridge, consensusMedianAggregation)().result();
   runtime.log(JSON.stringify(result));
   return result;
+}
 
 export async function main() {
   const runner = await Runner.newRunner<Config>();

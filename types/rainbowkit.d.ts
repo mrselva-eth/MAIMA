@@ -1,7 +1,6 @@
-import '@rainbow-me/rainbowkit';
-import type { ReactNode } from 'react';
-
 declare module '@rainbow-me/rainbowkit' {
+  import type { ReactNode } from 'react';
+
   export interface ConnectButtonCustomRenderProps {
     account?: {
       address: string;
