@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import Navbar from '@/components/sections/navbar';
 import { RequireWallet } from '@/components/app/RequireWallet';
 import { Button } from '@/components/ui/button';
@@ -37,10 +38,7 @@ function formatMessageTime(iso: string): string {
     return (
       d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
       ' ' +
-      d.toLocaleTimeString(undefined, {
-        hour: 'numeric',
-        minute: '2-digit',
-      })
+      d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
     );
   } catch {
     return '';
@@ -70,9 +68,19 @@ export default function AppPage() {
     useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { address } = useAccount();
 
   const copyMessage = (m: Message) => {
-    navigator.clipboard.writeText(m.content).then(() => {
+    let text = m.content;
+    if (m.report)
+      text += `\n\nAccuracy: ${m.report.accuracy}\nGas: ${m.report.gasFeeEstimate}\nOptimistic: ${
+        m.report.optimisticEstimate
+      }\n\nTop bridges: ${m.report.topBridges
+        .map((b) => `${b.name} (${b.score})`)
+        .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
+    if (m.result)
+      text += `\n\nProtocol: ${m.result.protocol}\nPair: ${m.result.pair}\nFee: ${m.result.fee}\nInput: ${m.result.inputAmount}\nOutput: ${m.result.outputAmount}\nTx: ${m.result.txHash}\nApproval: ${m.result.approvalHash}`;
+    navigator.clipboard.writeText(text).then(() => {
       setCopiedId(m.id);
       setTimeout(() => setCopiedId(null), 2000);
     });
@@ -131,15 +139,35 @@ export default function AppPage() {
       const res = await fetch('/api/maima/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intent }),
+        body: JSON.stringify({ prompt, fromAddress: address }),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        const errorMessage =
+          typeof data?.error === 'string' ? data.error : 'No allowed routes found. Try a different amount or pair.';
+        setTrackingReport(null);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === processingId
+              ? { ...m, content: `Request failed. ${errorMessage}` }
+              : m
+          )
+        );
+        return;
+      }
       const report = data.report as AnalyzeReport | undefined;
       setTrackingReport(report ?? null);
     } catch (err) {
       console.error(err);
       setTrackingReport(null);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === processingId
+            ? { ...m, content: 'Request failed. You can close the tracking panel and try again.' }
+            : m
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -147,17 +175,11 @@ export default function AppPage() {
 
   const handleTrackingComplete = (result: FinalResult | null) => {
     if (!result || !processingMessageId) return;
-
-    const content = `Done. ${result.protocol} — Pair: ${result.pair}, Fee: ${result.fee}.`;
-
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === processingMessageId
-          ? { ...m, content, result }
-          : m
-      )
-    );
-
+    const content = `Done. ${result.protocol} - Pair: ${result.pair}, Fee: ${result.fee}. Input: ${result.inputAmount} -> Output: ${result.outputAmount}. Tx: ${result.txHash.slice(
+      0,
+      10
+    )}... Approval: ${result.approvalHash.slice(0, 10)}...`;
+    setMessages((prev) => prev.map((m) => (m.id === processingMessageId ? { ...m, content, result } : m)));
     setProcessingMessageId(null);
   };
 
@@ -178,65 +200,159 @@ export default function AppPage() {
               trackingOpen ? 'flex-row' : 'flex-col'
             }`}
           >
-            {/* Chat panel */}
             <div
-              className={`h-full flex flex-col rounded-xl border bg-white shadow-lg overflow-hidden transition-all ${
-                trackingOpen
-                  ? 'w-[65%] min-w-0 max-w-4xl'
-                  : 'w-full max-w-4xl mx-auto'
+              className={`h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${
+                trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
               }`}
             >
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`flex flex-col ${
-                      m.role === 'user'
-                        ? 'items-end'
-                        : 'items-start'
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                        m.role === 'user'
-                          ? 'bg-[#1e40af] text-white'
-                          : 'bg-gray-100 text-black'
-                      }`}
-                    >
-                      {m.content}
-                    </div>
-
-                    <button
-                      onClick={() => copyMessage(m)}
-                      className="text-xs mt-1 opacity-60"
-                    >
-                      {copiedId === m.id ? (
-                        <Check size={14} />
-                      ) : (
-                        <Copy size={14} />
-                      )}
-                    </button>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain relative">
+                <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+                {messages.length === 0 && (
+                  <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
+                    <Image
+                      src="/images/logo.png"
+                      alt=""
+                      width={140}
+                      height={140}
+                      className="w-[140px] h-[140px] object-contain opacity-40 select-none"
+                      unoptimized
+                      draggable={false}
+                    />
                   </div>
-                ))}
-                <div ref={bottomRef} />
+                )}
+                <div className="relative z-10 p-4 space-y-4 min-h-full">
+                  {messages.map((m) => (
+                    <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        {m.role === 'assistant' && (
+                          <span className="shrink-0 w-7 h-7 rounded-full overflow-hidden border border-[#1e40af]/15 bg-white/80 flex items-center justify-center">
+                            <Image
+                              src="/images/logo.png"
+                              alt=""
+                              width={28}
+                              height={28}
+                              className="w-full h-full object-cover select-none"
+                              unoptimized
+                              draggable={false}
+                            />
+                          </span>
+                        )}
+                        <div
+                          className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${
+                            m.role === 'user'
+                              ? 'bg-[#1e40af] text-white'
+                              : 'bg-gray-100 text-foreground border border-gray-200'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                          {m.result && (
+                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
+                              <p>
+                                <strong>Protocol:</strong> {m.result.protocol}
+                              </p>
+                              <p>
+                                <strong>Pair:</strong> {m.result.pair}
+                              </p>
+                              <p>
+                                <strong>Fee:</strong> {m.result.fee}
+                              </p>
+                              <p>
+                                <strong>Input:</strong> {m.result.inputAmount} {'->'} <strong>Output:</strong>{' '}
+                                {m.result.outputAmount}
+                              </p>
+                              <p className="break-all">
+                                <strong>Tx:</strong> {m.result.txHash}
+                              </p>
+                              <p className="break-all">
+                                <strong>Approval:</strong> {m.result.approvalHash}
+                              </p>
+                            </div>
+                          )}
+                          {m.report && !m.result && (
+                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs">
+                              <p>
+                                <strong>Accuracy:</strong> {m.report.accuracy}
+                              </p>
+                              <p>
+                                <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
+                              </p>
+                              <p>
+                                <strong>Optimistic:</strong> {m.report.optimisticEstimate}
+                              </p>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <p className="font-medium text-foreground">Top bridges</p>
+                                  <ul className="list-disc list-inside text-muted-foreground">
+                                    {m.report.topBridges.slice(0, 5).map((b, i) => (
+                                      <li key={i}>
+                                        {b.name} ({b.score})
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">Top swaps</p>
+                                  <ul className="list-disc list-inside text-muted-foreground">
+                                    {m.report.topSwaps.slice(0, 5).map((s, i) => (
+                                      <li key={i}>
+                                        {s.name} ({s.score})
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={`mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${
+                          m.role === 'assistant' ? 'pl-9' : 'justify-end'
+                        }`}
+                      >
+                        <span>{formatMessageTime(m.at)}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyMessage(m)}
+                          className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                          aria-label="Copy message"
+                          title="Copy"
+                        >
+                          {copiedId === m.id ? (
+                            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {loading && !trackingOpen && (
+                    <div className="flex justify-start">
+                      <div className="rounded-2xl px-4 py-2.5 bg-gray-100 border border-gray-200 text-sm text-muted-foreground">
+                        Analyzing...
+                      </div>
+                    </div>
+                  )}
+                  <div ref={bottomRef} />
+                </div>
               </div>
 
-              {/* Input */}
-              <div className="p-4 border-t bg-white">
+              <div className="shrink-0 p-4 border-t border-[#1e40af]/10 bg-white">
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="e.g. Bridge ETH from Base to Arbitrum"
+                    placeholder="e.g. Swap 100 USDC to ETH at best rate within 1 hour"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === 'Enter' &&
-                      !e.shiftKey &&
-                      (e.preventDefault(), send())
-                    }
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+                    className="min-h-10 resize-none border-2 border-[#1e40af]/25 focus-visible:border-[#1e40af]/50 focus-visible:ring-2 focus-visible:ring-[#1e40af]/20"
+                    rows={1}
                   />
                   <Button
+                    type="button"
                     onClick={send}
                     disabled={loading || !input.trim()}
+                    className="shrink-0"
                     style={{ backgroundColor: THEME_COLOR }}
                   >
                     Send
@@ -244,8 +360,6 @@ export default function AppPage() {
                 </div>
               </div>
             </div>
-
-            {/* Tracking panel */}
             {trackingOpen && (
               <div className="w-[35%] min-w-0 flex-1 h-full flex flex-col overflow-hidden">
                 <ProcessTrackingPanel
