@@ -25,6 +25,12 @@ function normalizeProtocolName(name?: string) {
   return (name ?? '').trim().toLowerCase();
 }
 
+function parseGasFee(value?: string) {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -142,32 +148,119 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bestRoute = filteredRoutes[0];
+    const sortedRoutes = filteredRoutes
+      .map((route, index) => ({
+        route,
+        index,
+        fee: parseGasFee(route.gasCostUSD),
+      }))
+      .sort((a, b) => {
+        const feeA = a.fee ?? Number.POSITIVE_INFINITY;
+        const feeB = b.fee ?? Number.POSITIVE_INFINITY;
+        if (feeA !== feeB) return feeA - feeB;
+        return a.index - b.index;
+      })
+      .map((entry) => entry.route);
+
+    const bestRoute = sortedRoutes[0];
 
     const topSwaps = Array.from(
-      new Set(filteredRoutes.filter((r) => r.type === 'swap').map((r) => r.mainTool))
+      new Set(sortedRoutes.filter((r) => r.type === 'swap').map((r) => r.mainTool))
     )
       .slice(0, 5)
       .map((name, i) => ({ name, score: scoreForIndex(i) }));
 
     const topBridges = Array.from(
-      new Set(filteredRoutes.filter((r) => r.type === 'bridge').map((r) => r.mainTool))
+      new Set(sortedRoutes.filter((r) => r.type === 'bridge').map((r) => r.mainTool))
     )
       .slice(0, 5)
       .map((name, i) => ({ name, score: scoreForIndex(i) }));
+
+    const inferredTypeForReport = isBridgeRequest ? 'bridge' : 'swap';
+    const fallbackTop = Array.from(new Set(sortedRoutes.map((r) => r.mainTool)))
+      .slice(0, 5)
+      .map((name, i) => ({ name, score: scoreForIndex(i) }));
+
+    const finalTopSwaps =
+      inferredTypeForReport === 'swap' && topSwaps.length === 0 ? fallbackTop : topSwaps;
+    const finalTopBridges =
+      inferredTypeForReport === 'bridge' && topBridges.length === 0 ? fallbackTop : topBridges;
+
+    const now = Date.now();
+    const workflow = [
+      {
+        name: 'Intent parsed',
+        status: 'ok' as const,
+        details: isBridgeRequest ? 'Bridge request detected' : 'Swap request detected',
+        timestamp: now,
+      },
+      {
+        name: 'Quote requested',
+        status: 'ok' as const,
+        details: `Requested ${routes.length} route(s) from LI.FI`,
+        timestamp: now + 50,
+      },
+      {
+        name: 'Protocol validation',
+        status: enforceSwapWhitelist ? 'ok' as const : 'warn' as const,
+        details: enforceSwapWhitelist
+          ? `Whitelist enforced (${ALLOWED_SWAP_PROTOCOLS.length} allowed)`
+          : 'Whitelist not enforced on this chain',
+        timestamp: now + 100,
+      },
+      {
+        name: 'Ranking',
+        status: 'ok' as const,
+        details: 'Sorted by lowest gas fee (USD) first',
+        timestamp: now + 150,
+      },
+      {
+        name: 'Selection',
+        status: bestRoute ? ('ok' as const) : ('error' as const),
+        details: bestRoute ? `Selected ${bestRoute.mainTool}` : 'No valid route selected',
+        timestamp: now + 200,
+      },
+    ];
+
+    const ranking = sortedRoutes.slice(0, 10).map((route, i) => {
+      const feeUSD = parseGasFee(route.gasCostUSD);
+      const isSelected = bestRoute?.id === route.id && bestRoute?.mainTool === route.mainTool;
+      const reason = isSelected
+        ? feeUSD !== null
+          ? `Lowest gas fee ($${route.gasCostUSD})`
+          : 'Best available route by lowest fee'
+        : feeUSD !== null
+          ? `Higher gas fee than ranked protocols ($${route.gasCostUSD})`
+          : 'Fee not available';
+      return {
+        protocol: route.mainTool,
+        feeUSD,
+        rank: i + 1,
+        reason,
+        isSelected,
+      };
+    });
+
+    const selectionReason = bestRoute?.gasCostUSD
+      ? `Lowest gas fee: $${bestRoute.gasCostUSD}`
+      : 'Lowest available fee among valid routes';
 
     // Step 3: build report for frontend
     const report = {
       accuracy: 'Live (LI.FI)',
       gasFeeEstimate: bestRoute?.gasCostUSD ? `$${bestRoute.gasCostUSD}` : 'N/A',
       optimisticEstimate: `Estimated ${bestRoute?.steps?.length ?? 0} steps`,
-      topBridges,
-      topSwaps,
+      topBridges: finalTopBridges,
+      topSwaps: finalTopSwaps,
       summary: bestRoute ? `Best route via ${bestRoute.mainTool}` : 'No route found',
       timestamp: Date.now(),
-      routes: filteredRoutes,
+      routes: sortedRoutes,
       bestRoute,
       rawRoute: routes[0],
+      workflow,
+      ranking,
+      selectionReason,
+      intentType: inferredTypeForReport,
     };
 
     return NextResponse.json({
