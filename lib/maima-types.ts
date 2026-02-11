@@ -41,4 +41,19 @@ export type AnalyzeReport = {
   routes?: ReportRoute[];
   bestRoute?: ReportRoute;
   rawRoute?: unknown;
+  workflow?: Array<{
+    name: string;
+    status: 'ok' | 'warn' | 'error';
+    details: string;
+    timestamp?: number;
+  }>;
+  ranking?: Array<{
+    protocol: string;
+    feeUSD?: number | null;
+    rank: number;
+    reason?: string;
+    isSelected?: boolean;
+  }>;
+  selectionReason?: string;
+  intentType?: 'swap' | 'bridge';
 };
