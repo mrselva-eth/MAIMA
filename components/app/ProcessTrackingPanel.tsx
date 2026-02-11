@@ -636,6 +636,31 @@ export function ProcessTrackingPanel({
                 </div>
               )}
 
+              {phase === 'choose' && report?.workflow?.length ? (
+                <div className="my-3 pl-7 border-l-2 border-[#1e40af]/30 ml-2 space-y-2">
+                  <p className="text-[#60a5fa] font-medium text-xs">Workflow report</p>
+                  <div className="space-y-1.5">
+                    {report.workflow.map((step, i) => (
+                      <div key={`wf-${i}`} className="flex items-start gap-2">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-[#1e40af]/20 border border-[#1e40af]/40 flex items-center justify-center text-[10px] text-[#60a5fa] font-semibold">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-gray-200 text-[11px]">
+                            {step.name}{' '}
+                            <span className="text-gray-500">({step.status.toUpperCase()})</span>
+                          </p>
+                          <p className="text-[10px] text-gray-400">{step.details}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {report.selectionReason ? (
+                    <p className="text-[10px] text-gray-400">Why this protocol: {report.selectionReason}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {phase === 'execute' &&
                 executeLogs.map((line, i) => (
                   <div key={`ex-${i}`} className="flex items-center gap-2">

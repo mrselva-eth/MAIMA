@@ -78,6 +78,26 @@ export default function AppPage() {
       }\n\nTop bridges: ${m.report.topBridges
         .map((b) => `${b.name} (${b.score})`)
         .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
+    if (m.report?.workflow?.length) {
+      text += `\n\nWorkflow report:`;
+      text += m.report.workflow
+        .map((step, i) => `\n${i + 1}. ${step.name} (${step.status.toUpperCase()}) - ${step.details}`)
+        .join('');
+      if (m.report.selectionReason) {
+        text += `\nWhy this protocol: ${m.report.selectionReason}`;
+      }
+    }
+    if (m.report?.ranking?.length) {
+      text += `\n\nProtocol ranking:`;
+      text += m.report.ranking
+        .slice(0, 5)
+        .map((r) => {
+          const fee =
+            r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A';
+          return `\n${r.rank}. ${r.protocol} - ${fee}${r.reason ? ` (${r.reason})` : ''}`;
+        })
+        .join('');
+    }
     if (m.result)
       text += `\n\nProtocol: ${m.result.protocol}\nPair: ${m.result.pair}\nFee: ${m.result.fee}\nInput: ${m.result.inputAmount}\nOutput: ${m.result.outputAmount}\nTx: ${m.result.txHash}\nApproval: ${m.result.approvalHash}`;
     navigator.clipboard.writeText(text).then(() => {
@@ -158,6 +178,20 @@ export default function AppPage() {
       }
       const report = data.report as AnalyzeReport | undefined;
       setTrackingReport(report ?? null);
+      if (report) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === processingId
+              ? {
+                  ...m,
+                  report,
+                  content:
+                    'Report ready. Review why each protocol was ranked and choose the best option.',
+                }
+              : m
+          )
+        );
+      }
     } catch (err) {
       console.error(err);
       setTrackingReport(null);
@@ -270,6 +304,22 @@ export default function AppPage() {
                           )}
                           {m.report && !m.result && (
                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs">
+                              {(() => {
+                                const workflowHint = m.report?.workflow?.[0]?.details?.toLowerCase() ?? '';
+                                const inferredTypeFromWorkflow = workflowHint.includes('bridge')
+                                  ? 'bridge'
+                                  : workflowHint.includes('swap')
+                                    ? 'swap'
+                                    : null;
+                                const reportType =
+                                  m.report?.intentType ??
+                                  inferredTypeFromWorkflow ??
+                                  m.report?.bestRoute?.type ??
+                                  (m.report.topBridges.length > 0 && m.report.topSwaps.length === 0
+                                    ? 'bridge'
+                                    : 'swap');
+                                return (
+                                  <>
                               <p>
                                 <strong>Accuracy:</strong> {m.report.accuracy}
                               </p>
@@ -279,28 +329,112 @@ export default function AppPage() {
                               <p>
                                 <strong>Optimistic:</strong> {m.report.optimisticEstimate}
                               </p>
-                              <div className="grid grid-cols-2 gap-2 mt-2">
-                                <div>
-                                  <p className="font-medium text-foreground">Top bridges</p>
-                                  <ul className="list-disc list-inside text-muted-foreground">
-                                    {m.report.topBridges.slice(0, 5).map((b, i) => (
-                                      <li key={i}>
-                                        {b.name} ({b.score})
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-foreground">Top swaps</p>
-                                  <ul className="list-disc list-inside text-muted-foreground">
-                                    {m.report.topSwaps.slice(0, 5).map((s, i) => (
-                                      <li key={i}>
-                                        {s.name} ({s.score})
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
+                              <div className="grid grid-cols-1 gap-2 mt-2">
+                                {reportType === 'bridge' ? (
+                                  <div>
+                                    <p className="font-medium text-foreground">Top bridges</p>
+                                    {m.report.topBridges.length ? (
+                                      <ul className="list-disc list-inside text-muted-foreground">
+                                        {m.report.topBridges.slice(0, 5).map((b, i) => (
+                                          <li key={i}>
+                                            {b.name} ({b.score})
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-muted-foreground">No bridge routes found.</p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <p className="font-medium text-foreground">Top swaps</p>
+                                    {m.report.topSwaps.length ? (
+                                      <ul className="list-disc list-inside text-muted-foreground">
+                                        {m.report.topSwaps.slice(0, 5).map((s, i) => (
+                                          <li key={i}>
+                                            {s.name} ({s.score})
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-muted-foreground">No swap routes found.</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
+                              {m.report.workflow?.length ? (
+                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                  <p className="font-medium text-foreground">Workflow report</p>
+                                  <div className="space-y-1 text-muted-foreground">
+                                    {m.report.workflow.map((step, i) => (
+                                      <p key={i}>
+                                        {i + 1}. {step.name} ({step.status.toUpperCase()}) -- {step.details}
+                                      </p>
+                                    ))}
+                                  </div>
+                                  {m.report.selectionReason ? (
+                                    <p className="text-muted-foreground">
+                                      Why this protocol: {m.report.selectionReason}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                              {m.report.ranking?.length ? (
+                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                  <p className="font-medium text-foreground">Protocol ranking</p>
+                                  <div className="space-y-2 text-muted-foreground">
+                                    {(() => {
+                                      const fees = m.report.ranking
+                                        .slice(0, 5)
+                                        .map((r) => r.feeUSD ?? Number.POSITIVE_INFINITY);
+                                      const maxFee = Math.max(...fees);
+                                      const minFee = Math.min(...fees);
+                                      const range = Math.max(0.0001, maxFee - minFee);
+                                      return m.report.ranking.slice(0, 5).map((r) => {
+                                        const fee = r.feeUSD ?? maxFee;
+                                        const widthPct = Number.isFinite(fee)
+                                          ? 10 + ((fee - minFee) / range) * 90
+                                          : 10;
+                                        return (
+                                          <div
+                                            key={r.protocol}
+                                            className={`rounded-md border px-2 py-1.5 ${
+                                              r.isSelected ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-gray-200'
+                                            }`}
+                                          >
+                                            <div className="flex items-center justify-between gap-2">
+                                              <span className="text-foreground">
+                                                {r.rank}. {r.protocol}
+                                              </span>
+                                              <span className="text-[11px]">
+                                                {r.feeUSD !== null && r.feeUSD !== undefined
+                                                  ? `$${r.feeUSD.toFixed(4)}`
+                                                  : 'N/A'}
+                                              </span>
+                                            </div>
+                                            <div className="mt-1 h-1.5 w-full rounded bg-gray-200 overflow-hidden">
+                                              <div
+                                                className={`h-full rounded ${
+                                                  r.isSelected ? 'bg-emerald-400' : 'bg-blue-500'
+                                                }`}
+                                                style={{ width: `${Math.min(100, Math.max(10, widthPct))}%` }}
+                                              />
+                                            </div>
+                                            {r.reason ? (
+                                              <p className="mt-1 text-[11px] text-muted-foreground">
+                                                {r.reason}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+                                </div>
+                              ) : null}
+                                  </>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>
