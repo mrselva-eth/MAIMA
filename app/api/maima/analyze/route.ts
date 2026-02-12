@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { maimaRequests } from '@/lib/maima-requests';
+import { triggerCreWorkflows } from '@/lib/cre-trigger';
 
 function getRouteType(route: any): 'swap' | 'bridge' {
   const steps = Array.isArray(route?.steps) ? route.steps : [];
@@ -30,6 +32,18 @@ function parseGasFee(value?: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+type RouteSummary = {
+  id?: string;
+  type: 'swap' | 'bridge';
+  mainTool: string;
+  gasCostUSD?: string;
+  fromAmount?: string;
+  toAmount?: string;
+  fromToken?: unknown;
+  toToken?: unknown;
+  steps?: unknown[];
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -104,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     // Step 2: call LI.FI backend
     const origin = new URL(req.url).origin;
-    const lifiRes = await fetch(`${origin}/api/maima/tokens/quote`, {
+    const lifiRes = await fetch(`${origin}/api/maima/routing?action=quote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -135,7 +149,7 @@ export async function POST(req: NextRequest) {
     const allowedSwapSet = new Set(ALLOWED_SWAP_PROTOCOLS.map(normalizeProtocolName));
     const enforceSwapWhitelist =
       typeof payload?.fromChainId === 'number' && payload.fromChainId === SEPOLIA_CHAIN_ID;
-    const filteredRoutes = routeSummaries.filter((route) => {
+    const filteredRoutes = routeSummaries.filter((route: RouteSummary) => {
       if (route.type !== 'swap') return true;
       if (!enforceSwapWhitelist) return true;
       return allowedSwapSet.has(normalizeProtocolName(route.mainTool));
@@ -149,35 +163,40 @@ export async function POST(req: NextRequest) {
     }
 
     const sortedRoutes = filteredRoutes
-      .map((route, index) => ({
+      .map((route: RouteSummary, index: number) => ({
         route,
         index,
         fee: parseGasFee(route.gasCostUSD),
       }))
-      .sort((a, b) => {
-        const feeA = a.fee ?? Number.POSITIVE_INFINITY;
-        const feeB = b.fee ?? Number.POSITIVE_INFINITY;
-        if (feeA !== feeB) return feeA - feeB;
-        return a.index - b.index;
-      })
-      .map((entry) => entry.route);
+      .sort(
+        (
+          a: { route: RouteSummary; index: number; fee: number | null },
+          b: { route: RouteSummary; index: number; fee: number | null }
+        ) => {
+          const feeA = a.fee ?? Number.POSITIVE_INFINITY;
+          const feeB = b.fee ?? Number.POSITIVE_INFINITY;
+          if (feeA !== feeB) return feeA - feeB;
+          return a.index - b.index;
+        }
+      )
+      .map((entry: { route: RouteSummary; index: number; fee: number | null }) => entry.route);
 
     const bestRoute = sortedRoutes[0];
 
     const topSwaps = Array.from(
-      new Set(sortedRoutes.filter((r) => r.type === 'swap').map((r) => r.mainTool))
+      new Set(sortedRoutes.filter((r: RouteSummary) => r.type === 'swap').map((r: RouteSummary) => r.mainTool))
     )
       .slice(0, 5)
       .map((name, i) => ({ name, score: scoreForIndex(i) }));
 
     const topBridges = Array.from(
-      new Set(sortedRoutes.filter((r) => r.type === 'bridge').map((r) => r.mainTool))
+      new Set(sortedRoutes.filter((r: RouteSummary) => r.type === 'bridge').map((r: RouteSummary) => r.mainTool))
     )
       .slice(0, 5)
       .map((name, i) => ({ name, score: scoreForIndex(i) }));
 
     const inferredTypeForReport = isBridgeRequest ? 'bridge' : 'swap';
-    const fallbackTop = Array.from(new Set(sortedRoutes.map((r) => r.mainTool)))
+    const fallbackTop = Array.from(new Set(sortedRoutes.map((r: RouteSummary) => r.mainTool)))
       .slice(0, 5)
       .map((name, i) => ({ name, score: scoreForIndex(i) }));
 
@@ -222,7 +241,7 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    const ranking = sortedRoutes.slice(0, 10).map((route, i) => {
+    const ranking = sortedRoutes.slice(0, 10).map((route: RouteSummary, i: number) => {
       const feeUSD = parseGasFee(route.gasCostUSD);
       const isSelected = bestRoute?.id === route.id && bestRoute?.mainTool === route.mainTool;
       const reason = isSelected
@@ -261,7 +280,22 @@ export async function POST(req: NextRequest) {
       ranking,
       selectionReason,
       intentType: inferredTypeForReport,
+      ...(process.env.CRE_SIMULATION_MODE === 'on' ? { simulationMode: true } : {}),
     };
+
+    // When CRE simulation mode is on: register request and trigger CRE workflows (cre-maima + cre-swap or cre-bridge)
+    const creSimulationMode = process.env.CRE_SIMULATION_MODE === 'on';
+    if (creSimulationMode) {
+      const requestId = `maima_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      maimaRequests.set(requestId, {
+        id: requestId,
+        prompt: body?.prompt ?? '',
+        type: inferredTypeForReport === 'bridge' ? 'bridge' : 'swap',
+        createdAt: new Date().toISOString(),
+        report,
+      });
+      triggerCreWorkflows(inferredTypeForReport);
+    }
 
     return NextResponse.json({
       success: true,

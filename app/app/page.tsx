@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import Navbar from '@/components/sections/navbar';
-import { RequireWallet } from '@/components/app/RequireWallet';
+import { RequireWallet } from '@/context/RequireWallet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { BackgroundCircles } from '@/components/app/BackgroundCircles';
-import { ProcessTrackingPanel } from '@/components/app/ProcessTrackingPanel';
+import { BackgroundCircles } from '@/components/design/BackgroundCircles';
+import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
 import { Copy, Check } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima-types';
@@ -66,9 +66,27 @@ export default function AppPage() {
     useState<AnalyzeReport | null>(null);
   const [processingMessageId, setProcessingMessageId] =
     useState<string | null>(null);
+  const [executionPendingMessageId, setExecutionPendingMessageId] =
+    useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chatScrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatFollowTailRef = useRef(true);
   const { address } = useAccount();
+
+  const isSimulationMode =
+    typeof process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE !== 'undefined' &&
+    process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE === 'on';
+
+  const processingMessage = processingMessageId
+    ? messages.find((m) => m.id === processingMessageId)
+    : null;
+  const reportNotYetShown =
+    isSimulationMode &&
+    trackingOpen &&
+    processingMessageId &&
+    processingMessage &&
+    !processingMessage.report;
 
   const copyMessage = (m: Message) => {
     let text = m.content;
@@ -107,7 +125,14 @@ export default function AppPage() {
   };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = chatScrollContainerRef.current;
+    if (!el || !chatFollowTailRef.current) return;
+    requestAnimationFrame(() => {
+      el.scrollTo({
+        top: el.scrollHeight - el.clientHeight,
+        behavior: 'smooth',
+      });
+    });
   }, [messages]);
 
   const send = async () => {
@@ -178,7 +203,7 @@ export default function AppPage() {
       }
       const report = data.report as AnalyzeReport | undefined;
       setTrackingReport(report ?? null);
-      if (report) {
+      if (report && !isSimulationMode) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === processingId
@@ -207,13 +232,41 @@ export default function AppPage() {
     }
   };
 
+  const handleStepComplete = () => {
+    if (!isSimulationMode || !processingMessageId || !trackingReport) return;
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === processingMessageId
+          ? {
+              ...m,
+              report: trackingReport,
+              content:
+                'Report ready. Review why each protocol was ranked and choose the best option.',
+            }
+          : m
+      )
+    );
+  };
+
+  const handleExecuteStart = () => {
+    if (processingMessageId) setExecutionPendingMessageId(processingMessageId);
+  };
+
   const handleTrackingComplete = (result: FinalResult | null) => {
     if (!result || !processingMessageId) return;
-    const content = `Done. ${result.protocol} - Pair: ${result.pair}, Fee: ${result.fee}. Input: ${result.inputAmount} -> Output: ${result.outputAmount}. Tx: ${result.txHash.slice(
-      0,
-      10
-    )}... Approval: ${result.approvalHash.slice(0, 10)}...`;
-    setMessages((prev) => prev.map((m) => (m.id === processingMessageId ? { ...m, content, result } : m)));
+    setExecutionPendingMessageId(null);
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== processingMessageId) return m;
+        const doneContent = `Done. ${result.protocol} - Pair: ${result.pair}, Fee: ${result.fee}. Input: ${result.inputAmount} -> Output: ${result.outputAmount}. Tx: ${result.txHash.slice(
+          0,
+          10
+        )}... Approval: ${result.approvalHash.slice(0, 10)}...`;
+        return m.report
+          ? { ...m, result } // Keep existing content; final output shows in report bottom
+          : { ...m, content: doneContent, result };
+      })
+    );
     setProcessingMessageId(null);
   };
 
@@ -222,6 +275,7 @@ export default function AppPage() {
     setTrackingPrompt('');
     setTrackingReport(null);
     setProcessingMessageId(null);
+    setExecutionPendingMessageId(null);
   };
 
   return (
@@ -235,12 +289,21 @@ export default function AppPage() {
             }`}
           >
             <div
-              className={`h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${
+              className={`relative h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${
                 trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
               }`}
             >
-              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain relative">
-                <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+              <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+              <div
+                ref={chatScrollContainerRef}
+                onScroll={() => {
+                  const el = chatScrollContainerRef.current;
+                  if (!el) return;
+                  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 50;
+                  chatFollowTailRef.current = nearBottom;
+                }}
+                className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain"
+              >
                 {messages.length === 0 && (
                   <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
                     <Image
@@ -278,31 +341,28 @@ export default function AppPage() {
                               : 'bg-gray-100 text-foreground border border-gray-200'
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-                          {m.result && (
-                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
-                              <p>
-                                <strong>Protocol:</strong> {m.result.protocol}
-                              </p>
-                              <p>
-                                <strong>Pair:</strong> {m.result.pair}
-                              </p>
-                              <p>
-                                <strong>Fee:</strong> {m.result.fee}
-                              </p>
-                              <p>
-                                <strong>Input:</strong> {m.result.inputAmount} {'->'} <strong>Output:</strong>{' '}
-                                {m.result.outputAmount}
-                              </p>
-                              <p className="break-all">
-                                <strong>Tx:</strong> {m.result.txHash}
-                              </p>
-                              <p className="break-all">
-                                <strong>Approval:</strong> {m.result.approvalHash}
+                          {m.role === 'assistant' &&
+                          isSimulationMode &&
+                          m.id === processingMessageId &&
+                          !m.report ? (
+                            <div className="flex flex-col items-center justify-center gap-4 py-6 min-w-[200px]">
+                              <Image
+                                src="/images/logo.png"
+                                alt=""
+                                width={120}
+                                height={120}
+                                className="w-[120px] h-[120px] object-contain select-none animate-pulse"
+                                unoptimized
+                                draggable={false}
+                              />
+                              <p className="text-sm font-medium text-[#1e40af] tracking-wide">
+                                MAIMA is miming
                               </p>
                             </div>
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap">{m.content}</p>
                           )}
-                          {m.report && !m.result && (
+                          {m.report && (
                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs">
                               {(() => {
                                 const workflowHint = m.report?.workflow?.[0]?.details?.toLowerCase() ?? '';
@@ -432,9 +492,68 @@ export default function AppPage() {
                                   </div>
                                 </div>
                               ) : null}
+                              {executionPendingMessageId === m.id && !m.result ? (
+                                <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col items-center gap-2 py-4">
+                                  <Image
+                                    src="/images/logo.png"
+                                    alt=""
+                                    width={48}
+                                    height={48}
+                                    className="animate-pulse opacity-80 object-contain"
+                                    unoptimized
+                                  />
+                                  <p className="text-xs text-muted-foreground">Execution in progress...</p>
+                                </div>
+                              ) : m.result ? (
+                                <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
+                                  <p className="font-medium text-foreground">Final execution</p>
+                                  <p>
+                                    <strong>Protocol:</strong> {m.result.protocol}
+                                  </p>
+                                  <p>
+                                    <strong>Pair:</strong> {m.result.pair}
+                                  </p>
+                                  <p>
+                                    <strong>Fee:</strong> {m.result.fee}
+                                  </p>
+                                  <p>
+                                    <strong>Input:</strong> {m.result.inputAmount} {'->'}{' '}
+                                    <strong>Output:</strong> {m.result.outputAmount}
+                                  </p>
+                                  <p className="break-all">
+                                    <strong>Tx:</strong> {m.result.txHash}
+                                  </p>
+                                  <p className="break-all">
+                                    <strong>Approval:</strong> {m.result.approvalHash}
+                                  </p>
+                                </div>
+                              ) : null}
                                   </>
                                 );
                               })()}
+                            </div>
+                          )}
+                          {!m.report && m.result && (
+                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
+                              <p>
+                                <strong>Protocol:</strong> {m.result.protocol}
+                              </p>
+                              <p>
+                                <strong>Pair:</strong> {m.result.pair}
+                              </p>
+                              <p>
+                                <strong>Fee:</strong> {m.result.fee}
+                              </p>
+                              <p>
+                                <strong>Input:</strong> {m.result.inputAmount} {'->'} <strong>Output:</strong>{' '}
+                                {m.result.outputAmount}
+                              </p>
+                              <p className="break-all">
+                                <strong>Tx:</strong> {m.result.txHash}
+                              </p>
+                              <p className="break-all">
+                                <strong>Approval:</strong> {m.result.approvalHash}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -472,7 +591,7 @@ export default function AppPage() {
                 </div>
               </div>
 
-              <div className="shrink-0 p-4 border-t border-[#1e40af]/10 bg-white">
+              <div className="relative z-10 shrink-0 p-4 border-t border-[#1e40af]/10 bg-white">
                 <div className="flex gap-2">
                   <Textarea
                     placeholder="e.g. Swap 100 USDC to ETH at best rate within 1 hour"
@@ -502,7 +621,8 @@ export default function AppPage() {
                   prompt={trackingPrompt}
                   report={trackingReport}
                   onComplete={handleTrackingComplete}
-                  onStepComplete={() => {}}
+                  onStepComplete={handleStepComplete}
+                  onExecuteStart={handleExecuteStart}
                 />
               </div>
             )}

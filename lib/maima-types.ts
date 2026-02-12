@@ -56,4 +56,6 @@ export type AnalyzeReport = {
   }>;
   selectionReason?: string;
   intentType?: 'swap' | 'bridge';
+  /** When true, CRE simulation mode is on: real execution is disabled; CRE workflows are triggered. */
+  simulationMode?: boolean;
 };

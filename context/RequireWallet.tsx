@@ -13,6 +13,7 @@ interface RequireWalletProps {
 /**
  * Gates app content behind wallet connection. Renders children only when connected.
  * When disconnected, shows a prompt to connect wallet (same as before: no access without connect).
+ * Reusable across app and other routes; import from @/context/RequireWallet.
  */
 export function RequireWallet({ children }: RequireWalletProps) {
   const { isConnected, isReconnecting } = useAccount();
