@@ -132,6 +132,22 @@ TypeScript workflows need **Bun** for the JS→WASM compile step. If you see `Sc
 
 **Updating CRE on Windows:** `cre update` downloads the new binary but cannot replace it automatically. Close any running `cre` processes, then copy the downloaded exe (e.g. from `%TEMP%\cre_update_*\cre_v*_windows_amd64.exe`) over `%LOCALAPPDATA%\Programs\cre\cre.exe`, or run the new exe from the temp folder.
 
+### Process tracking in production (logs not complete)
+
+If the Process Tracking panel shows the full log locally but not in production after you select a protocol:
+
+1. **Deploy the latest code**  
+   Ensure the commit that shows execution logs when reverting to “choose” (e.g. “Wallet not connected” or “Route has no steps”) is deployed. Redeploy and, if your host caches builds, trigger a fresh build or clear cache.
+
+2. **Environment**  
+   In production, set `CRE_SIMULATION_MODE` and `NEXT_PUBLIC_CRE_SIMULATION_MODE` as needed. If both are off, you need a connected wallet and routes with steps to see full execution logs; otherwise you’ll see the revert messages (and with the fix, those still appear in the execution block).
+
+3. **Browser**  
+   Open DevTools → Network and Console, then select a protocol. Check for failed requests to `/api/maima/analyze` or `/api/maima/routing`, and any console errors.
+
+4. **API shape**  
+   Confirm `/api/maima/analyze` and `/api/maima/routing?action=quote` return the same shape as locally (e.g. `report.routes` with `steps`). If the backend uses `req.url` for the internal fetch to routing, ensure the request’s host is the public app URL (no wrong host in serverless).
+
 ## Scripts
 
 | Command | Description |
