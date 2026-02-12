@@ -323,6 +323,9 @@ export function useTrackingFlow({
     setPhase('execute');
     onExecuteStart?.();
 
+    // Set one line immediately so the execution block is visible even if something throws later (e.g. CSP/eval in prod)
+    setExecuteLogs((prev) => [...prev, `[${formatTime()}] Starting execution for selection #${index + 1}...`]);
+
     const selectedRoute = topRoutes[index] ?? null;
     if (!selectedRoute) {
       setExecuteLogs((prev) => [...prev, `[${formatTime()}] No live route available. Try again.`]);

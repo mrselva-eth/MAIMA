@@ -197,7 +197,7 @@ export function ProcessTrackingPanel({
                             isChosen
                               ? 'border-emerald-500/50 bg-emerald-500/10 cursor-default'
                               : phase === 'choose'
-                                ? 'border-white/10 hover:border-[#1e40af]/50 hover:bg-[#1e40af]/10'
+                                ? 'border-white/10 hover:border-[#1e40af]/50 hover:bg-[#1e40af]/10 cursor-pointer'
                                 : 'border-white/10 bg-white/5 opacity-80 cursor-default'
                           }`}
                         >
