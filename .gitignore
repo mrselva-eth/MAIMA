@@ -60,16 +60,6 @@ next-env.d.ts
 # ============================================
 # CRE workflows — do not push build artifacts
 # ============================================
-/cre/cre-maima/node_modules
-/cre/cre-maima/tmp.js
-/cre/cre-maima/tmp.wasm
-/cre/cre-bridge/node_modules
-/cre/cre-bridge/tmp.js
-/cre/cre-bridge/tmp.wasm
-/cre/cre-swap/node_modules
-/cre/cre-swap/tmp.js
-/cre/cre-swap/tmp.wasm
-
 # ============================================
 # Deploy artifacts (optional: remove to commit addresses for frontend)
 # ============================================
