@@ -65,6 +65,8 @@ export default function AppPage() {
   const [trackingPrompt, setTrackingPrompt] = useState('');
   const [trackingReport, setTrackingReport] =
     useState<AnalyzeReport | null>(null);
+  // Bumps on every new Send so the tracking panel remounts (prevents stale state after a completed run)
+  const [trackingRunId, setTrackingRunId] = useState(0);
   const [processingMessageId, setProcessingMessageId] =
     useState<string | null>(null);
   const [executionPendingMessageId, setExecutionPendingMessageId] =
@@ -167,6 +169,8 @@ export default function AppPage() {
     setTrackingPrompt(prompt);
     setTrackingReport(null);
     setTrackingOpen(true);
+    setTrackingRunId((n) => n + 1);
+    setExecutionPendingMessageId(null);
 
     // Prompt → intent mapping
     let intent: '1' | '2' | '3' | '4' = '3';
@@ -680,6 +684,7 @@ export default function AppPage() {
             {trackingOpen && (
               <div className="w-[35%] min-w-0 flex-1 h-full flex flex-col overflow-hidden">
                 <ProcessTrackingPanel
+                  key={trackingRunId}
                   open={trackingOpen}
                   onClose={handleTrackingClose}
                   prompt={trackingPrompt}

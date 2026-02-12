@@ -150,8 +150,19 @@ export function ProcessTrackingPanel({
                         >
                           <span
                             className="w-8 h-8 rounded-lg bg-white/10 shrink-0 flex items-center justify-center overflow-hidden border border-white/10"
-                            title="Protocol icon (add image later)"
-                          />
+                            title="Protocol icon"
+                          >
+                            {getLogoUrl(name) ? (
+                              <Image
+                                src={getLogoUrl(name)!}
+                                alt=""
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-contain"
+                                unoptimized
+                              />
+                            ) : null}
+                          </span>
                           <span className="flex-1 text-gray-200 font-medium truncate">{name}</span>
                           {status === 'pending' && (
                             <span className="text-[10px] text-gray-500 px-2 py-0.5 rounded bg-white/5">Pending</span>
