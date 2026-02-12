@@ -2,7 +2,9 @@
 
 import type { ProcessTrackingPanelProps } from './tracking-types';
 import { useTrackingFlow } from './use-tracking-flow';
-import { TrackingLoader } from '@/components/design/TrackingLoader';
+import { TrackingChartHeader } from '@/components/design/TrackingChartHeader';
+import { useProtocolLogos } from '@/hooks/use-protocol-logos';
+import Image from 'next/image';
 
 export type { TrackingPhase, ProcessTrackingState, ProcessTrackingPanelProps } from './tracking-types';
 
@@ -15,6 +17,7 @@ export function ProcessTrackingPanel({
   onStepComplete,
   onExecuteStart,
 }: ProcessTrackingPanelProps) {
+  const { getLogoUrl } = useProtocolLogos();
   const {
     scrollContainerRef,
     logEndRef,
@@ -70,17 +73,13 @@ export function ProcessTrackingPanel({
 
   return (
     <div className="h-full w-full min-w-0 flex flex-col rounded-xl border border-[#1e40af]/15 bg-gray-900/95 shadow-xl overflow-hidden">
-      <div className="relative shrink-0 px-4 py-3 pr-10 border-b border-white/10 flex items-center justify-between bg-gray-800/80">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-white">Process tracking</p>
-            <div className="ml-2 mt-2">
-              <TrackingLoader />
-            </div>
-          </div>
+      <div className="relative shrink-0 px-4 py-3 pr-10 border-b border-white/10 flex items-center justify-between bg-gray-800/80 rounded-t-xl overflow-hidden">
+        <TrackingChartHeader />
+        <div className="relative z-10 flex flex-col">
+          <p className="text-sm font-semibold text-white">Process tracking</p>
           <p className="text-[10px] text-gray-400 mt-0.5">{inferredType === 'bridge' ? 'Bridge' : 'Swap'} flow</p>
         </div>
-        <span className="absolute right-10 bottom-2 text-[10px] font-semibold text-[#60a5fa] tracking-wide">
+        <span className="absolute right-10 bottom-2 text-[10px] font-semibold text-[#60a5fa] tracking-wide z-10">
           MAIMING ...
         </span>
         <button
@@ -201,7 +200,18 @@ export function ProcessTrackingPanel({
                                 : 'border-white/10 bg-white/5 opacity-80 cursor-default'
                           }`}
                         >
-                          <span className="w-8 h-8 rounded-lg bg-white/10 shrink-0 flex items-center justify-center overflow-hidden border border-white/10" />
+                          <span className="w-8 h-8 rounded-lg bg-white/10 shrink-0 flex items-center justify-center overflow-hidden border border-white/10">
+                            {getLogoUrl(item.name) ? (
+                              <Image
+                                src={getLogoUrl(item.name)!}
+                                alt=""
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-contain"
+                                unoptimized
+                              />
+                            ) : null}
+                          </span>
                           <span>
                             <span className="text-[#60a5fa] font-semibold">{i + 1}.</span> {item.name}{' '}
                             <span className="text-gray-500">({item.score})</span>
