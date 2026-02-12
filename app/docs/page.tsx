@@ -92,15 +92,14 @@ export default function DocsPage() {
                   Documentation
                 </h1>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  MAIMA is a DeFi optimistic solution handler. Describe swap or bridge needs in natural language;
-                  MAIMA AI analyzes and returns a report with accuracy, gas fee, and optimistic estimates.
-                  Use process tracking in the app to see protocols checked and choose the best option.
+                  MAIMA uses LI.FI to analyze swap and bridge requests. Describe what you want in plain language;
+                  you get a report with accuracy, gas estimate, and a ranked list of protocols. Use the process tracking panel to see protocols checked, then choose one and run it in the app.
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground mb-8">
-                  <li>Chat interface for swap/bridge requests</li>
-                  <li>Report: accuracy, gas estimate, optimistic execution</li>
-                  <li>Process tracking: protocols listed, checked, then choose one</li>
-                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: maima (main), bridge, swap — deploy to Chainlink with Early Access</li>
+                  <li>Chat interface: connect wallet, describe swap or bridge in plain language</li>
+                  <li>Report: LI.FI routes, ranked with accuracy, gas, and recommended protocol</li>
+                  <li>Process tracking: input checked, protocols listed and checked, top 4 choose one, then run simulation or sign in wallet</li>
+                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: cre-maima (main), cre-bridge, cre-swap; poll the app queue and can be deployed to Chainlink when ready</li>
                 </ul>
               </section>
 
@@ -145,7 +144,7 @@ pnpm install`}
                   <li>&quot;Bridge 500 USDT from Ethereum to Arbitrum&quot;</li>
                 </ul>
                 <p className="text-muted-foreground">
-                  MAIMA returns a report with accuracy, gas fee estimate, optimistic execution, and top bridges/swaps. Use the tracking panel to see protocols checked and choose one for your request.
+                  MAIMA calls LI.FI, ranks routes, and returns a report with accuracy, gas estimate, and a ranked list of protocols. The tracking panel shows the flow, then you choose one protocol and run it (simulation or sign approval and swap in your wallet).
                 </p>
               </section>
 
@@ -157,13 +156,13 @@ pnpm install`}
                 <p className="text-muted-foreground mb-4">Key endpoints:</p>
                 <ul className="space-y-3 text-muted-foreground mb-4">
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/queue</code> — Active requests (used by CRE workflows)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt; returns report (LI.FI routes ranked, accuracy, gas, recommended protocol)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt, get report (accuracy, gas, optimistic, top bridges/swaps)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=quote</code> (used by analyze), <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code> (used by app for execution)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=quote</code>, <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code>
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/queue</code> — Active requests (polled by CRE workflows)
                   </li>
                 </ul>
               </section>
@@ -175,7 +174,7 @@ pnpm install`}
                 </h2>
                 <p className="text-muted-foreground mb-4">
                   Three workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: <strong className="text-foreground">cre-maima</strong> (main), <strong className="text-foreground">cre-bridge</strong>, <strong className="text-foreground">cre-swap</strong>.
-                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/queue</code>. Deploy to Chainlink when you have Early Access.
+                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/queue</code>. Use them for scheduled runs or deploy to Chainlink when ready.
                 </p>
               </section>
 
@@ -185,8 +184,8 @@ pnpm install`}
                   Security
                 </h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-8">
-                  <li>Deploy workflows to Chainlink when ready for production</li>
-                  <li>Wallet connect optional; no keys in backend</li>
+                  <li>Wallet required for the app; no keys stored in the backend</li>
+                  <li>CRE workflows in <code className="bg-muted px-1 rounded text-sm">cre/</code> can be deployed to Chainlink when ready</li>
                 </ul>
               </section>
             </div>

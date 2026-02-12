@@ -31,7 +31,7 @@ export default function Footer() {
                 </span>
               </Link>
               <p className="text-gray-400 text-sm sm:text-base leading-relaxed max-w-md">
-                DeFi optimistic solution handler. Swap & bridge analysis and report by MAIMA AI.
+                Swap and bridge analysis and report by MAIMA.
               </p>
           </div>
 

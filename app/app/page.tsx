@@ -11,6 +11,7 @@ import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrac
 import Image from 'next/image';
 import { Copy, Check } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima-types';
+import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
 const THEME_COLOR = '#1e40af';
 
@@ -73,6 +74,7 @@ export default function AppPage() {
   const chatScrollContainerRef = useRef<HTMLDivElement>(null);
   const chatFollowTailRef = useRef(true);
   const { address } = useAccount();
+  const { getLogoUrl } = useProtocolLogos();
 
   const isSimulationMode =
     typeof process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE !== 'undefined' &&
@@ -394,10 +396,22 @@ export default function AppPage() {
                                   <div>
                                     <p className="font-medium text-foreground">Top bridges</p>
                                     {m.report.topBridges.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground">
+                                      <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
                                         {m.report.topBridges.slice(0, 5).map((b, i) => (
-                                          <li key={i}>
-                                            {b.name} ({b.score})
+                                          <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                            <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                              {getLogoUrl(b.name) ? (
+                                                <Image
+                                                  src={getLogoUrl(b.name)!}
+                                                  alt=""
+                                                  width={24}
+                                                  height={24}
+                                                  className="w-full h-full object-contain"
+                                                  unoptimized
+                                                />
+                                              ) : null}
+                                            </span>
+                                            <span>{b.name} ({b.score})</span>
                                           </li>
                                         ))}
                                       </ul>
@@ -409,10 +423,22 @@ export default function AppPage() {
                                   <div>
                                     <p className="font-medium text-foreground">Top swaps</p>
                                     {m.report.topSwaps.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground">
+                                      <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
                                         {m.report.topSwaps.slice(0, 5).map((s, i) => (
-                                          <li key={i}>
-                                            {s.name} ({s.score})
+                                          <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                            <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                              {getLogoUrl(s.name) ? (
+                                                <Image
+                                                  src={getLogoUrl(s.name)!}
+                                                  alt=""
+                                                  width={24}
+                                                  height={24}
+                                                  className="w-full h-full object-contain"
+                                                  unoptimized
+                                                />
+                                              ) : null}
+                                            </span>
+                                            <span>{s.name} ({s.score})</span>
                                           </li>
                                         ))}
                                       </ul>
@@ -463,8 +489,20 @@ export default function AppPage() {
                                             }`}
                                           >
                                             <div className="flex items-center justify-between gap-2">
-                                              <span className="text-foreground">
-                                                {r.rank}. {r.protocol}
+                                              <span className="text-foreground flex items-center gap-2 min-h-[28px]">
+                                                <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                  {getLogoUrl(r.protocol) ? (
+                                                    <Image
+                                                      src={getLogoUrl(r.protocol)!}
+                                                      alt=""
+                                                      width={24}
+                                                      height={24}
+                                                      className="w-full h-full object-contain"
+                                                      unoptimized
+                                                    />
+                                                  ) : null}
+                                                </span>
+                                                <span>{r.rank}. {r.protocol}</span>
                                               </span>
                                               <span className="text-[11px]">
                                                 {r.feeUSD !== null && r.feeUSD !== undefined
@@ -507,8 +545,21 @@ export default function AppPage() {
                               ) : m.result ? (
                                 <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
                                   <p className="font-medium text-foreground">Final execution</p>
-                                  <p>
-                                    <strong>Protocol:</strong> {m.result.protocol}
+                                  <p className="flex items-center gap-2">
+                                    <strong>Protocol:</strong>
+                                    <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                      {getLogoUrl(m.result.protocol) ? (
+                                        <Image
+                                          src={getLogoUrl(m.result.protocol)!}
+                                          alt=""
+                                          width={24}
+                                          height={24}
+                                          className="w-full h-full object-contain"
+                                          unoptimized
+                                        />
+                                      ) : null}
+                                    </span>
+                                    <span>{m.result.protocol}</span>
                                   </p>
                                   <p>
                                     <strong>Pair:</strong> {m.result.pair}
@@ -535,8 +586,21 @@ export default function AppPage() {
                           )}
                           {!m.report && m.result && (
                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
-                              <p>
-                                <strong>Protocol:</strong> {m.result.protocol}
+                              <p className="flex items-center gap-2">
+                                <strong>Protocol:</strong>
+                                <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                  {getLogoUrl(m.result.protocol) ? (
+                                    <Image
+                                      src={getLogoUrl(m.result.protocol)!}
+                                      alt=""
+                                      width={24}
+                                      height={24}
+                                      className="w-full h-full object-contain"
+                                      unoptimized
+                                    />
+                                  ) : null}
+                                </span>
+                                <span>{m.result.protocol}</span>
                               </p>
                               <p>
                                 <strong>Pair:</strong> {m.result.pair}

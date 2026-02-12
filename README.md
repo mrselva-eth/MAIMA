@@ -26,7 +26,7 @@ MAIMA analyzes your swap and bridge needs and returns a **report** (accuracy, ga
 ├── context/                 # RequireWallet (reusable wallet gate)
 ├── components/
 │   ├── app/tracking-wind/   # ProcessTrackingPanel, tracking-types, tracking-helpers, use-tracking-flow
-│   ├── design/              # BackgroundCircles, TrackingLoader, background-beams, flickering-grid, etc.
+│   ├── design/              # BackgroundCircles, TrackingChartHeader, background-beams, flickering-grid, etc.
 │   ├── sections/            # navbar, footer, hero, features, cta, maima-image-section
 │   └── ui/                  # Shared UI
 ├── lib/                     # maima-requests, maima-types, utils, wallet-config, cre-trigger
