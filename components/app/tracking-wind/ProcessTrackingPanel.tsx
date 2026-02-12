@@ -213,10 +213,15 @@ export function ProcessTrackingPanel({
                       );
                     })}
                   </div>
+                  {phase === 'choose' && (
+                    <p className="text-[10px] text-gray-500 mt-1.5">
+                      Select one to run execution — logs will appear below.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {phase === 'execute' &&
+              {(phase === 'execute' || phase === 'done' || (phase === 'choose' && executeLogs.length > 0)) &&
                 executeLogs.map((line, i) => (
                   <div key={`ex-${i}`} className="flex items-center gap-2 py-1">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-[#1e40af]/20 border border-[#1e40af]/40 flex items-center justify-center text-[10px] text-[#60a5fa]">
