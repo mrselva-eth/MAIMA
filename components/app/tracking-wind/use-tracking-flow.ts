@@ -331,17 +331,33 @@ export function useTrackingFlow({
       return;
     }
 
-    const protocol = selectedRoute?.mainTool ?? top4[index]?.name ?? `Protocol ${index + 1}`;
-    const pair = formatPair(selectedRoute);
-    const fee = selectedRoute?.gasCostUSD ? `$${selectedRoute.gasCostUSD}` : 'N/A';
-    const inputAmount = selectedRoute
-      ? formatTokenAmount(selectedRoute.fromAmount, selectedRoute.fromToken?.decimals, selectedRoute.fromToken?.symbol)
-      : `${prompt.match(/\d+/)?.[0] ?? '100'} ${inferredType === 'bridge' ? 'USDT' : 'USDC'}`;
-    const outputAmount = selectedRoute
-      ? formatTokenAmount(selectedRoute.toAmount, selectedRoute.toToken?.decimals, selectedRoute.toToken?.symbol)
-      : inferredType === 'bridge'
-        ? inputAmount
-        : (Number(prompt.match(/\d+/)?.[0] ?? '100') * 0.05).toFixed(4) + ' ETH';
+    let protocol: string;
+    let pair: string;
+    let fee: string;
+    let inputAmount: string;
+    let outputAmount: string;
+    try {
+      protocol = selectedRoute?.mainTool ?? top4[index]?.name ?? `Protocol ${index + 1}`;
+      pair = formatPair(selectedRoute);
+      fee = selectedRoute?.gasCostUSD ? `$${selectedRoute.gasCostUSD}` : 'N/A';
+      inputAmount = selectedRoute
+        ? formatTokenAmount(selectedRoute.fromAmount, selectedRoute.fromToken?.decimals, selectedRoute.fromToken?.symbol)
+        : `${prompt.match(/\d+/)?.[0] ?? '100'} ${inferredType === 'bridge' ? 'USDT' : 'USDC'}`;
+      outputAmount = selectedRoute
+        ? formatTokenAmount(selectedRoute.toAmount, selectedRoute.toToken?.decimals, selectedRoute.toToken?.symbol)
+        : inferredType === 'bridge'
+          ? inputAmount
+          : (Number(prompt.match(/\d+/)?.[0] ?? '100') * 0.05).toFixed(4) + ' ETH';
+    } catch (err) {
+      setExecuteLogs((prev) => [
+        ...prev,
+        `[${formatTime()}] User chose protocol #${index + 1}.`,
+        `[${formatTime()}] Execution error: ${err instanceof Error ? err.message : 'Unknown error'}.`,
+      ]);
+      setPhase('choose');
+      setSelectedIndex(null);
+      return;
+    }
 
     setExecuteLogs((prev) => [
       ...prev,
