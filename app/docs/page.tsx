@@ -100,8 +100,7 @@ export default function DocsPage() {
                   <li>Chat interface for swap/bridge requests</li>
                   <li>Report: accuracy, gas estimate, optimistic execution</li>
                   <li>Process tracking: protocols listed, checked, then choose one</li>
-                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: maima (main), bridge, swap</li>
-                  <li>Deploy workflows to Chainlink when you have Early Access</li>
+                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: maima (main), bridge, swap — deploy to Chainlink with Early Access</li>
                 </ul>
               </section>
 
@@ -123,8 +122,7 @@ pnpm install`}
                   <code className="bg-muted px-1.5 py-0.5 rounded text-sm">.env.local</code> and set:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
-                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — WalletConnect Cloud</li>
-                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — for wallet connect (optional)</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — from WalletConnect Cloud (for App)</li>
                 </ul>
                 <p className="text-muted-foreground">
                   Run <code className="bg-muted px-1.5 py-0.5 rounded text-sm">pnpm dev</code> and open{' '}
@@ -159,13 +157,13 @@ pnpm install`}
                 <p className="text-muted-foreground mb-4">Key endpoints:</p>
                 <ul className="space-y-3 text-muted-foreground mb-4">
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/requests</code> — Active requests (for CRE)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/queue</code> — Active requests (used by CRE workflows)
                   </li>
                   <li>
                     <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt, get report (accuracy, gas, optimistic, top bridges/swaps)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/tokens/quote?tokenIn=ETH&tokenOut=USDC&amount=1</code> — Swap quote (optional)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=quote</code>, <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code>
                   </li>
                 </ul>
               </section>
@@ -177,7 +175,7 @@ pnpm install`}
                 </h2>
                 <p className="text-muted-foreground mb-4">
                   Three workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: <strong className="text-foreground">cre-maima</strong> (main), <strong className="text-foreground">cre-bridge</strong>, <strong className="text-foreground">cre-swap</strong>.
-                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/requests</code>. Based on user requests, the workflow gets active and the AI report is generated in the app chat. Deploy to Chainlink when you have Early Access.
+                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/queue</code>. Deploy to Chainlink when you have Early Access.
                 </p>
               </section>
 
