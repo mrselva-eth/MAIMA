@@ -28,6 +28,10 @@ export type ReportRoute = {
   fromToken?: ReportToken;
   toToken?: ReportToken;
   steps?: ReportStep[];
+  executionDuration?: number; // seconds
+  liquidityScore?: string;    // e.g. "High", "Medium", "Low"
+  reliabilityScore?: string;  // e.g. "99.9%"
+  tags?: string[];
 };
 
 export type AnalyzeReport = {
@@ -50,6 +54,9 @@ export type AnalyzeReport = {
   ranking?: Array<{
     protocol: string;
     feeUSD?: number | null;
+    executionDuration?: number;
+    liquidityScore?: string;
+    reliabilityScore?: string;
     rank: number;
     reason?: string;
     isSelected?: boolean;
