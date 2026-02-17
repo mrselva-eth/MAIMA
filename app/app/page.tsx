@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BackgroundCircles } from '@/components/design/BackgroundCircles';
 import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, ShieldCheck } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima-types';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
@@ -339,8 +339,8 @@ export default function AppPage() {
                         )}
                         <div
                           className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${m.role === 'user'
-                              ? 'bg-[#1e40af] text-white'
-                              : 'bg-gray-100 text-foreground border border-gray-200'
+                            ? 'bg-[#1e40af] text-white'
+                            : 'bg-gray-100 text-foreground border border-gray-200'
                             }`}
                         >
                           {m.role === 'assistant' &&
@@ -382,9 +382,24 @@ export default function AppPage() {
                                     : 'swap');
                                 return (
                                   <>
-                                    <p>
+                                    <p className="flex items-center gap-1.5">
                                       <strong>Accuracy:</strong> {m.report.accuracy}
+                                      {m.report.accuracy.includes('Oracle') && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20">
+                                          <ShieldCheck className="w-2.5 h-2.5" />
+                                          Chainlink
+                                        </span>
+                                      )}
                                     </p>
+                                    {m.report.chainlink?.prices && m.report.chainlink.prices.length > 0 && (
+                                      <div className="flex flex-col gap-0.5 mt-1">
+                                        {m.report.chainlink.prices.map((p, idx) => (
+                                          <p key={idx} className="text-[#1e40af]/80 font-medium text-[11px]">
+                                            <strong>{p.symbol} Price:</strong> {p.price} (Oracle)
+                                          </p>
+                                        ))}
+                                      </div>
+                                    )}
                                     <p>
                                       <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
                                     </p>
