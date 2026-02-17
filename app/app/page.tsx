@@ -95,11 +95,10 @@ export default function AppPage() {
   const copyMessage = (m: Message) => {
     let text = m.content;
     if (m.report)
-      text += `\n\nAccuracy: ${m.report.accuracy}\nGas: ${m.report.gasFeeEstimate}\nOptimistic: ${
-        m.report.optimisticEstimate
-      }\n\nTop bridges: ${m.report.topBridges
-        .map((b) => `${b.name} (${b.score})`)
-        .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
+      text += `\n\nAccuracy: ${m.report.accuracy}\nGas: ${m.report.gasFeeEstimate}\nOptimistic: ${m.report.optimisticEstimate
+        }\n\nTop bridges: ${m.report.topBridges
+          .map((b) => `${b.name} (${b.score})`)
+          .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
     if (m.report?.workflow?.length) {
       text += `\n\nWorkflow report:`;
       text += m.report.workflow
@@ -214,11 +213,11 @@ export default function AppPage() {
           prev.map((m) =>
             m.id === processingId
               ? {
-                  ...m,
-                  report,
-                  content:
-                    'Report ready. Review why each protocol was ranked and choose the best option.',
-                }
+                ...m,
+                report,
+                content:
+                  'Report ready. Review why each protocol was ranked and choose the best option.',
+              }
               : m
           )
         );
@@ -244,11 +243,11 @@ export default function AppPage() {
       prev.map((m) =>
         m.id === processingMessageId
           ? {
-              ...m,
-              report: trackingReport,
-              content:
-                'Report ready. Review why each protocol was ranked and choose the best option.',
-            }
+            ...m,
+            report: trackingReport,
+            content:
+              'Report ready. Review why each protocol was ranked and choose the best option.',
+          }
           : m
       )
     );
@@ -290,14 +289,12 @@ export default function AppPage() {
       <RequireWallet>
         <div className="relative flex-1 flex flex-col min-h-0 pt-16">
           <div
-            className={`relative z-10 flex-1 flex min-h-0 gap-3 px-4 py-2 ${
-              trackingOpen ? 'flex-row' : 'flex-col'
-            }`}
+            className={`relative z-10 flex-1 flex min-h-0 gap-3 px-4 py-2 ${trackingOpen ? 'flex-row' : 'flex-col'
+              }`}
           >
             <div
-              className={`relative h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${
-                trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
-              }`}
+              className={`relative h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
+                }`}
             >
               <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
               <div
@@ -341,16 +338,15 @@ export default function AppPage() {
                           </span>
                         )}
                         <div
-                          className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                            m.role === 'user'
+                          className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${m.role === 'user'
                               ? 'bg-[#1e40af] text-white'
                               : 'bg-gray-100 text-foreground border border-gray-200'
-                          }`}
+                            }`}
                         >
                           {m.role === 'assistant' &&
-                          isSimulationMode &&
-                          m.id === processingMessageId &&
-                          !m.report ? (
+                            isSimulationMode &&
+                            m.id === processingMessageId &&
+                            !m.report ? (
                             <div className="flex flex-col items-center justify-center gap-4 py-6 min-w-[200px]">
                               <Image
                                 src="/images/logo.png"
@@ -386,203 +382,207 @@ export default function AppPage() {
                                     : 'swap');
                                 return (
                                   <>
-                              <p>
-                                <strong>Accuracy:</strong> {m.report.accuracy}
-                              </p>
-                              <p>
-                                <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
-                              </p>
-                              <p>
-                                <strong>Optimistic:</strong> {m.report.optimisticEstimate}
-                              </p>
-                              <div className="grid grid-cols-1 gap-2 mt-2">
-                                {reportType === 'bridge' ? (
-                                  <div>
-                                    <p className="font-medium text-foreground">Top bridges</p>
-                                    {m.report.topBridges.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
-                                        {m.report.topBridges.slice(0, 5).map((b, i) => (
-                                          <li key={i} className="flex items-center gap-2 min-h-[28px]">
-                                            <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                                              {getLogoUrl(b.name) ? (
-                                                <Image
-                                                  src={getLogoUrl(b.name)!}
-                                                  alt=""
-                                                  width={24}
-                                                  height={24}
-                                                  className="w-full h-full object-contain"
-                                                  unoptimized
-                                                />
-                                              ) : null}
-                                            </span>
-                                            <span>{b.name} ({b.score})</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-muted-foreground">No bridge routes found.</p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <p className="font-medium text-foreground">Top swaps</p>
-                                    {m.report.topSwaps.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
-                                        {m.report.topSwaps.slice(0, 5).map((s, i) => (
-                                          <li key={i} className="flex items-center gap-2 min-h-[28px]">
-                                            <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                                              {getLogoUrl(s.name) ? (
-                                                <Image
-                                                  src={getLogoUrl(s.name)!}
-                                                  alt=""
-                                                  width={24}
-                                                  height={24}
-                                                  className="w-full h-full object-contain"
-                                                  unoptimized
-                                                />
-                                              ) : null}
-                                            </span>
-                                            <span>{s.name} ({s.score})</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-muted-foreground">No swap routes found.</p>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              {m.report.workflow?.length ? (
-                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
-                                  <p className="font-medium text-foreground">Workflow report</p>
-                                  <div className="space-y-1 text-muted-foreground">
-                                    {m.report.workflow.map((step, i) => (
-                                      <p key={i}>
-                                        {i + 1}. {step.name} ({step.status.toUpperCase()}) -- {step.details}
-                                      </p>
-                                    ))}
-                                  </div>
-                                  {m.report.selectionReason ? (
-                                    <p className="text-muted-foreground">
-                                      Why this protocol: {m.report.selectionReason}
+                                    <p>
+                                      <strong>Accuracy:</strong> {m.report.accuracy}
                                     </p>
-                                  ) : null}
-                                </div>
-                              ) : null}
-                              {m.report.ranking?.length ? (
-                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
-                                  <p className="font-medium text-foreground">Protocol ranking</p>
-                                  <div className="space-y-2 text-muted-foreground">
-                                    {(() => {
-                                      const fees = m.report.ranking
-                                        .slice(0, 5)
-                                        .map((r) => r.feeUSD ?? Number.POSITIVE_INFINITY);
-                                      const maxFee = Math.max(...fees);
-                                      const minFee = Math.min(...fees);
-                                      const range = Math.max(0.0001, maxFee - minFee);
-                                      return m.report.ranking.slice(0, 5).map((r) => {
-                                        const fee = r.feeUSD ?? maxFee;
-                                        const widthPct = Number.isFinite(fee)
-                                          ? 10 + ((fee - minFee) / range) * 90
-                                          : 10;
-                                        return (
-                                          <div
-                                            key={r.protocol}
-                                            className={`rounded-md border px-2 py-1.5 ${
-                                              r.isSelected ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-gray-200'
-                                            }`}
-                                          >
-                                            <div className="flex items-center justify-between gap-2">
-                                              <span className="text-foreground flex items-center gap-2 min-h-[28px]">
-                                                <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                                                  {getLogoUrl(r.protocol) ? (
-                                                    <Image
-                                                      src={getLogoUrl(r.protocol)!}
-                                                      alt=""
-                                                      width={24}
-                                                      height={24}
-                                                      className="w-full h-full object-contain"
-                                                      unoptimized
+                                    <p>
+                                      <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
+                                    </p>
+                                    <p>
+                                      <strong>Optimistic:</strong> {m.report.optimisticEstimate}
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-2 mt-2">
+                                      {reportType === 'bridge' ? (
+                                        <div>
+                                          <p className="font-medium text-foreground">Top bridges</p>
+                                          {m.report.topBridges.length ? (
+                                            <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
+                                              {m.report.topBridges.slice(0, 5).map((b, i) => (
+                                                <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                                  <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                    {getLogoUrl(b.name) ? (
+                                                      <Image
+                                                        src={getLogoUrl(b.name)!}
+                                                        alt=""
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-full h-full object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <span>{b.name} ({b.score})</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : (
+                                            <p className="text-muted-foreground">No bridge routes found.</p>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <p className="font-medium text-foreground">Top swaps</p>
+                                          {m.report.topSwaps.length ? (
+                                            <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
+                                              {m.report.topSwaps.slice(0, 5).map((s, i) => (
+                                                <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                                  <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                    {getLogoUrl(s.name) ? (
+                                                      <Image
+                                                        src={getLogoUrl(s.name)!}
+                                                        alt=""
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-full h-full object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <span>{s.name} ({s.score})</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : (
+                                            <p className="text-muted-foreground">No swap routes found.</p>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {m.report.workflow?.length ? (
+                                      <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                        <p className="font-medium text-foreground">Workflow report</p>
+                                        <div className="space-y-1 text-muted-foreground">
+                                          {m.report.workflow.map((step, i) => (
+                                            <p key={i}>
+                                              {i + 1}. {step.name} ({step.status.toUpperCase()}) -- {step.details}
+                                            </p>
+                                          ))}
+                                        </div>
+                                        {m.report.selectionReason ? (
+                                          <p className="text-muted-foreground">
+                                            Why this protocol: {m.report.selectionReason}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                    {m.report.ranking?.length ? (
+                                      <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                        <p className="font-medium text-foreground">Protocol ranking</p>
+                                        <div className="space-y-2 text-muted-foreground">
+                                          {(() => {
+                                            const fees = m.report.ranking
+                                              .slice(0, 5)
+                                              .map((r) => r.feeUSD ?? Number.POSITIVE_INFINITY);
+                                            const maxFee = Math.max(...fees);
+                                            const minFee = Math.min(...fees);
+                                            const range = Math.max(0.0001, maxFee - minFee);
+                                            return m.report.ranking.slice(0, 5).map((r) => {
+                                              const fee = r.feeUSD ?? maxFee;
+                                              const widthPct = Number.isFinite(fee)
+                                                ? 10 + ((fee - minFee) / range) * 90
+                                                : 10;
+                                              return (
+                                                <div
+                                                  key={r.protocol}
+                                                  className={`rounded-md border px-2 py-1.5 ${r.isSelected ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-gray-200'
+                                                    }`}
+                                                >
+                                                  <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-foreground flex items-center gap-2 min-h-[28px]">
+                                                      <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                        {getLogoUrl(r.protocol) ? (
+                                                          <Image
+                                                            src={getLogoUrl(r.protocol)!}
+                                                            alt=""
+                                                            width={24}
+                                                            height={24}
+                                                            className="w-full h-full object-contain"
+                                                            unoptimized
+                                                          />
+                                                        ) : null}
+                                                      </span>
+                                                      <span>{r.rank}. {r.protocol}</span>
+                                                    </span>
+                                                    <div className="text-right">
+                                                      <div className="text-[11px] font-medium">
+                                                        {r.feeUSD !== null && r.feeUSD !== undefined
+                                                          ? `$${r.feeUSD.toFixed(2)}`
+                                                          : 'N/A'}
+                                                      </div>
+                                                      <div className="text-[9px] text-muted-foreground opacity-80">
+                                                        {r.executionDuration ? `${Math.round(r.executionDuration)}s` : ''}
+                                                        {r.reliabilityScore ? ` • ${r.reliabilityScore}` : ''}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <div className="mt-1 h-1.5 w-full rounded bg-gray-200 overflow-hidden">
+                                                    <div
+                                                      className={`h-full rounded ${r.isSelected ? 'bg-emerald-400' : 'bg-blue-500'
+                                                        }`}
+                                                      style={{ width: `${Math.min(100, Math.max(10, widthPct))}%` }}
                                                     />
+                                                  </div>
+                                                  {r.reason ? (
+                                                    <p className="mt-1 text-[11px] text-muted-foreground">
+                                                      {r.reason}
+                                                    </p>
                                                   ) : null}
-                                                </span>
-                                                <span>{r.rank}. {r.protocol}</span>
-                                              </span>
-                                              <span className="text-[11px]">
-                                                {r.feeUSD !== null && r.feeUSD !== undefined
-                                                  ? `$${r.feeUSD.toFixed(4)}`
-                                                  : 'N/A'}
-                                              </span>
-                                            </div>
-                                            <div className="mt-1 h-1.5 w-full rounded bg-gray-200 overflow-hidden">
-                                              <div
-                                                className={`h-full rounded ${
-                                                  r.isSelected ? 'bg-emerald-400' : 'bg-blue-500'
-                                                }`}
-                                                style={{ width: `${Math.min(100, Math.max(10, widthPct))}%` }}
-                                              />
-                                            </div>
-                                            {r.reason ? (
-                                              <p className="mt-1 text-[11px] text-muted-foreground">
-                                                {r.reason}
-                                              </p>
-                                            ) : null}
-                                          </div>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                </div>
-                              ) : null}
-                              {executionPendingMessageId === m.id && !m.result ? (
-                                <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col items-center gap-2 py-4">
-                                  <Image
-                                    src="/images/logo.png"
-                                    alt=""
-                                    width={48}
-                                    height={48}
-                                    className="animate-pulse opacity-80 object-contain"
-                                    unoptimized
-                                  />
-                                  <p className="text-xs text-muted-foreground">Execution in progress...</p>
-                                </div>
-                              ) : m.result ? (
-                                <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
-                                  <p className="font-medium text-foreground">Final execution</p>
-                                  <p className="flex items-center gap-2">
-                                    <strong>Protocol:</strong>
-                                    <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                                      {getLogoUrl(m.result.protocol) ? (
+                                                </div>
+                                              );
+                                            });
+                                          })()}
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {executionPendingMessageId === m.id && !m.result ? (
+                                      <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col items-center gap-2 py-4">
                                         <Image
-                                          src={getLogoUrl(m.result.protocol)!}
+                                          src="/images/logo.png"
                                           alt=""
-                                          width={24}
-                                          height={24}
-                                          className="w-full h-full object-contain"
+                                          width={48}
+                                          height={48}
+                                          className="animate-pulse opacity-80 object-contain"
                                           unoptimized
                                         />
-                                      ) : null}
-                                    </span>
-                                    <span>{m.result.protocol}</span>
-                                  </p>
-                                  <p>
-                                    <strong>Pair:</strong> {m.result.pair}
-                                  </p>
-                                  <p>
-                                    <strong>Fee:</strong> {m.result.fee}
-                                  </p>
-                                  <p>
-                                    <strong>Input:</strong> {m.result.inputAmount} {'->'}{' '}
-                                    <strong>Output:</strong> {m.result.outputAmount}
-                                  </p>
-                                  <p className="break-all">
-                                    <strong>Tx:</strong> {m.result.txHash}
-                                  </p>
-                                  <p className="break-all">
-                                    <strong>Approval:</strong> {m.result.approvalHash}
-                                  </p>
-                                </div>
-                              ) : null}
+                                        <p className="text-xs text-muted-foreground">Execution in progress...</p>
+                                      </div>
+                                    ) : m.result ? (
+                                      <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
+                                        <p className="font-medium text-foreground">Final execution</p>
+                                        <p className="flex items-center gap-2">
+                                          <strong>Protocol:</strong>
+                                          <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            {getLogoUrl(m.result.protocol) ? (
+                                              <Image
+                                                src={getLogoUrl(m.result.protocol)!}
+                                                alt=""
+                                                width={24}
+                                                height={24}
+                                                className="w-full h-full object-contain"
+                                                unoptimized
+                                              />
+                                            ) : null}
+                                          </span>
+                                          <span>{m.result.protocol}</span>
+                                        </p>
+                                        <p>
+                                          <strong>Pair:</strong> {m.result.pair}
+                                        </p>
+                                        <p>
+                                          <strong>Fee:</strong> {m.result.fee}
+                                        </p>
+                                        <p>
+                                          <strong>Input:</strong> {m.result.inputAmount} {'->'}{' '}
+                                          <strong>Output:</strong> {m.result.outputAmount}
+                                        </p>
+                                        <p className="break-all">
+                                          <strong>Tx:</strong> {m.result.txHash}
+                                        </p>
+                                        <p className="break-all">
+                                          <strong>Approval:</strong> {m.result.approvalHash}
+                                        </p>
+                                      </div>
+                                    ) : null}
                                   </>
                                 );
                               })()}
@@ -627,9 +627,8 @@ export default function AppPage() {
                         </div>
                       </div>
                       <div
-                        className={`mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${
-                          m.role === 'assistant' ? 'pl-9' : 'justify-end'
-                        }`}
+                        className={`mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${m.role === 'assistant' ? 'pl-9' : 'justify-end'
+                          }`}
                       >
                         <span>{formatMessageTime(m.at)}</span>
                         <button
