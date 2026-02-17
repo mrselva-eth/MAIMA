@@ -67,7 +67,7 @@ export function useTrackingFlow({
   const [isStreamingExecuteLog, setIsStreamingExecuteLog] = useState(false);
 
   const inferredType: 'swap' | 'bridge' =
-    report?.bestRoute?.type ?? (/bridge|cross-chain|transfer.*chain/i.test(prompt) ? 'bridge' : 'swap');
+    report?.intentType ?? report?.bestRoute?.type ?? (/bridge|cross-chain|transfer.*chain/i.test(prompt) ? 'bridge' : 'swap');
   const routeOptions = useMemo(() => (report?.routes?.length ? report.routes : []), [report]);
   const enforceSwapWhitelist = chainId === SEPOLIA_CHAIN_ID;
 
@@ -86,20 +86,7 @@ export function useTrackingFlow({
   }, [routeOptions, inferredType, enforceSwapWhitelist, swapWhitelistSet]);
 
   const sortedRoutes = useMemo(() => {
-    if (!filteredRoutes.length) return [];
-    return filteredRoutes
-      .map((route, index) => ({
-        route,
-        index,
-        fee: parseGasFee(route.gasCostUSD),
-      }))
-      .sort((a, b) => {
-        const feeA = a.fee ?? Number.POSITIVE_INFINITY;
-        const feeB = b.fee ?? Number.POSITIVE_INFINITY;
-        if (feeA !== feeB) return feeA - feeB;
-        return a.index - b.index;
-      })
-      .map((entry) => entry.route);
+    return filteredRoutes;
   }, [filteredRoutes]);
 
   const fallbackTop = (inferredType === 'bridge' ? DEFAULT_BRIDGES : DEFAULT_SWAPS)
@@ -109,15 +96,30 @@ export function useTrackingFlow({
         : true
     )
     .slice(0, 4)
-    .map((name, i) => ({ name, score: scoreForIndex(i) }));
+    .map((name, i) => ({
+      name,
+      metrics: {
+        fee: '$0.00',
+        duration: '30s',
+        reliability: '99.9%',
+        liquidity: 'High'
+      }
+    }));
 
   const topRoutes = sortedRoutes.length ? sortedRoutes.slice(0, 4) : [];
 
   const top4 = topRoutes.length
-    ? topRoutes.map((route, i) => ({
+    ? topRoutes.map((route, i) => {
+      return {
         name: route.mainTool,
-        score: route.gasCostUSD ? `$${route.gasCostUSD}` : scoreForIndex(i),
-      }))
+        metrics: {
+          fee: route.gasCostUSD ? `$${route.gasCostUSD}` : 'N/A',
+          duration: route.executionDuration ? Math.round(route.executionDuration) + 's' : '?',
+          reliability: route.reliabilityScore || 'N/A',
+          liquidity: route.liquidityScore || 'N/A',
+        }
+      };
+    })
     : fallbackTop;
 
   const protocolNames = useMemo(() => {
@@ -252,6 +254,11 @@ export function useTrackingFlow({
       return () => clearTimeout(t);
     }
     if (stepIndex === 1) {
+      if (!report) {
+        // Wait for report to populate routes.
+        return;
+      }
+
       const t = setTimeout(() => {
         setLogLines((prev) => [...prev, `[${formatTime()}] Listing ${inferredType} protocols...`]);
         setStepIndex(2);
@@ -266,7 +273,7 @@ export function useTrackingFlow({
       setProtocolStatuses(() => Object.fromEntries(list.map((_, i) => [i, 'pending'])));
       return;
     }
-  }, [open, phase, stepIndex, inferredType, protocolNames, protocolsToCheck]);
+  }, [open, phase, stepIndex, inferredType, protocolNames, protocolsToCheck, report]);
 
   // Phase 2: Check each protocol
   useEffect(() => {
@@ -287,11 +294,16 @@ export function useTrackingFlow({
     setLogLines((prev) => [...prev, `[${formatTime()}] Checking ${name}...`]);
 
     const t1 = setTimeout(() => {
-      const fee = protocolFeeMap.get(name) ?? 'N/A';
+      const route = filteredRoutes.find(r => r.mainTool === name);
+      const fee = route?.gasCostUSD ? `$${route.gasCostUSD}` : 'N/A';
+      const duration = route?.executionDuration ? `${Math.round(route.executionDuration)}s` : 'N/A';
+      const reliability = route?.reliabilityScore ?? 'N/A';
+      const liquidity = route?.liquidityScore ?? 'N/A';
+
       setLogLines((prev) => [
         ...prev,
         `[${formatTime()}]   Pair exists. Route available.`,
-        `[${formatTime()}]   Fee: ${fee}`,
+        `[${formatTime()}]   Fee: ${fee} | Time: ${duration} | Success: ${reliability} | Liq: ${liquidity}`,
       ]);
     }, PROTOCOL_CHECK_DELAY_MS * 0.5);
 
