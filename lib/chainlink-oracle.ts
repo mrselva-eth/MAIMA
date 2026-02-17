@@ -1,5 +1,5 @@
 import { createPublicClient, http, parseAbi } from 'viem';
-import { base, sepolia } from 'viem/chains';
+import { base } from 'viem/chains';
 
 const AGGREGATOR_V3_ABI = parseAbi([
     'function decimals() external view returns (uint8)',
@@ -18,18 +18,10 @@ const PRICE_FEEDS: Record<number, Record<string, `0x${string}`>> = {
         'WBTC/USD': '0x2a060f659631f604442c9da1682370213187ee19',
         'DAI/USD': '0x591e79239a7d679378eC8c847e5038150364C78F',
     },
-    [sepolia.id]: {
-        'ETH/USD': '0x694AA1769357215DE4FAC081bf1f309aDC325306',
-        'USDC/USD': '0x7e86095690bE0d611b43936F023363321bc6BC6B',
-        'LINK/USD': '0xc59E3574594C1593F6c7606196EE4F0A92215712',
-        'WBTC/USD': '0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43',
-        'DAI/USD': '0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9',
-    },
 };
 
 const RPC_URLS: Record<number, string> = {
     [base.id]: 'https://mainnet.base.org',
-    [sepolia.id]: 'https://rpc.ankr.com/eth_sepolia',
 };
 
 /**
@@ -44,7 +36,7 @@ export async function getChainlinkPrice(symbol: string, chainId: number = base.i
     }
 
     const client = createPublicClient({
-        chain: chainId === base.id ? base : sepolia,
+        chain: base,
         transport: http(RPC_URLS[chainId]),
     });
 

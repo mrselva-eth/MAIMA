@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { maimaRequests } from '@/lib/maima-requests';
 import { triggerCreWorkflows } from '@/lib/cre-trigger';
 import { getChainlinkPrice } from '@/lib/chainlink-oracle';
+import { base } from 'viem/chains';
 
 function getRouteType(route: any): 'swap' | 'bridge' {
   const steps = Array.isArray(route?.steps) ? route.steps : [];
@@ -22,7 +23,6 @@ function scoreForIndex(index: number): string {
 }
 
 const ALLOWED_SWAP_PROTOCOLS = ['Uniswap V3', '1inch', 'Curve', 'KyberSwap', 'Paraswap'];
-const SEPOLIA_CHAIN_ID = 11155111;
 
 function normalizeProtocolName(name?: string) {
   return (name ?? '').trim().toLowerCase();
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     const lifiData = await lifiRes.json();
 
     // Step 3: Chainlink Price Verification
-    const clChainId = payload.fromChainId === SEPOLIA_CHAIN_ID ? 11155111 : 8453;
+    const clChainId = base.id;
     const routes = Array.isArray(lifiData.routes) ? lifiData.routes : [];
 
     // Attempt to get symbols from first route
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
 
     const allowedSwapSet = new Set(ALLOWED_SWAP_PROTOCOLS.map(normalizeProtocolName));
     const enforceSwapWhitelist =
-      typeof payload?.fromChainId === 'number' && payload.fromChainId === SEPOLIA_CHAIN_ID;
+      typeof payload?.fromChainId === 'number' && payload.fromChainId === 11155111; // Hardcoded Sepolia ID for whitelist logic if still needed
     const filteredRoutes = routeSummaries.filter((route: RouteSummary) => {
       if (route.type !== 'swap') return true;
       if (!enforceSwapWhitelist) return true;
