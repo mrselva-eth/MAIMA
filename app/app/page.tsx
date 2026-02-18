@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BackgroundCircles } from '@/components/design/BackgroundCircles';
 import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, ShieldCheck } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima-types';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
@@ -171,7 +171,7 @@ export default function AppPage() {
     setTrackingRunId((n) => n + 1);
     setExecutionPendingMessageId(null);
 
-    // Prompt → intent mapping
+    // Prompt ? intent mapping
     let intent: '1' | '2' | '3' | '4' = '3';
     const p = prompt.toLowerCase();
 
@@ -339,8 +339,8 @@ export default function AppPage() {
                         )}
                         <div
                           className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${m.role === 'user'
-                              ? 'bg-[#1e40af] text-white'
-                              : 'bg-gray-100 text-foreground border border-gray-200'
+                            ? 'bg-[#1e40af] text-white'
+                            : 'bg-gray-100 text-foreground border border-gray-200'
                             }`}
                         >
                           {m.role === 'assistant' &&
@@ -382,9 +382,24 @@ export default function AppPage() {
                                     : 'swap');
                                 return (
                                   <>
-                                    <p>
+                                    <p className="flex items-center gap-1.5">
                                       <strong>Accuracy:</strong> {m.report.accuracy}
+                                      {m.report.accuracy.includes('Oracle') && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20">
+                                          <ShieldCheck className="w-2.5 h-2.5" />
+                                          Chainlink
+                                        </span>
+                                      )}
                                     </p>
+                                    {m.report.chainlink?.prices && m.report.chainlink.prices.length > 0 && (
+                                      <div className="flex flex-col gap-0.5 mt-1">
+                                        {m.report.chainlink.prices.map((p, idx) => (
+                                          <p key={idx} className="text-[#1e40af]/80 font-medium text-[11px]">
+                                            <strong>{p.symbol} Price:</strong> {p.price} (Oracle)
+                                          </p>
+                                        ))}
+                                      </div>
+                                    )}
                                     <p>
                                       <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
                                     </p>
@@ -468,69 +483,63 @@ export default function AppPage() {
                                     {m.report.ranking?.length ? (
                                       <div className="pt-2 border-t border-gray-200/80 space-y-2">
                                         <p className="font-medium text-foreground">Protocol ranking</p>
-                                        <div className="space-y-2 text-muted-foreground">
-                                          {(() => {
-                                            const fees = m.report.ranking
-                                              .slice(0, 5)
-                                              .map((r) => r.feeUSD ?? Number.POSITIVE_INFINITY);
-                                            const maxFee = Math.max(...fees);
-                                            const minFee = Math.min(...fees);
-                                            const range = Math.max(0.0001, maxFee - minFee);
-                                            return m.report.ranking.slice(0, 5).map((r) => {
-                                              const fee = r.feeUSD ?? maxFee;
-                                              const widthPct = Number.isFinite(fee)
-                                                ? 10 + ((fee - minFee) / range) * 90
-                                                : 10;
-                                              return (
-                                                <div
-                                                  key={r.protocol}
-                                                  className={`rounded-md border px-2 py-1.5 ${r.isSelected ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-gray-200'
-                                                    }`}
-                                                >
-                                                  <div className="flex items-center justify-between gap-2">
-                                                    <span className="text-foreground flex items-center gap-2 min-h-[28px]">
-                                                      <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
-                                                        {getLogoUrl(r.protocol) ? (
-                                                          <Image
-                                                            src={getLogoUrl(r.protocol)!}
-                                                            alt=""
-                                                            width={24}
-                                                            height={24}
-                                                            className="w-full h-full object-contain"
-                                                            unoptimized
-                                                          />
-                                                        ) : null}
-                                                      </span>
-                                                      <span>{r.rank}. {r.protocol}</span>
-                                                    </span>
-                                                    <div className="text-right">
-                                                      <div className="text-[11px] font-medium">
-                                                        {r.feeUSD !== null && r.feeUSD !== undefined
-                                                          ? `$${r.feeUSD.toFixed(2)}`
-                                                          : 'N/A'}
-                                                      </div>
-                                                      <div className="text-[9px] text-muted-foreground opacity-80">
-                                                        {r.executionDuration ? `${Math.round(r.executionDuration)}s` : ''}
-                                                        {r.reliabilityScore ? ` • ${r.reliabilityScore}` : ''}
-                                                      </div>
+                                        <div className="space-y-2">
+                                          {m.report.ranking.slice(0, 4).map((r, i) => (
+                                            <div
+                                              key={r.protocol}
+                                              className={`rounded-2xl border p-3 ${r.isSelected
+                                                ? 'border-[#1e40af]/45 bg-[#1e40af]/10'
+                                                : 'border-[#1e40af]/20 bg-white'
+                                                }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 min-h-[34px]">
+                                                  <span className="w-10 h-10 shrink-0 rounded-xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+                                                    {getLogoUrl(r.protocol) ? (
+                                                      <Image
+                                                        src={getLogoUrl(r.protocol)!}
+                                                        alt=""
+                                                        width={30}
+                                                        height={30}
+                                                        className="w-7 h-7 object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <div className="flex flex-col min-w-0">
+                                                    <span className="text-[13px] font-semibold leading-none text-foreground">{r.protocol}</span>
+                                                    <div className="flex gap-1.5 mt-1">
+                                                      {i === 0 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium uppercase tracking-tighter">Cheapest</span>}
+                                                      {i === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium uppercase tracking-tighter">Fastest</span>}
                                                     </div>
                                                   </div>
-                                                  <div className="mt-1 h-1.5 w-full rounded bg-gray-200 overflow-hidden">
-                                                    <div
-                                                      className={`h-full rounded ${r.isSelected ? 'bg-emerald-400' : 'bg-blue-500'
-                                                        }`}
-                                                      style={{ width: `${Math.min(100, Math.max(10, widthPct))}%` }}
-                                                    />
-                                                  </div>
-                                                  {r.reason ? (
-                                                    <p className="mt-1 text-[11px] text-muted-foreground">
-                                                      {r.reason}
-                                                    </p>
-                                                  ) : null}
                                                 </div>
-                                              );
-                                            });
-                                          })()}
+                                                <div className="text-[#60a5fa] text-lg leading-none">{'>'}</div>
+                                              </div>
+                                              <div className="mt-3 grid grid-cols-2 gap-2">
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Gas Fee</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">
+                                                    {r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A'}
+                                                  </p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Est. Time</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">
+                                                    {r.executionDuration ? `${Math.round(r.executionDuration)}s` : 'N/A'}
+                                                  </p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Reliability</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">{r.reliabilityScore || 'N/A'}</p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Liquidity</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">{r.liquidityScore || 'N/A'}</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </div>
                                     ) : null}

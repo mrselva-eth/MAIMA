@@ -36,6 +36,14 @@ export type ReportRoute = {
 
 export type AnalyzeReport = {
   accuracy: string;
+  chainlink?: {
+    prices?: Array<{
+      symbol: string;
+      price: string;
+      updatedAt?: number;
+    }>;
+    verifiedBy?: string;
+  };
   gasFeeEstimate: string;
   optimisticEstimate: string;
   topBridges: Array<{ name: string; score: string }>;

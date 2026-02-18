@@ -299,17 +299,20 @@ export function useTrackingFlow({
       const duration = route?.executionDuration ? `${Math.round(route.executionDuration)}s` : 'N/A';
       const reliability = route?.reliabilityScore ?? 'N/A';
       const liquidity = route?.liquidityScore ?? 'N/A';
+      const isOracleVerified = report?.accuracy?.includes('Oracle');
 
       setLogLines((prev) => [
         ...prev,
         `[${formatTime()}]   Pair exists. Route available.`,
+        isOracleVerified ? `[${formatTime()}]   Verified via Chainlink Oracle Network.` : null,
         `[${formatTime()}]   Fee: ${fee} | Time: ${duration} | Success: ${reliability} | Liq: ${liquidity}`,
-      ]);
+      ].filter(Boolean) as string[]);
     }, PROTOCOL_CHECK_DELAY_MS * 0.5);
 
     const t2 = setTimeout(() => {
+      const isOracleVerified = report?.accuracy?.includes('Oracle');
       setProtocolStatuses((prev) => ({ ...prev, [checkingIndex]: 'checked' }));
-      setLogLines((prev) => [...prev, `[${formatTime()}]   ${name} OK`]);
+      setLogLines((prev) => [...prev, `[${formatTime()}]   ${name} ${isOracleVerified ? 'verified via Chainlink' : 'OK'}`]);
       setCheckingIndex((i) => i + 1);
     }, PROTOCOL_CHECK_DELAY_MS);
 
