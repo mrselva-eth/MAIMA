@@ -1,0 +1,41 @@
+# CRE workflow artifacts + common caches
+.next/
+out/
+
+# Generated build outputs (CRE workflow compile)
+tmp.js
+tmp.wasm
+**/tmp.js
+**/tmp.wasm
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Env (keep configs tracked, but not secrets)
+.env
+.env.* 
+!.env.example
+
+
+# Misc caches
+.cache/
+**/.cache/
+dist/
+**/dist/
+build/
+**/build/
+
