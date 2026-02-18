@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import type { ProcessTrackingPanelProps } from './tracking-types';
 import { useTrackingFlow } from './use-tracking-flow';
 import { TrackingChartHeader } from '@/components/design/TrackingChartHeader';
@@ -60,7 +58,7 @@ export function ProcessTrackingPanel({
     onExecuteStart,
   });
 
-  const [viewMode, setViewMode] = React.useState<'logs' | 'table'>('table');
+  const viewMode: 'logs' = 'logs';
 
   if (!open) return null;
 
@@ -96,25 +94,6 @@ export function ProcessTrackingPanel({
           <p className="text-[10px] text-gray-400 mt-0.5">{inferredType === 'bridge' ? 'Bridge' : 'Swap'} flow</p>
         </div>
 
-        {/* View Toggle */}
-        <div className="relative z-10 flex bg-black/40 rounded-lg p-0.5 ml-4">
-          <button
-            type="button"
-            onClick={() => setViewMode('logs')}
-            className={`px-2 py-0.5 text-[10px] font-medium rounded-md transition-all ${viewMode === 'logs' ? 'bg-[#1e40af]/40 text-[#60a5fa] shadow-sm' : 'text-gray-500 hover:text-gray-300'
-              }`}
-          >
-            Logs
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('table')}
-            className={`px-2 py-0.5 text-[10px] font-medium rounded-md transition-all ${viewMode === 'table' ? 'bg-[#1e40af]/40 text-[#60a5fa] shadow-sm' : 'text-gray-500 hover:text-gray-300'
-              }`}
-          >
-            Table
-          </button>
-        </div>
         <span className="absolute right-10 bottom-2 text-[10px] font-semibold text-[#60a5fa] tracking-wide z-10">
           MAIMING ...
         </span>
@@ -156,11 +135,11 @@ export function ProcessTrackingPanel({
                       type="button"
                       onClick={() => !finalResult && handleChoose(i)}
                       disabled={!!finalResult}
-                      className={`group relative flex flex-col gap-3 text-left p-3.5 rounded-xl border transition-all duration-300 w-full ${isSelected
-                        ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                      className={`group relative flex flex-col gap-3 text-left p-3.5 rounded-xl border transition-colors duration-200 w-full ${isSelected
+                        ? 'border-emerald-500/50 bg-emerald-500/10'
                         : dim
                           ? 'border-white/5 bg-white/5 opacity-50'
-                          : 'border-white/10 hover:border-[#1e40af]/50 hover:bg-[#1e40af]/10 bg-white/5 hover:-translate-y-0.5'
+                          : 'border-white/10 hover:border-[#1e40af]/40 bg-white/5'
                         }`}
                     >
                       <div className="flex items-center gap-3 w-full">
@@ -186,9 +165,9 @@ export function ProcessTrackingPanel({
                               {item.name}
                             </span>
                             {isSelected ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shadow-sm" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             ) : !finalResult && (
-                              <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#60a5fa] group-hover:translate-x-0.5 transition-all" />
+                              <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[#60a5fa] transition-colors" />
                             )}
                           </div>
 
