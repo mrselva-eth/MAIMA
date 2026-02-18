@@ -278,8 +278,303 @@ export default function AppPage() {
                               : 'bg-gray-100 text-foreground border border-gray-200'
                           }`}
                         >
+<<<<<<< Updated upstream
                           <p className="text-sm whitespace-pre-wrap">{m.content}</p>
                           {m.result && (
+=======
+                          {m.role === 'assistant' &&
+                            isSimulationMode &&
+                            m.id === processingMessageId &&
+                            !m.report ? (
+                            <div className="flex flex-col items-center justify-center gap-4 py-6 min-w-[200px]">
+                              <Image
+                                src="/images/logo.png"
+                                alt=""
+                                width={120}
+                                height={120}
+                                className="w-[120px] h-[120px] object-contain select-none animate-pulse"
+                                unoptimized
+                                draggable={false}
+                              />
+                              <p className="text-sm font-medium text-[#1e40af] tracking-wide">
+                                MAIMA is miming
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                          )}
+                          {m.report && (
+                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs">
+                              {(() => {
+                                const workflowHint = m.report?.workflow?.[0]?.details?.toLowerCase() ?? '';
+                                const inferredTypeFromWorkflow = workflowHint.includes('bridge')
+                                  ? 'bridge'
+                                  : workflowHint.includes('swap')
+                                    ? 'swap'
+                                    : null;
+                                const reportType =
+                                  m.report?.intentType ??
+                                  inferredTypeFromWorkflow ??
+                                  m.report?.bestRoute?.type ??
+                                  (m.report.topBridges.length > 0 && m.report.topSwaps.length === 0
+                                    ? 'bridge'
+                                    : 'swap');
+                                return (
+                                  <>
+                                    <p>
+                                      <strong>Accuracy:</strong> {m.report.accuracy}
+                                    </p>
+                                    <p>
+                                      <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
+                                    </p>
+                                    <p>
+                                      <strong>Optimistic:</strong> {m.report.optimisticEstimate}
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-2 mt-2">
+                                      {reportType === 'bridge' ? (
+                                        <div>
+                                          <p className="font-medium text-foreground">Top bridges</p>
+                                          {m.report.topBridges.length ? (
+                                            <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
+                                              {m.report.topBridges.slice(0, 5).map((b, i) => (
+                                                <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                                  <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                    {getLogoUrl(b.name) ? (
+                                                      <Image
+                                                        src={getLogoUrl(b.name)!}
+                                                        alt=""
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-full h-full object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <span>{b.name} ({b.score})</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : (
+                                            <p className="text-muted-foreground">No bridge routes found.</p>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <p className="font-medium text-foreground">Top swaps</p>
+                                          {m.report.topSwaps.length ? (
+                                            <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
+                                              {m.report.topSwaps.slice(0, 5).map((s, i) => (
+                                                <li key={i} className="flex items-center gap-2 min-h-[28px]">
+                                                  <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                    {getLogoUrl(s.name) ? (
+                                                      <Image
+                                                        src={getLogoUrl(s.name)!}
+                                                        alt=""
+                                                        width={24}
+                                                        height={24}
+                                                        className="w-full h-full object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <span>{s.name} ({s.score})</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : (
+                                            <p className="text-muted-foreground">No swap routes found.</p>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {m.report.workflow?.length ? (
+                                      <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                        <p className="font-medium text-foreground">Workflow report</p>
+                                        <div className="space-y-1 text-muted-foreground">
+                                          {m.report.workflow.map((step, i) => (
+                                            <p key={i}>
+                                              {i + 1}. {step.name} ({step.status.toUpperCase()}) -- {step.details}
+                                            </p>
+                                          ))}
+                                        </div>
+                                        {m.report.selectionReason ? (
+                                          <p className="text-muted-foreground">
+                                            Why this protocol: {m.report.selectionReason}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                    {m.report.ranking?.length ? (
+                                      <div className="pt-2 border-t border-gray-200/80 space-y-2">
+                                        <p className="font-medium text-foreground">Protocol ranking</p>
+                                        <div className="grid grid-cols-1 gap-2 text-muted-foreground">
+                                          {(() => {
+                                            const rows = m.report.ranking.slice(0, 4);
+                                            const fees = rows.map((r) => r.feeUSD ?? Number.NaN);
+                                            const finiteFees = fees.filter((v) => Number.isFinite(v));
+                                            const durations = rows.map((r) => r.executionDuration ?? 0);
+                                            const reliabilities = rows.map((r) => {
+                                              const value = Number((r.reliabilityScore ?? '').replace('%', '').trim());
+                                              return Number.isFinite(value) ? value : 0;
+                                            });
+                                            const liquidities = rows.map((r) => {
+                                              const l = (r.liquidityScore ?? '').toLowerCase();
+                                              if (l === 'high') return 100;
+                                              if (l === 'medium') return 65;
+                                              if (l === 'low') return 35;
+                                              return 50;
+                                            });
+                                            const maxFee = finiteFees.length ? Math.max(...finiteFees) : 0;
+                                            const minFee = finiteFees.length ? Math.min(...finiteFees) : 0;
+                                            const maxDuration = Math.max(...durations);
+                                            const minDuration = Math.min(...durations);
+                                            const maxReliability = Math.max(...reliabilities);
+                                            const maxLiquidity = Math.max(...liquidities);
+                                            const feeRange = Math.max(0.0001, maxFee - minFee);
+                                            const durationRange = Math.max(1, maxDuration - minDuration);
+
+                                            return rows.map((r) => {
+                                              const fee = r.feeUSD;
+                                              const duration = r.executionDuration ?? 0;
+                                              const reliability = Number((r.reliabilityScore ?? '').replace('%', '').trim());
+                                              const reliabilitySafe = Number.isFinite(reliability) ? reliability : 0;
+                                              const l = (r.liquidityScore ?? '').toLowerCase();
+                                              const liquidity = l === 'high' ? 100 : l === 'medium' ? 65 : l === 'low' ? 35 : 50;
+
+                                              const gasRatioPct = Number.isFinite(fee)
+                                                ? Math.round(Math.max(0, Math.min(100, 100 - (((fee as number) - minFee) / feeRange) * 100)))
+                                                : 0;
+                                              const timeRatioPct = Math.round(Math.max(0, Math.min(100, 100 - ((duration - minDuration) / durationRange) * 100)));
+                                              const liquidityRatioPct = maxLiquidity > 0
+                                                ? Math.round(Math.max(0, Math.min(100, (liquidity / maxLiquidity) * 100)))
+                                                : 0;
+                                              const reliabilityRatioPct = maxReliability > 0
+                                                ? Math.round(Math.max(0, Math.min(100, (reliabilitySafe / maxReliability) * 100)))
+                                                : 0;
+
+                                              return (
+                                                <div
+                                                  key={r.protocol}
+                                                  className={`rounded-2xl border p-3 ${r.isSelected
+                                                    ? 'border-[#1e40af]/40 bg-[#1e40af]/[0.06]'
+                                                    : 'border-[#1e40af]/15 bg-white/95'
+                                                    }`}
+                                                >
+                                                  <div className="flex items-center justify-between gap-3">
+                                                    <span className="flex items-center gap-2 min-h-[34px]">
+                                                      <span className="w-8 h-8 shrink-0 rounded-md overflow-hidden bg-white border border-[#1e40af]/15 flex items-center justify-center">
+                                                        {getLogoUrl(r.protocol) ? (
+                                                          <Image
+                                                            src={getLogoUrl(r.protocol)!}
+                                                            alt=""
+                                                            width={28}
+                                                            height={28}
+                                                            className="w-full h-full object-contain"
+                                                            unoptimized
+                                                          />
+                                                        ) : null}
+                                                      </span>
+                                                      <span className="text-sm font-semibold text-foreground">{r.protocol}</span>
+                                                    </span>
+                                                    <div className="text-right">
+                                                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rank</div>
+                                                      <div className="text-sm font-semibold text-[#1e40af]">#{r.rank}</div>
+                                                    </div>
+                                                  </div>
+                                                  {r.reason ? (
+                                                    <p className="mt-2 inline-flex rounded-md border border-[#1e40af]/30 bg-[#1e40af]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#1e40af]">
+                                                      {r.reason}
+                                                    </p>
+                                                  ) : null}
+                                                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
+                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Gas Fee</p>
+                                                      <p className="text-sm font-semibold text-foreground">
+                                                        {r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A'}
+                                                      </p>
+                                                      <p className="text-[10px] text-[#1e40af]">Ratio {gasRatioPct}%</p>
+                                                    </div>
+                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
+                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Est. Time</p>
+                                                      <p className="text-sm font-semibold text-foreground">
+                                                        {r.executionDuration ? `${Math.round(r.executionDuration)}s` : 'N/A'}
+                                                      </p>
+                                                      <p className="text-[10px] text-[#1e40af]">Ratio {timeRatioPct}%</p>
+                                                    </div>
+                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
+                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Reliability</p>
+                                                      <p className="text-sm font-semibold text-foreground">{r.reliabilityScore || 'N/A'}</p>
+                                                      <p className="text-[10px] text-[#1e40af]">Ratio {reliabilityRatioPct}%</p>
+                                                    </div>
+                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
+                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Liquidity</p>
+                                                      <p className="text-sm font-semibold text-foreground">{r.liquidityScore || 'N/A'}</p>
+                                                      <p className="text-[10px] text-[#1e40af]">Ratio {liquidityRatioPct}%</p>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              );
+                                            });
+                                          })()}
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {executionPendingMessageId === m.id && !m.result ? (
+                                      <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col items-center gap-2 py-4">
+                                        <Image
+                                          src="/images/logo.png"
+                                          alt=""
+                                          width={48}
+                                          height={48}
+                                          className="animate-pulse opacity-80 object-contain"
+                                          unoptimized
+                                        />
+                                        <p className="text-xs text-muted-foreground">Execution in progress...</p>
+                                      </div>
+                                    ) : m.result ? (
+                                      <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
+                                        <p className="font-medium text-foreground">Final execution</p>
+                                        <p className="flex items-center gap-2">
+                                          <strong>Protocol:</strong>
+                                          <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            {getLogoUrl(m.result.protocol) ? (
+                                              <Image
+                                                src={getLogoUrl(m.result.protocol)!}
+                                                alt=""
+                                                width={24}
+                                                height={24}
+                                                className="w-full h-full object-contain"
+                                                unoptimized
+                                              />
+                                            ) : null}
+                                          </span>
+                                          <span>{m.result.protocol}</span>
+                                        </p>
+                                        <p>
+                                          <strong>Pair:</strong> {m.result.pair}
+                                        </p>
+                                        <p>
+                                          <strong>Fee:</strong> {m.result.fee}
+                                        </p>
+                                        <p>
+                                          <strong>Input:</strong> {m.result.inputAmount} {'->'}{' '}
+                                          <strong>Output:</strong> {m.result.outputAmount}
+                                        </p>
+                                        <p className="break-all">
+                                          <strong>Tx:</strong> {m.result.txHash}
+                                        </p>
+                                        <p className="break-all">
+                                          <strong>Approval:</strong> {m.result.approvalHash}
+                                        </p>
+                                      </div>
+                                    ) : null}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                          {!m.report && m.result && (
+>>>>>>> Stashed changes
                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
                               <p>
                                 <strong>Protocol:</strong> {m.result.protocol}
