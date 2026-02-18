@@ -5,28 +5,28 @@ import Image from 'next/image';
 
 const steps = [
   {
-    title: 'Describe Swap or Bridge',
-    desc: 'Say what you need in plain language. e.g. "Swap 100 USDC to ETH" or "Bridge 500 USDT to Arbitrum".',
+    title: 'Describe',
+    desc: 'In the app, describe what you want in plain language. Connect your wallet, then type e.g. "Swap 100 USDC to ETH" or "Bridge 500 USDT to Arbitrum".',
   },
   {
-    title: 'MAIMA Analysis',
-    desc: 'AI analyzes your request and prepares a report: accuracy, gas estimate, optimistic execution.',
+    title: 'Report',
+    desc: 'MAIMA calls LI.FI for routes, ranks them, and returns a report: accuracy, gas estimate, and a ranked list of protocols with the best pick and reason.',
   },
   {
-    title: 'Top Bridges & Swaps',
-    desc: 'Report includes top bridges and top swaps. Best options for your need.',
-  },
-  {
-    title: 'CRE Workflows',
-    desc: 'Chainlink workflows (cre-maima, cre-bridge, cre-swap) under cre/ run on a schedule. Based on your request, the workflow gets active.',
+    title: 'Top Protocols',
+    desc: 'The report shows the top bridges or swaps for your pair. You see protocol names, gas fees, and why one is recommended.',
   },
   {
     title: 'Process Tracking',
-    desc: 'Track protocol checks in the app, choose a protocol, and get the result. All visible in the tracking panel.',
+    desc: 'A tracking panel opens and shows the flow: input checked, protocols listed and checked, then the top 4 with "choose one".',
   },
   {
-    title: 'Deploy with Chainlink',
-    desc: 'Deploy workflows to Chainlink when you have Early Access. Report and tracking in the app today.',
+    title: 'Choose and Run',
+    desc: 'Click one protocol in the panel. In simulation mode you see CRE output; otherwise you sign approval and swap in your wallet via LI.FI.',
+  },
+  {
+    title: 'CRE Workflows',
+    desc: 'Optional: cre-maima, cre-swap, and cre-bridge under cre/ poll the app queue. Use them when running on a schedule or deploying to Chainlink.',
   },
 ];
 

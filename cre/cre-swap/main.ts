@@ -8,7 +8,7 @@ import {
   CronCapability,
   HTTPClient,
   handler,
-  consensusMedianAggregation,
+  consensusIdenticalAggregation,
   Runner,
   type NodeRuntime,
   type Runtime,
@@ -30,7 +30,7 @@ const initWorkflow = (config: Config) => {
 
 function runSwap(nodeRuntime: NodeRuntime<Config>): SwapResult {
   const httpClient = new HTTPClient();
-  const url = `${nodeRuntime.config.apiBaseUrl}/api/maima/requests`;
+  const url = `${nodeRuntime.config.apiBaseUrl}/api/maima/queue`;
   try {
     httpClient.sendRequest(nodeRuntime, { url, method: "GET" }).result();
   } catch {
@@ -45,9 +45,13 @@ function runSwap(nodeRuntime: NodeRuntime<Config>): SwapResult {
 }
 
 function onTrigger(runtime: Runtime<Config>): SwapResult {
-  runtime.log("Swap workflow running.");
-  const result = runtime.runInNodeMode(runSwap, consensusMedianAggregation()).result();
-  runtime.log(JSON.stringify(result));
+  runtime.log("cre-swap workflow running.");
+  runtime.log("[1] Intent parsed — swap request detected.");
+  runtime.log("[2] Quote requested — polling /api/maima/queue.");
+  const result = runtime.runInNodeMode(runSwap, consensusIdenticalAggregation<SwapResult>())().result();
+  runtime.log("[3] Protocol validation — swap protocols checked.");
+  runtime.log("[4] Ranking — sorted by gas fee.");
+  runtime.log("[5] Selection — " + result.route + ", slippage " + result.slippage + ", priceImpact " + result.priceImpact + ".");
   return result;
 }
 

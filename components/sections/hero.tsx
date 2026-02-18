@@ -28,8 +28,7 @@ export default function Hero() {
             />
           </div>
           <p className="text-base text-gray-600 max-w-md leading-relaxed sm:text-lg">
-            DeFi optimistic solution handler. Describe swap or bridge needs in natural language; MAIMA AI analyzes and returns
-            a complete report—accuracy, gas fee, optimistic estimates. Track protocols in the app and choose the best option. Deploy workflows with Chainlink when you have Early Access.
+            Say what you want to swap or bridge. MAIMA figures out accuracy, gas and the best protocol, then you pick one and run it in the app.
           </p>
         </div>
       </div>

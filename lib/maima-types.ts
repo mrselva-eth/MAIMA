@@ -28,10 +28,22 @@ export type ReportRoute = {
   fromToken?: ReportToken;
   toToken?: ReportToken;
   steps?: ReportStep[];
+  executionDuration?: number; // seconds
+  liquidityScore?: string;    // e.g. "High", "Medium", "Low"
+  reliabilityScore?: string;  // e.g. "99.9%"
+  tags?: string[];
 };
 
 export type AnalyzeReport = {
   accuracy: string;
+  chainlink?: {
+    prices?: Array<{
+      symbol: string;
+      price: string;
+      updatedAt?: number;
+    }>;
+    verifiedBy?: string;
+  };
   gasFeeEstimate: string;
   optimisticEstimate: string;
   topBridges: Array<{ name: string; score: string }>;
@@ -50,10 +62,15 @@ export type AnalyzeReport = {
   ranking?: Array<{
     protocol: string;
     feeUSD?: number | null;
+    executionDuration?: number;
+    liquidityScore?: string;
+    reliabilityScore?: string;
     rank: number;
     reason?: string;
     isSelected?: boolean;
   }>;
   selectionReason?: string;
   intentType?: 'swap' | 'bridge';
+  /** When true, CRE simulation mode is on: real execution is disabled; CRE workflows are triggered. */
+  simulationMode?: boolean;
 };
