@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import Navbar from '@/components/sections/navbar';
-import { RequireWallet } from '@/components/app/RequireWallet';
+import { RequireWallet } from '@/context/RequireWallet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { BackgroundCircles } from '@/components/app/BackgroundCircles';
-import { ProcessTrackingPanel } from '@/components/app/ProcessTrackingPanel';
+import { BackgroundCircles } from '@/components/design/BackgroundCircles';
+import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, ShieldCheck } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima-types';
+import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
 const THEME_COLOR = '#1e40af';
 
@@ -64,20 +65,40 @@ export default function AppPage() {
   const [trackingPrompt, setTrackingPrompt] = useState('');
   const [trackingReport, setTrackingReport] =
     useState<AnalyzeReport | null>(null);
+  // Bumps on every new Send so the tracking panel remounts (prevents stale state after a completed run)
+  const [trackingRunId, setTrackingRunId] = useState(0);
   const [processingMessageId, setProcessingMessageId] =
+    useState<string | null>(null);
+  const [executionPendingMessageId, setExecutionPendingMessageId] =
     useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chatScrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatFollowTailRef = useRef(true);
   const { address } = useAccount();
+  const { getLogoUrl } = useProtocolLogos();
+
+  const isSimulationMode =
+    typeof process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE !== 'undefined' &&
+    process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE === 'on';
+
+  const processingMessage = processingMessageId
+    ? messages.find((m) => m.id === processingMessageId)
+    : null;
+  const reportNotYetShown =
+    isSimulationMode &&
+    trackingOpen &&
+    processingMessageId &&
+    processingMessage &&
+    !processingMessage.report;
 
   const copyMessage = (m: Message) => {
     let text = m.content;
     if (m.report)
-      text += `\n\nAccuracy: ${m.report.accuracy}\nGas: ${m.report.gasFeeEstimate}\nOptimistic: ${
-        m.report.optimisticEstimate
-      }\n\nTop bridges: ${m.report.topBridges
-        .map((b) => `${b.name} (${b.score})`)
-        .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
+      text += `\n\nAccuracy: ${m.report.accuracy}\nGas: ${m.report.gasFeeEstimate}\nOptimistic: ${m.report.optimisticEstimate
+        }\n\nTop bridges: ${m.report.topBridges
+          .map((b) => `${b.name} (${b.score})`)
+          .join(', ')}\nTop swaps: ${m.report.topSwaps.map((s) => `${s.name} (${s.score})`).join(', ')}`;
     if (m.report?.workflow?.length) {
       text += `\n\nWorkflow report:`;
       text += m.report.workflow
@@ -107,7 +128,14 @@ export default function AppPage() {
   };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = chatScrollContainerRef.current;
+    if (!el || !chatFollowTailRef.current) return;
+    requestAnimationFrame(() => {
+      el.scrollTo({
+        top: el.scrollHeight - el.clientHeight,
+        behavior: 'smooth',
+      });
+    });
   }, [messages]);
 
   const send = async () => {
@@ -140,8 +168,10 @@ export default function AppPage() {
     setTrackingPrompt(prompt);
     setTrackingReport(null);
     setTrackingOpen(true);
+    setTrackingRunId((n) => n + 1);
+    setExecutionPendingMessageId(null);
 
-    // Prompt → intent mapping
+    // Prompt ? intent mapping
     let intent: '1' | '2' | '3' | '4' = '3';
     const p = prompt.toLowerCase();
 
@@ -178,16 +208,16 @@ export default function AppPage() {
       }
       const report = data.report as AnalyzeReport | undefined;
       setTrackingReport(report ?? null);
-      if (report) {
+      if (report && !isSimulationMode) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === processingId
               ? {
-                  ...m,
-                  report,
-                  content:
-                    'Report ready. Review why each protocol was ranked and choose the best option.',
-                }
+                ...m,
+                report,
+                content:
+                  'Report ready. Review why each protocol was ranked and choose the best option.',
+              }
               : m
           )
         );
@@ -207,13 +237,41 @@ export default function AppPage() {
     }
   };
 
+  const handleStepComplete = () => {
+    if (!isSimulationMode || !processingMessageId || !trackingReport) return;
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === processingMessageId
+          ? {
+            ...m,
+            report: trackingReport,
+            content:
+              'Report ready. Review why each protocol was ranked and choose the best option.',
+          }
+          : m
+      )
+    );
+  };
+
+  const handleExecuteStart = () => {
+    if (processingMessageId) setExecutionPendingMessageId(processingMessageId);
+  };
+
   const handleTrackingComplete = (result: FinalResult | null) => {
     if (!result || !processingMessageId) return;
-    const content = `Done. ${result.protocol} - Pair: ${result.pair}, Fee: ${result.fee}. Input: ${result.inputAmount} -> Output: ${result.outputAmount}. Tx: ${result.txHash.slice(
-      0,
-      10
-    )}... Approval: ${result.approvalHash.slice(0, 10)}...`;
-    setMessages((prev) => prev.map((m) => (m.id === processingMessageId ? { ...m, content, result } : m)));
+    setExecutionPendingMessageId(null);
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== processingMessageId) return m;
+        const doneContent = `Done. ${result.protocol} - Pair: ${result.pair}, Fee: ${result.fee}. Input: ${result.inputAmount} -> Output: ${result.outputAmount}. Tx: ${result.txHash.slice(
+          0,
+          10
+        )}... Approval: ${result.approvalHash.slice(0, 10)}...`;
+        return m.report
+          ? { ...m, result } // Keep existing content; final output shows in report bottom
+          : { ...m, content: doneContent, result };
+      })
+    );
     setProcessingMessageId(null);
   };
 
@@ -222,6 +280,7 @@ export default function AppPage() {
     setTrackingPrompt('');
     setTrackingReport(null);
     setProcessingMessageId(null);
+    setExecutionPendingMessageId(null);
   };
 
   return (
@@ -230,17 +289,24 @@ export default function AppPage() {
       <RequireWallet>
         <div className="relative flex-1 flex flex-col min-h-0 pt-16">
           <div
-            className={`relative z-10 flex-1 flex min-h-0 gap-3 px-4 py-2 ${
-              trackingOpen ? 'flex-row' : 'flex-col'
-            }`}
+            className={`relative z-10 flex-1 flex min-h-0 gap-3 px-4 py-2 ${trackingOpen ? 'flex-row' : 'flex-col'
+              }`}
           >
             <div
-              className={`h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${
-                trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
-              }`}
+              className={`relative h-full flex flex-col rounded-xl border border-[#1e40af]/15 bg-white/95 shadow-lg overflow-hidden transition-all ${trackingOpen ? 'w-[65%] min-w-0 max-w-4xl' : 'w-full max-w-4xl mx-auto'
+                }`}
             >
-              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain relative">
-                <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+              <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+              <div
+                ref={chatScrollContainerRef}
+                onScroll={() => {
+                  const el = chatScrollContainerRef.current;
+                  if (!el) return;
+                  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 50;
+                  chatFollowTailRef.current = nearBottom;
+                }}
+                className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain"
+              >
                 {messages.length === 0 && (
                   <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
                     <Image
@@ -272,16 +338,11 @@ export default function AppPage() {
                           </span>
                         )}
                         <div
-                          className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                            m.role === 'user'
-                              ? 'bg-[#1e40af] text-white'
-                              : 'bg-gray-100 text-foreground border border-gray-200'
-                          }`}
+                          className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 ${m.role === 'user'
+                            ? 'bg-[#1e40af] text-white'
+                            : 'bg-gray-100 text-foreground border border-gray-200'
+                            }`}
                         >
-<<<<<<< Updated upstream
-                          <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-                          {m.result && (
-=======
                           {m.role === 'assistant' &&
                             isSimulationMode &&
                             m.id === processingMessageId &&
@@ -321,9 +382,24 @@ export default function AppPage() {
                                     : 'swap');
                                 return (
                                   <>
-                                    <p>
+                                    <p className="flex items-center gap-1.5">
                                       <strong>Accuracy:</strong> {m.report.accuracy}
+                                      {m.report.accuracy.includes('Oracle') && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20">
+                                          <ShieldCheck className="w-2.5 h-2.5" />
+                                          Chainlink
+                                        </span>
+                                      )}
                                     </p>
+                                    {m.report.chainlink?.prices && m.report.chainlink.prices.length > 0 && (
+                                      <div className="flex flex-col gap-0.5 mt-1">
+                                        {m.report.chainlink.prices.map((p, idx) => (
+                                          <p key={idx} className="text-[#1e40af]/80 font-medium text-[11px]">
+                                            <strong>{p.symbol} Price:</strong> {p.price} (Oracle)
+                                          </p>
+                                        ))}
+                                      </div>
+                                    )}
                                     <p>
                                       <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
                                     </p>
@@ -407,115 +483,63 @@ export default function AppPage() {
                                     {m.report.ranking?.length ? (
                                       <div className="pt-2 border-t border-gray-200/80 space-y-2">
                                         <p className="font-medium text-foreground">Protocol ranking</p>
-                                        <div className="grid grid-cols-1 gap-2 text-muted-foreground">
-                                          {(() => {
-                                            const rows = m.report.ranking.slice(0, 4);
-                                            const fees = rows.map((r) => r.feeUSD ?? Number.NaN);
-                                            const finiteFees = fees.filter((v) => Number.isFinite(v));
-                                            const durations = rows.map((r) => r.executionDuration ?? 0);
-                                            const reliabilities = rows.map((r) => {
-                                              const value = Number((r.reliabilityScore ?? '').replace('%', '').trim());
-                                              return Number.isFinite(value) ? value : 0;
-                                            });
-                                            const liquidities = rows.map((r) => {
-                                              const l = (r.liquidityScore ?? '').toLowerCase();
-                                              if (l === 'high') return 100;
-                                              if (l === 'medium') return 65;
-                                              if (l === 'low') return 35;
-                                              return 50;
-                                            });
-                                            const maxFee = finiteFees.length ? Math.max(...finiteFees) : 0;
-                                            const minFee = finiteFees.length ? Math.min(...finiteFees) : 0;
-                                            const maxDuration = Math.max(...durations);
-                                            const minDuration = Math.min(...durations);
-                                            const maxReliability = Math.max(...reliabilities);
-                                            const maxLiquidity = Math.max(...liquidities);
-                                            const feeRange = Math.max(0.0001, maxFee - minFee);
-                                            const durationRange = Math.max(1, maxDuration - minDuration);
-
-                                            return rows.map((r) => {
-                                              const fee = r.feeUSD;
-                                              const duration = r.executionDuration ?? 0;
-                                              const reliability = Number((r.reliabilityScore ?? '').replace('%', '').trim());
-                                              const reliabilitySafe = Number.isFinite(reliability) ? reliability : 0;
-                                              const l = (r.liquidityScore ?? '').toLowerCase();
-                                              const liquidity = l === 'high' ? 100 : l === 'medium' ? 65 : l === 'low' ? 35 : 50;
-
-                                              const gasRatioPct = Number.isFinite(fee)
-                                                ? Math.round(Math.max(0, Math.min(100, 100 - (((fee as number) - minFee) / feeRange) * 100)))
-                                                : 0;
-                                              const timeRatioPct = Math.round(Math.max(0, Math.min(100, 100 - ((duration - minDuration) / durationRange) * 100)));
-                                              const liquidityRatioPct = maxLiquidity > 0
-                                                ? Math.round(Math.max(0, Math.min(100, (liquidity / maxLiquidity) * 100)))
-                                                : 0;
-                                              const reliabilityRatioPct = maxReliability > 0
-                                                ? Math.round(Math.max(0, Math.min(100, (reliabilitySafe / maxReliability) * 100)))
-                                                : 0;
-
-                                              return (
-                                                <div
-                                                  key={r.protocol}
-                                                  className={`rounded-2xl border p-3 ${r.isSelected
-                                                    ? 'border-[#1e40af]/40 bg-[#1e40af]/[0.06]'
-                                                    : 'border-[#1e40af]/15 bg-white/95'
-                                                    }`}
-                                                >
-                                                  <div className="flex items-center justify-between gap-3">
-                                                    <span className="flex items-center gap-2 min-h-[34px]">
-                                                      <span className="w-8 h-8 shrink-0 rounded-md overflow-hidden bg-white border border-[#1e40af]/15 flex items-center justify-center">
-                                                        {getLogoUrl(r.protocol) ? (
-                                                          <Image
-                                                            src={getLogoUrl(r.protocol)!}
-                                                            alt=""
-                                                            width={28}
-                                                            height={28}
-                                                            className="w-full h-full object-contain"
-                                                            unoptimized
-                                                          />
-                                                        ) : null}
-                                                      </span>
-                                                      <span className="text-sm font-semibold text-foreground">{r.protocol}</span>
-                                                    </span>
-                                                    <div className="text-right">
-                                                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rank</div>
-                                                      <div className="text-sm font-semibold text-[#1e40af]">#{r.rank}</div>
-                                                    </div>
-                                                  </div>
-                                                  {r.reason ? (
-                                                    <p className="mt-2 inline-flex rounded-md border border-[#1e40af]/30 bg-[#1e40af]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#1e40af]">
-                                                      {r.reason}
-                                                    </p>
-                                                  ) : null}
-                                                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
-                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Gas Fee</p>
-                                                      <p className="text-sm font-semibold text-foreground">
-                                                        {r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A'}
-                                                      </p>
-                                                      <p className="text-[10px] text-[#1e40af]">Ratio {gasRatioPct}%</p>
-                                                    </div>
-                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
-                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Est. Time</p>
-                                                      <p className="text-sm font-semibold text-foreground">
-                                                        {r.executionDuration ? `${Math.round(r.executionDuration)}s` : 'N/A'}
-                                                      </p>
-                                                      <p className="text-[10px] text-[#1e40af]">Ratio {timeRatioPct}%</p>
-                                                    </div>
-                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
-                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Reliability</p>
-                                                      <p className="text-sm font-semibold text-foreground">{r.reliabilityScore || 'N/A'}</p>
-                                                      <p className="text-[10px] text-[#1e40af]">Ratio {reliabilityRatioPct}%</p>
-                                                    </div>
-                                                    <div className="rounded-lg border border-[#1e40af]/15 bg-[#1e40af]/[0.04] px-3 py-2">
-                                                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Liquidity</p>
-                                                      <p className="text-sm font-semibold text-foreground">{r.liquidityScore || 'N/A'}</p>
-                                                      <p className="text-[10px] text-[#1e40af]">Ratio {liquidityRatioPct}%</p>
+                                        <div className="space-y-2">
+                                          {m.report.ranking.slice(0, 4).map((r, i) => (
+                                            <div
+                                              key={r.protocol}
+                                              className={`rounded-2xl border p-3 ${r.isSelected
+                                                ? 'border-[#1e40af]/45 bg-[#1e40af]/10'
+                                                : 'border-[#1e40af]/20 bg-white'
+                                                }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 min-h-[34px]">
+                                                  <span className="w-10 h-10 shrink-0 rounded-xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+                                                    {getLogoUrl(r.protocol) ? (
+                                                      <Image
+                                                        src={getLogoUrl(r.protocol)!}
+                                                        alt=""
+                                                        width={30}
+                                                        height={30}
+                                                        className="w-7 h-7 object-contain"
+                                                        unoptimized
+                                                      />
+                                                    ) : null}
+                                                  </span>
+                                                  <div className="flex flex-col min-w-0">
+                                                    <span className="text-[13px] font-semibold leading-none text-foreground">{r.protocol}</span>
+                                                    <div className="flex gap-1.5 mt-1">
+                                                      {i === 0 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium uppercase tracking-tighter">Cheapest</span>}
+                                                      {i === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium uppercase tracking-tighter">Fastest</span>}
                                                     </div>
                                                   </div>
                                                 </div>
-                                              );
-                                            });
-                                          })()}
+                                                <div className="text-[#60a5fa] text-lg leading-none">{'>'}</div>
+                                              </div>
+                                              <div className="mt-3 grid grid-cols-2 gap-2">
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Gas Fee</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">
+                                                    {r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A'}
+                                                  </p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Est. Time</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">
+                                                    {r.executionDuration ? `${Math.round(r.executionDuration)}s` : 'N/A'}
+                                                  </p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Reliability</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">{r.reliabilityScore || 'N/A'}</p>
+                                                </div>
+                                                <div className="rounded-lg bg-[#1e40af]/[0.04] border border-[#1e40af]/15 px-2 py-1.5">
+                                                  <p className="text-[8px] text-gray-500 uppercase leading-none mb-0.5">Liquidity</p>
+                                                  <p className="text-[10px] text-foreground font-semibold leading-none">{r.liquidityScore || 'N/A'}</p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </div>
                                     ) : null}
@@ -574,10 +598,22 @@ export default function AppPage() {
                             </div>
                           )}
                           {!m.report && m.result && (
->>>>>>> Stashed changes
                             <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-1.5 text-xs">
-                              <p>
-                                <strong>Protocol:</strong> {m.result.protocol}
+                              <p className="flex items-center gap-2">
+                                <strong>Protocol:</strong>
+                                <span className="w-6 h-6 shrink-0 rounded overflow-hidden bg-gray-100 flex items-center justify-center">
+                                  {getLogoUrl(m.result.protocol) ? (
+                                    <Image
+                                      src={getLogoUrl(m.result.protocol)!}
+                                      alt=""
+                                      width={24}
+                                      height={24}
+                                      className="w-full h-full object-contain"
+                                      unoptimized
+                                    />
+                                  ) : null}
+                                </span>
+                                <span>{m.result.protocol}</span>
                               </p>
                               <p>
                                 <strong>Pair:</strong> {m.result.pair}
@@ -597,147 +633,11 @@ export default function AppPage() {
                               </p>
                             </div>
                           )}
-                          {m.report && !m.result && (
-                            <div className="mt-3 pt-3 border-t border-gray-200/80 space-y-2 text-xs">
-                              {(() => {
-                                const workflowHint = m.report?.workflow?.[0]?.details?.toLowerCase() ?? '';
-                                const inferredTypeFromWorkflow = workflowHint.includes('bridge')
-                                  ? 'bridge'
-                                  : workflowHint.includes('swap')
-                                    ? 'swap'
-                                    : null;
-                                const reportType =
-                                  m.report?.intentType ??
-                                  inferredTypeFromWorkflow ??
-                                  m.report?.bestRoute?.type ??
-                                  (m.report.topBridges.length > 0 && m.report.topSwaps.length === 0
-                                    ? 'bridge'
-                                    : 'swap');
-                                return (
-                                  <>
-                              <p>
-                                <strong>Accuracy:</strong> {m.report.accuracy}
-                              </p>
-                              <p>
-                                <strong>Gas (est.):</strong> {m.report.gasFeeEstimate}
-                              </p>
-                              <p>
-                                <strong>Optimistic:</strong> {m.report.optimisticEstimate}
-                              </p>
-                              <div className="grid grid-cols-1 gap-2 mt-2">
-                                {reportType === 'bridge' ? (
-                                  <div>
-                                    <p className="font-medium text-foreground">Top bridges</p>
-                                    {m.report.topBridges.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground">
-                                        {m.report.topBridges.slice(0, 5).map((b, i) => (
-                                          <li key={i}>
-                                            {b.name} ({b.score})
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-muted-foreground">No bridge routes found.</p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <p className="font-medium text-foreground">Top swaps</p>
-                                    {m.report.topSwaps.length ? (
-                                      <ul className="list-disc list-inside text-muted-foreground">
-                                        {m.report.topSwaps.slice(0, 5).map((s, i) => (
-                                          <li key={i}>
-                                            {s.name} ({s.score})
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-muted-foreground">No swap routes found.</p>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              {m.report.workflow?.length ? (
-                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
-                                  <p className="font-medium text-foreground">Workflow report</p>
-                                  <div className="space-y-1 text-muted-foreground">
-                                    {m.report.workflow.map((step, i) => (
-                                      <p key={i}>
-                                        {i + 1}. {step.name} ({step.status.toUpperCase()}) -- {step.details}
-                                      </p>
-                                    ))}
-                                  </div>
-                                  {m.report.selectionReason ? (
-                                    <p className="text-muted-foreground">
-                                      Why this protocol: {m.report.selectionReason}
-                                    </p>
-                                  ) : null}
-                                </div>
-                              ) : null}
-                              {m.report.ranking?.length ? (
-                                <div className="pt-2 border-t border-gray-200/80 space-y-2">
-                                  <p className="font-medium text-foreground">Protocol ranking</p>
-                                  <div className="space-y-2 text-muted-foreground">
-                                    {(() => {
-                                      const fees = m.report.ranking
-                                        .slice(0, 5)
-                                        .map((r) => r.feeUSD ?? Number.POSITIVE_INFINITY);
-                                      const maxFee = Math.max(...fees);
-                                      const minFee = Math.min(...fees);
-                                      const range = Math.max(0.0001, maxFee - minFee);
-                                      return m.report.ranking.slice(0, 5).map((r) => {
-                                        const fee = r.feeUSD ?? maxFee;
-                                        const widthPct = Number.isFinite(fee)
-                                          ? 10 + ((fee - minFee) / range) * 90
-                                          : 10;
-                                        return (
-                                          <div
-                                            key={r.protocol}
-                                            className={`rounded-md border px-2 py-1.5 ${
-                                              r.isSelected ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-gray-200'
-                                            }`}
-                                          >
-                                            <div className="flex items-center justify-between gap-2">
-                                              <span className="text-foreground">
-                                                {r.rank}. {r.protocol}
-                                              </span>
-                                              <span className="text-[11px]">
-                                                {r.feeUSD !== null && r.feeUSD !== undefined
-                                                  ? `$${r.feeUSD.toFixed(4)}`
-                                                  : 'N/A'}
-                                              </span>
-                                            </div>
-                                            <div className="mt-1 h-1.5 w-full rounded bg-gray-200 overflow-hidden">
-                                              <div
-                                                className={`h-full rounded ${
-                                                  r.isSelected ? 'bg-emerald-400' : 'bg-blue-500'
-                                                }`}
-                                                style={{ width: `${Math.min(100, Math.max(10, widthPct))}%` }}
-                                              />
-                                            </div>
-                                            {r.reason ? (
-                                              <p className="mt-1 text-[11px] text-muted-foreground">
-                                                {r.reason}
-                                              </p>
-                                            ) : null}
-                                          </div>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                </div>
-                              ) : null}
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div
-                        className={`mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${
-                          m.role === 'assistant' ? 'pl-9' : 'justify-end'
-                        }`}
+                        className={`mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${m.role === 'assistant' ? 'pl-9' : 'justify-end'
+                          }`}
                       >
                         <span>{formatMessageTime(m.at)}</span>
                         <button
@@ -767,7 +667,7 @@ export default function AppPage() {
                 </div>
               </div>
 
-              <div className="shrink-0 p-4 border-t border-[#1e40af]/10 bg-white">
+              <div className="relative z-10 shrink-0 p-4 border-t border-[#1e40af]/10 bg-white">
                 <div className="flex gap-2">
                   <Textarea
                     placeholder="e.g. Swap 100 USDC to ETH at best rate within 1 hour"
@@ -792,12 +692,14 @@ export default function AppPage() {
             {trackingOpen && (
               <div className="w-[35%] min-w-0 flex-1 h-full flex flex-col overflow-hidden">
                 <ProcessTrackingPanel
+                  key={trackingRunId}
                   open={trackingOpen}
                   onClose={handleTrackingClose}
                   prompt={trackingPrompt}
                   report={trackingReport}
                   onComplete={handleTrackingComplete}
-                  onStepComplete={() => {}}
+                  onStepComplete={handleStepComplete}
+                  onExecuteStart={handleExecuteStart}
                 />
               </div>
             )}

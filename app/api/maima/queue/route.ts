@@ -1,5 +1,5 @@
 /**
- * GET /api/maima/requests
+ * GET /api/maima/queue
  * Returns active requests for CRE workflows (maima, bridge, swap) to poll.
  */
 
@@ -15,7 +15,7 @@ export async function GET() {
       count: requests.length,
     });
   } catch (error) {
-    console.error('[maima/requests] Error:', error);
+    console.error('[maima/queue] Error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch requests' },
       { status: 500 }

@@ -5,6 +5,13 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        pathname: '/lifinance/types/main/src/assets/icons/**',
+      },
+    ],
   },
   // Acknowledge Turbopack for next dev (webpack config is for next build --webpack only)
   turbopack: {},

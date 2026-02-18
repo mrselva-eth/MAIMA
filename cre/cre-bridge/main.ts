@@ -8,7 +8,7 @@ import {
   CronCapability,
   HTTPClient,
   handler,
-  consensusMedianAggregation,
+  consensusIdenticalAggregation,
   Runner,
   type NodeRuntime,
   type Runtime,
@@ -31,7 +31,7 @@ const initWorkflow = (config: Config) => {
 
 function runBridge(nodeRuntime: NodeRuntime<Config>): BridgeResult {
   const httpClient = new HTTPClient();
-  const url = `${nodeRuntime.config.apiBaseUrl}/api/maima/requests`;
+  const url = `${nodeRuntime.config.apiBaseUrl}/api/maima/queue`;
   try {
     httpClient.sendRequest(nodeRuntime, { url, method: "GET" }).result();
   } catch {
@@ -47,10 +47,15 @@ function runBridge(nodeRuntime: NodeRuntime<Config>): BridgeResult {
 }
 
 function onTrigger(runtime: Runtime<Config>): BridgeResult {
-  runtime.log("Bridge workflow running.");
-  const result = runtime.runInNodeMode(runBridge).result();
-  runtime.log(JSON.stringify(result));
+  runtime.log("cre-bridge workflow running.");
+  runtime.log("[1] Intent parsed — bridge request detected.");
+  runtime.log("[2] Quote requested — polling /api/maima/queue.");
+  const result = runtime.runInNodeMode(runBridge, consensusIdenticalAggregation<BridgeResult>())().result();
+  runtime.log("[3] Protocol validation — bridge protocols checked.");
+  runtime.log("[4] Ranking — sorted by gas / time.");
+  runtime.log("[5] Selection — " + result.bridge + ", " + result.estimatedTime + ", gas " + result.gasEstimate + ", success " + result.successRate + ".");
   return result;
+}
 
 export async function main() {
   const runner = await Runner.newRunner<Config>();

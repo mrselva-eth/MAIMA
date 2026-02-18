@@ -4,12 +4,12 @@ import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 
 const FEATURES = [
-  { image: '/images/features/f1.png', title: 'Chat Interface', desc: 'Describe swap or bridge in natural language.' },
-  { image: '/images/features/f2.png', title: 'Report', desc: 'Accuracy, gas fee, optimistic estimates.' },
-  { image: '/images/features/f3.png', title: 'Top Bridges & Swaps', desc: 'Best options for your need.' },
-  { image: '/images/features/f4.png', title: 'CRE Workflows', desc: 'cre-maima (main), cre-bridge, cre-swap under cre/.' },
-  { image: '/images/features/f5.png', title: 'Process Tracking', desc: 'See protocols checked in the app and choose one.' },
-  { image: '/images/features/f6.png', title: 'DeFi Optimistic', desc: 'Swap & bridge analysis by MAIMA AI.' },
+  { image: '/images/features/f1.png', title: 'Chat Interface', desc: 'Connect your wallet and describe what you want in plain language. e.g. Swap 100 USDC to ETH or bridge to Arbitrum.' },
+  { image: '/images/features/f2.png', title: 'Report', desc: 'MAIMA uses LI.FI to get routes, ranks them, and returns accuracy, gas estimate, and a recommended protocol with reason.' },
+  { image: '/images/features/f3.png', title: 'Top Protocols', desc: 'Ranked list of bridges or swaps for your pair with gas fees and why one is picked.' },
+  { image: '/images/features/f4.png', title: 'Process Tracking', desc: 'A panel shows the flow: input checked, protocols listed and checked, then top 4 with choose one.' },
+  { image: '/images/features/f5.png', title: 'Choose and Run', desc: 'Click one protocol in the panel. Run simulation or sign approval and swap in your wallet via LI.FI.' },
+  { image: '/images/features/f6.png', title: 'CRE Workflows', desc: 'Optional: cre-maima, cre-swap, cre-bridge under cre/ poll the app queue for scheduled runs or Chainlink deployment.' },
 ] as const;
 
 export default function Features() {
