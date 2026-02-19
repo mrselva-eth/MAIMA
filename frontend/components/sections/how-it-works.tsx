@@ -5,28 +5,28 @@ import Image from 'next/image';
 
 const steps = [
   {
-    title: 'Describe',
-    desc: 'In the app, describe what you want in plain language. Connect your wallet, then type e.g. "Swap 100 USDC to ETH" or "Bridge 500 USDT to Arbitrum".',
+    title: 'Submit Your Request',
+    desc: 'Type what you want in plain language — e.g. "Swap 100 USDC to ETH" or "Bridge 1 ETH from Base to Arbitrum". Connect your wallet and hit Send.',
   },
   {
-    title: 'Report',
-    desc: 'MAIMA calls LI.FI for routes, ranks them, and returns a report: accuracy, gas estimate, and a ranked list of protocols with the best pick and reason.',
+    title: 'API Enqueues & Spawns CRE',
+    desc: 'The API adds your request to the queue and spawns the CRE orchestrator (cre-maima). No separate backend to run — everything happens on demand.',
   },
   {
-    title: 'Top Protocols',
-    desc: 'The report shows the top bridges or swaps for your pair. You see protocol names, gas fees, and why one is recommended.',
+    title: 'Orchestrator Delegates',
+    desc: 'cre-maima polls the queue and delegates to cre-swap (for swaps) or cre-bridge (for bridges). Each workflow gets one request to process.',
   },
   {
-    title: 'Process Tracking',
-    desc: 'A tracking panel opens and shows the flow: input checked, protocols listed and checked, then the top 4 with "choose one".',
+    title: 'Fetch, Verify & Rank',
+    desc: 'cre-swap/cre-bridge fetches routes from LI.FI, verifies token prices with Chainlink, validates protocols, and ranks by gas, speed, and reliability.',
   },
   {
-    title: 'Choose and Run',
-    desc: 'Click one protocol in the panel. In simulation mode you see CRE output; otherwise you sign approval and swap in your wallet via LI.FI.',
+    title: 'See Top Protocols',
+    desc: 'The frontend shows the top 4 protocols with fees, duration, liquidity, and oracle status. The best route is highlighted with a clear reason.',
   },
   {
-    title: 'CRE Workflows',
-    desc: 'Optional: cre-maima, cre-swap, and cre-bridge under cre/ poll the app queue. Use them when running on a schedule or deploying to Chainlink.',
+    title: 'Choose & Execute',
+    desc: 'Click a protocol to run. Simulation mode runs the CRE workflow for display; real mode prepares a tx via LI.FI and you sign in MetaMask.',
   },
 ];
 
