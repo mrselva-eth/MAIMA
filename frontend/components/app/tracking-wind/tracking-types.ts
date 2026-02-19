@@ -1,4 +1,4 @@
-import type { AnalyzeReport } from '@/lib/maima-types';
+import type { AnalyzeReport } from '@/lib/maima';
 
 /** Theme blue used across the tracking panel */
 export const THEME_COLOR = '#1e40af';
@@ -51,8 +51,9 @@ export interface ProcessTrackingPanelProps {
   onClose: () => void;
   prompt: string;
   report: AnalyzeReport | null;
+  /** True while the app is polling for the report (CRE backend may still be processing). */
+  isWaitingForReport?: boolean;
   onComplete: (result: ProcessTrackingState['finalResult']) => void;
   onStepComplete: () => void;
-  /** Called when user selects a protocol (execute phase starting). Used to show loading in chat. */
   onExecuteStart?: () => void;
 }

@@ -1,6 +1,17 @@
 /**
- * Shared types for MAIMA analyze report
+ * MAIMA: types + in-memory stores (queue, reports, pending swap/bridge).
+ * Single module for all maima-related lib. Replace with DB in production.
  */
+
+// --- Types ---
+export type MaimaRequest = {
+  id: string;
+  prompt: string;
+  fromAddress?: string;
+  type: 'swap' | 'bridge' | 'both';
+  createdAt: string;
+  report?: unknown;
+};
 
 export type ReportToken = {
   address?: string;
@@ -28,20 +39,16 @@ export type ReportRoute = {
   fromToken?: ReportToken;
   toToken?: ReportToken;
   steps?: ReportStep[];
-  executionDuration?: number; // seconds
-  liquidityScore?: string;    // e.g. "High", "Medium", "Low"
-  reliabilityScore?: string;  // e.g. "99.9%"
+  executionDuration?: number;
+  liquidityScore?: string;
+  reliabilityScore?: string;
   tags?: string[];
 };
 
 export type AnalyzeReport = {
   accuracy: string;
   chainlink?: {
-    prices?: Array<{
-      symbol: string;
-      price: string;
-      updatedAt?: number;
-    }>;
+    prices?: Array<{ symbol: string; price: string; updatedAt?: number }>;
     verifiedBy?: string;
   };
   gasFeeEstimate: string;
@@ -53,12 +60,7 @@ export type AnalyzeReport = {
   routes?: ReportRoute[];
   bestRoute?: ReportRoute;
   rawRoute?: unknown;
-  workflow?: Array<{
-    name: string;
-    status: 'ok' | 'warn' | 'error';
-    details: string;
-    timestamp?: number;
-  }>;
+  workflow?: Array<{ name: string; status: 'ok' | 'warn' | 'error'; details: string; timestamp?: number }>;
   ranking?: Array<{
     protocol: string;
     feeUSD?: number | null;
@@ -71,6 +73,11 @@ export type AnalyzeReport = {
   }>;
   selectionReason?: string;
   intentType?: 'swap' | 'bridge';
-  /** When true, CRE simulation mode is on: real execution is disabled; CRE workflows are triggered. */
   simulationMode?: boolean;
 };
+
+// --- Stores ---
+export const maimaRequests = new Map<string, MaimaRequest>();
+export const maimaReports = new Map<string, unknown>();
+export const pendingSwapQueue: MaimaRequest[] = [];
+export const pendingBridgeQueue: MaimaRequest[] = [];
