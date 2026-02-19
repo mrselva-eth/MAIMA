@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import type { AnalyzeReport } from '@/lib/maima-types';
+import type { AnalyzeReport } from '@/lib/maima';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
 type ReportProtocolChartProps = {

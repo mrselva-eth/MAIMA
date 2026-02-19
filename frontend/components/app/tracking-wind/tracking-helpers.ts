@@ -1,4 +1,4 @@
-import type { ReportRoute } from '@/lib/maima-types';
+import type { ReportRoute } from '@/lib/maima';
 import { CHAIN_NAMES, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from './tracking-types';
 
 export function formatTime() {

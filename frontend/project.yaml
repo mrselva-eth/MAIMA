@@ -1,9 +1,10 @@
 # CRE project config (Chainlink Runtime Environment)
-# Run: cre workflow simulate cre/cre-maima --target staging-settings
-# From repo root (E:\MAIMA)
+# Used by: cre workflow simulate, cre workflow deploy
+# Run cre commands from this directory (repo root).
 
 name: intent-based-smart-wallet
 
+# RPC URLs for supported chains (required for simulate/deploy)
 staging-settings:
   rpcs:
     - chain-name: ethereum-testnet-sepolia

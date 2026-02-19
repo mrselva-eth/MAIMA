@@ -10,7 +10,7 @@ import { BackgroundCircles } from '@/components/design/BackgroundCircles';
 import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
 import { Copy, Check, ShieldCheck } from 'lucide-react';
-import type { AnalyzeReport } from '@/lib/maima-types';
+import type { AnalyzeReport } from '@/lib/maima';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 
 const THEME_COLOR = '#1e40af';
@@ -65,7 +65,7 @@ export default function AppPage() {
   const [trackingPrompt, setTrackingPrompt] = useState('');
   const [trackingReport, setTrackingReport] =
     useState<AnalyzeReport | null>(null);
-  // Bumps on every new Send so the tracking panel remounts (prevents stale state after a completed run)
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [trackingRunId, setTrackingRunId] = useState(0);
   const [processingMessageId, setProcessingMessageId] =
     useState<string | null>(null);
@@ -91,6 +91,45 @@ export default function AppPage() {
     processingMessageId &&
     processingMessage &&
     !processingMessage.report;
+
+  // Poll for report when we have a pending requestId (non-blocking; UI shows "Waiting for CRE…")
+  useEffect(() => {
+    if (!pendingRequestId || !processingMessageId) return;
+    const pollIntervalMs = 1500;
+    const pollTimeoutMs = 60000;
+    const started = Date.now();
+    const id = setInterval(async () => {
+      if (Date.now() - started >= pollTimeoutMs) {
+        setPendingRequestId(null);
+        return;
+      }
+      try {
+        const r = await fetch(`/api/maima?action=report&requestId=${encodeURIComponent(pendingRequestId)}`);
+        const j = await r.json();
+        if (j.success && j.report != null) {
+          const report = j.report as AnalyzeReport;
+          setTrackingReport(report);
+          setPendingRequestId(null);
+          if (!isSimulationMode) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === processingMessageId
+                  ? {
+                      ...m,
+                      report,
+                      content: 'Report ready. Review why each protocol was ranked and choose the best option.',
+                    }
+                  : m
+              )
+            );
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }, pollIntervalMs);
+    return () => clearInterval(id);
+  }, [pendingRequestId, processingMessageId, isSimulationMode]);
 
   const copyMessage = (m: Message) => {
     let text = m.content;
@@ -186,10 +225,10 @@ export default function AppPage() {
     }
 
     try {
-      const res = await fetch('/api/maima/analyze', {
+      const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, fromAddress: address }),
+        body: JSON.stringify({ action: 'analyze', prompt, fromAddress: address }),
       });
 
       const data = await res.json();
@@ -206,22 +245,17 @@ export default function AppPage() {
         );
         return;
       }
-      const report = data.report as AnalyzeReport | undefined;
-      setTrackingReport(report ?? null);
-      if (report && !isSimulationMode) {
+      const requestId = data.requestId as string | undefined;
+      if (!requestId) {
+        setTrackingReport(null);
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === processingId
-              ? {
-                ...m,
-                report,
-                content:
-                  'Report ready. Review why each protocol was ranked and choose the best option.',
-              }
-              : m
+            m.id === processingId ? { ...m, content: 'No requestId from analyze.' } : m
           )
         );
+        return;
       }
+      setPendingRequestId(requestId);
     } catch (err) {
       console.error(err);
       setTrackingReport(null);
@@ -279,6 +313,7 @@ export default function AppPage() {
     setTrackingOpen(false);
     setTrackingPrompt('');
     setTrackingReport(null);
+    setPendingRequestId(null);
     setProcessingMessageId(null);
     setExecutionPendingMessageId(null);
   };
@@ -697,6 +732,7 @@ export default function AppPage() {
                   onClose={handleTrackingClose}
                   prompt={trackingPrompt}
                   report={trackingReport}
+                  isWaitingForReport={!!pendingRequestId}
                   onComplete={handleTrackingComplete}
                   onStepComplete={handleStepComplete}
                   onExecuteStart={handleExecuteStart}
