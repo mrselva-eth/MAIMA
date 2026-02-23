@@ -38,8 +38,8 @@ function toBase64(str: string): string {
   let result = "";
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i];
-    const b = bytes[i + 1];
-    const c = bytes[i + 2];
+    const b = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const c = i + 2 < bytes.length ? bytes[i + 2] : 0;
     result += key[a >> 2];
     result += key[((a & 3) << 4) | (b >> 4)];
     result += i + 1 < bytes.length ? key[((b & 15) << 2) | (c >> 6)] : "=";

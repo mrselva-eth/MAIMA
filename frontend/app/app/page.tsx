@@ -115,10 +115,10 @@ export default function AppPage() {
               prev.map((m) =>
                 m.id === processingMessageId
                   ? {
-                      ...m,
-                      report,
-                      content: 'Report ready. Review why each protocol was ranked and choose the best option.',
-                    }
+                    ...m,
+                    report,
+                    content: 'Report ready. Review why each protocol was ranked and choose the best option.',
+                  }
                   : m
               )
             );
@@ -182,16 +182,54 @@ export default function AppPage() {
     if (!prompt || loading) return;
     setInput('');
 
+    const now = Date.now();
     const userMsg: Message = {
-      id: `u_${Date.now()}`,
+      id: `u_${now}`,
       role: 'user',
       content: prompt,
       at: new Date().toISOString(),
     };
+
+    // Validation
+    const p = prompt.toLowerCase();
+    const isSwapIntent = p.includes('swap') || p.includes('convert') || p.includes('exchange');
+    const isBridgeIntent = p.includes('bridge') || p.includes('across') || p.includes('transfer');
+
+    const isEthUsdc = (p.includes('eth') && p.includes('usdc'));
+    const isBaseAndArb = (p.includes('base') && p.includes('arbitrum'));
+
+    let errorContent = null;
+
+    if (isSwapIntent) {
+      if (!isEthUsdc) {
+        errorContent = "I currently only support swapping between **ETH** and **USDC**.";
+      }
+    } else if (isBridgeIntent) {
+      if (!isBaseAndArb) {
+        errorContent = "I currently only support bridging between **Base** and **Arbitrum**.";
+      }
+    } else {
+      errorContent = "I didn't recognize that request. You can ask me to **swap ETH/USDC** or **bridge between Base and Arbitrum**.";
+    }
+
+    if (errorContent) {
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        {
+          id: `a_${now}_unsupported`,
+          role: 'assistant',
+          content: `${errorContent}\n\n**Supported options:**\n- 🔄 **Swap**: ETH ↔ USDC on **Base**\n- bridge: ETH between **Base** and **Arbitrum**`,
+          at: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
-    const processingId = `a_${Date.now()}`;
+    const processingId = `a_${now}_processing`;
     const processingMsg: Message = {
       id: processingId,
       role: 'assistant',
@@ -210,10 +248,8 @@ export default function AppPage() {
     setTrackingRunId((n) => n + 1);
     setExecutionPendingMessageId(null);
 
-    // Prompt ? intent mapping
-    let intent: '1' | '2' | '3' | '4' = '3';
-    const p = prompt.toLowerCase();
 
+    let intent: '1' | '2' | '3' | '4' = '3';
     if (p.includes('usdc') && p.includes('eth') && p.includes('base')) {
       intent = '2';
     } else if (p.includes('eth') && p.includes('usdc')) {
