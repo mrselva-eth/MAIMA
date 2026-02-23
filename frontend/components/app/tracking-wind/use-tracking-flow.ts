@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAccount, useSwitchChain, useWalletClient, usePublicClient } from 'wagmi';
 import { encodeFunctionData, erc20Abi } from 'viem';
-import type { ReportRoute } from '@/lib/maima-types';
+import type { ReportRoute } from '@/lib/maima';
 import {
   CRE_STREAM_DELAY_MS,
   PROTOCOL_CHECK_DELAY_MS,
@@ -42,6 +42,7 @@ export function useTrackingFlow({
   open,
   prompt,
   report,
+  isWaitingForReport = false,
   onComplete,
   onStepComplete,
   onExecuteStart,
@@ -206,7 +207,7 @@ export function useTrackingFlow({
     (async () => {
       const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
       try {
-        const res = await fetch('/api/cre/simulation', {
+        const res = await fetch('/api/cre', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'maima' }),
@@ -242,6 +243,27 @@ export function useTrackingFlow({
       onStepComplete();
     })();
   }, [open, report?.simulationMode, report?.intentType, report?.bestRoute, report?.selectionReason, prompt, onStepComplete]);
+
+  // When waiting for report, show CRE waiting message and tip after delay
+  useEffect(() => {
+    if (!open || !isWaitingForReport || report) return;
+    const t1 = setTimeout(() => {
+      setLogLines((prev) => {
+        if (prev.some((l) => l.includes('Waiting for CRE backend'))) return prev;
+        return [...prev, `[${formatTime()}] Waiting for CRE backend… (this may take 10–30s)`];
+      });
+    }, 2000);
+    const t2 = setTimeout(() => {
+      setLogLines((prev) => {
+        if (prev.some((l) => l.includes('cre workflow simulate'))) return prev;
+        return [...prev, `[${formatTime()}] Tip: Run CRE from repo root: cre workflow simulate cre/cre-maima --target staging-settings`];
+      });
+    }, 14000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [open, isWaitingForReport, report]);
 
   // Phase 1: Initial steps (skip when simulation mode)
   useEffect(() => {
@@ -396,7 +418,7 @@ export function useTrackingFlow({
       setIsStreamingExecuteLog(true);
       const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
       try {
-        const res = await fetch('/api/cre/simulation', {
+        const res = await fetch('/api/cre', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: inferredType }),
@@ -502,10 +524,10 @@ export function useTrackingFlow({
           toAddress: address,
         },
       };
-      const stepRes = await fetch('/api/maima/routing?action=step', {
+      const stepRes = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(stepPayload),
+        body: JSON.stringify({ action: 'step', step: stepPayload }),
       });
       const stepData = await stepRes.json();
       const txRequest = stepData?.transactionRequest;
@@ -561,7 +583,7 @@ export function useTrackingFlow({
           statusParams.set('bridge', selectedRoute.mainTool);
         }
         statusParams.set('action', 'status');
-        const statusRes = await fetch(`/api/maima/routing?${statusParams.toString()}`);
+        const statusRes = await fetch(`/api/maima?${statusParams.toString()}`);
         const statusData = await statusRes.json();
         const receiving = statusData?.receiving;
         if (receiving?.amount && receiving?.token?.decimals) {
