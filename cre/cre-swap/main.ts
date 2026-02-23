@@ -41,8 +41,8 @@ function toBase64(str: string): string {
   let result = "";
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i];
-    const b = bytes[i + 1];
-    const c = bytes[i + 2];
+    const b = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const c = i + 2 < bytes.length ? bytes[i + 2] : 0;
     result += key[a >> 2];
     result += key[((a & 3) << 4) | (b >> 4)];
     result += i + 1 < bytes.length ? key[((b & 15) << 2) | (c >> 6)] : "=";
@@ -148,8 +148,8 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   if (toSymbol && toSymbol !== fromSymbol) {
     try {
       const pr = httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima?action=chainlink-price&symbol=${encodeURIComponent(toSymbol)}&chainId=${clChainId}`, method: "GET" }).result();
-      const prData = JSON.parse(new TextDecoder().decode(pr.body)) as { price?: number; updatedAt?: number };
-      if (prData.price != null) verifiedPrices.push({ symbol: toSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt });
+      const prData = JSON.parse(new TextDecoder().decode(pr.body)) as { price?: number; updatedAt0?: number };
+      if (prData.price != null) verifiedPrices.push({ symbol: toSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt0 });
     } catch {
       // ignore
     }

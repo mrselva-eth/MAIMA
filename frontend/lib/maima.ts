@@ -77,7 +77,15 @@ export type AnalyzeReport = {
 };
 
 // --- Stores ---
-export const maimaRequests = new Map<string, MaimaRequest>();
-export const maimaReports = new Map<string, unknown>();
-export const pendingSwapQueue: MaimaRequest[] = [];
-export const pendingBridgeQueue: MaimaRequest[] = [];
+// Wrap in globalThis for persistence across HMR reloads in development
+const globalMaima = globalThis as unknown as {
+  maimaRequests?: Map<string, MaimaRequest>;
+  maimaReports?: Map<string, unknown>;
+  pendingSwapQueue?: MaimaRequest[];
+  pendingBridgeQueue?: MaimaRequest[];
+};
+
+export const maimaRequests = globalMaima.maimaRequests ||= new Map<string, MaimaRequest>();
+export const maimaReports = globalMaima.maimaReports ||= new Map<string, unknown>();
+export const pendingSwapQueue = globalMaima.pendingSwapQueue ||= [];
+export const pendingBridgeQueue = globalMaima.pendingBridgeQueue ||= [];
