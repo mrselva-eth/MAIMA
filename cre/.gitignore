@@ -3,6 +3,7 @@
 out/
 
 # Generated build outputs (CRE workflow compile)
+pnpm-lock.yaml
 tmp.js
 tmp.wasm
 **/tmp.js

@@ -154,21 +154,29 @@ export default function AppPage() {
     const r = m.report;
     const ts = new Date(m.at).toLocaleString();
     const rows = (r?.ranking ?? []).slice(0, 5).map((rank, i) => `
-      <tr style="background:${i % 2 === 0 ? '#f8faff' : '#fff'}">
-        <td style="padding:8px 12px;font-weight:600;color:#1e40af">#${rank.rank ?? i + 1}</td>
-        <td style="padding:8px 12px;font-weight:600">${rank.protocol}</td>
-        <td style="padding:8px 12px">${rank.feeUSD !== null && rank.feeUSD !== undefined ? '$' + Number(rank.feeUSD).toFixed(4) : 'N/A'}</td>
-        <td style="padding:8px 12px">${rank.executionDuration ? Math.round(rank.executionDuration) + 's' : 'N/A'}</td>
-        <td style="padding:8px 12px;color:#555">${rank.reason ?? ''}</td>
+      <tr>
+        <td style="padding:6px 12px;font-weight:600;color:#1e40af">#${rank.rank ?? i + 1}</td>
+        <td style="padding:6px 12px;font-weight:600">${rank.protocol}</td>
+        <td style="padding:6px 12px">${rank.feeUSD !== null && rank.feeUSD !== undefined ? '$' + Number(rank.feeUSD).toFixed(4) : 'N/A'}</td>
+        <td style="padding:6px 12px">${rank.executionDuration ? Math.round(rank.executionDuration) + 's' : 'N/A'}</td>
+        <td style="padding:6px 12px;color:#555">${rank.reason ?? ''}</td>
       </tr>`).join('');
 
     const chainlinkRows = r?.chainlink?.prices?.length
-      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">$${Number(c.price).toFixed(4)}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`).join('')
+      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => {
+        const raw = String(c.price ?? '').replace(/^\$/, '');
+        const num = Number(raw);
+        const displayPrice = Number.isFinite(num) ? `$${num.toFixed(2)}` : c.price;
+        return `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">${displayPrice}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`;
+      }).join('')
       : '';
+
 
     const workflowRows = r?.workflow?.length
       ? r.workflow.map((s, i) => `<tr><td style="padding:6px 12px">${i + 1}. ${s.name}</td><td style="padding:6px 12px;text-transform:uppercase;font-weight:600;color:${s.status === 'ok' ? '#059669' : '#dc2626'}">${s.status}</td><td style="padding:6px 12px;color:#555">${s.details ?? ''}</td></tr>`).join('')
       : '';
+
+    const logoUrl = `${window.location.origin}/images/logo.png`;
 
     const html = `<!DOCTYPE html>
 <html>
@@ -177,9 +185,12 @@ export default function AppPage() {
   <title>MAIMA Analysis Report</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px 48px;max-width:900px;margin:0 auto}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px 48px;max-width:900px;margin:0 auto;position:relative}
+    .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;opacity:0.10;pointer-events:none;z-index:0;user-select:none}
+    .watermark img{width:100%;height:100%;object-fit:contain}
+    .content{position:relative;z-index:1}
     .header{display:flex;align-items:center;gap:16px;border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:24px}
-    .logo{width:48px;height:48px;background:#1e40af;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:800}
+    .logo-img{width:48px;height:48px;object-fit:contain;border-radius:10px}
     h1{font-size:22px;color:#1e40af;font-weight:700}
     .sub{font-size:12px;color:#777;margin-top:2px}
     .section{margin-bottom:24px}
@@ -190,13 +201,16 @@ export default function AppPage() {
     table{width:100%;border-collapse:collapse;font-size:12.5px;border:1px solid #e5e7ef;border-radius:8px;overflow:hidden}
     thead{background:#1e40af;color:#fff}
     th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
-    .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px}
-    @media print{body{padding:20px 28px}}
+    .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .footer img{width:18px;height:18px;object-fit:contain;opacity:0.5}
+    @media print{body{padding:20px 28px}.watermark{position:fixed}}
   </style>
 </head>
 <body>
+  <div class="watermark"><img src="${logoUrl}" alt="" /></div>
+  <div class="content">
   <div class="header">
-    <div class="logo">M</div>
+    <img class="logo-img" src="${logoUrl}" alt="MAIMA" />
     <div>
       <h1>MAIMA Analysis Report</h1>
       <div class="sub">Generated · ${ts}</div>
@@ -251,7 +265,8 @@ export default function AppPage() {
     </div>
   </div>` : ''}
 
-  <div class="footer">MAIMA · AI-Powered DeFi Intent Analyzer · Simulation Report</div>
+  <div class="footer"><img src="${logoUrl}" alt="" />MAIMA · AI-Powered DeFi Intent Analyzer · Simulation Report</div>
+  </div>
   <script>window.onload=()=>{window.print();}</script>
 </body>
 </html>`;
