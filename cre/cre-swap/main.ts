@@ -17,7 +17,6 @@ import {
 type Config = {
   schedule: string;
   apiBaseUrl: string;
-  simulationMode?: boolean;
 };
 
 const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -89,7 +88,7 @@ function parseIntent(prompt: string, fromAddress: string): Record<string, unknow
     fromTokenAddress: fromToken,
     toTokenAddress: toToken,
     fromAmount,
-    fromAddress: fromAddress || "0x0000000000000000000000000000000000000000",
+    fromAddress: fromAddress === "0x0000000000000000000000000000000000000000" || !fromAddress ? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" : fromAddress,
     options: { allowSwitchChain: true },
   };
 }
@@ -99,7 +98,6 @@ type SwapProcessResult = { processed: boolean; requestId: string; timestamp: num
 function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   const httpClient = new HTTPClient();
   const base = nodeRuntime.config.apiBaseUrl;
-  const simulationMode = nodeRuntime.config.simulationMode === true;
 
   const pendingResp = httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima?action=pending-swap`, method: "GET" }).result();
   const pendingText = new TextDecoder().decode(pendingResp.body);
@@ -112,7 +110,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   const request = pendingData.request;
   if (!request?.id) return { processed: false, requestId: "", timestamp: Date.now() };
 
-  const payload = parseIntent(request.prompt, request.fromAddress ?? "0x0");
+  const payload = parseIntent(request.prompt, request.fromAddress ?? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
   const quoteBody = toBase64(JSON.stringify({ action: "quote", payload }));
   const quoteResp = httpClient
     .sendRequest(nodeRuntime, {
@@ -268,7 +266,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
     ranking,
     selectionReason: bestRoute ? `Selected ${bestRoute.mainTool}` : "No valid route",
     intentType: "swap" as const,
-    ...(simulationMode ? { simulationMode: true } : {}),
+    simulationMode: true,
   };
 
   const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report }));

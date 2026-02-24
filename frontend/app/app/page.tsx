@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAccount } from 'wagmi';
 import Navbar from '@/components/sections/navbar';
-import { RequireWallet } from '@/context/RequireWallet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { BackgroundCircles } from '@/components/design/BackgroundCircles';
@@ -12,6 +10,8 @@ import Image from 'next/image';
 import { Copy, Check, ShieldCheck } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
+import { RequireWallet } from '@/context/RequireWallet';
+import { useAccount } from 'wagmi';
 
 const THEME_COLOR = '#1e40af';
 
@@ -56,6 +56,7 @@ type Message = {
 };
 
 export default function AppPage() {
+  const { address } = useAccount();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -75,18 +76,13 @@ export default function AppPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement>(null);
   const chatFollowTailRef = useRef(true);
-  const { address } = useAccount();
   const { getLogoUrl } = useProtocolLogos();
 
-  const isSimulationMode =
-    typeof process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE !== 'undefined' &&
-    process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE === 'on';
 
   const processingMessage = processingMessageId
     ? messages.find((m) => m.id === processingMessageId)
     : null;
   const reportNotYetShown =
-    isSimulationMode &&
     trackingOpen &&
     processingMessageId &&
     processingMessage &&
@@ -110,26 +106,13 @@ export default function AppPage() {
           const report = j.report as AnalyzeReport;
           setTrackingReport(report);
           setPendingRequestId(null);
-          if (!isSimulationMode) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === processingMessageId
-                  ? {
-                    ...m,
-                    report,
-                    content: 'Report ready. Review why each protocol was ranked and choose the best option.',
-                  }
-                  : m
-              )
-            );
-          }
         }
       } catch {
         // ignore
       }
     }, pollIntervalMs);
     return () => clearInterval(id);
-  }, [pendingRequestId, processingMessageId, isSimulationMode]);
+  }, [pendingRequestId, processingMessageId]);
 
   const copyMessage = (m: Message) => {
     let text = m.content;
@@ -202,14 +185,14 @@ export default function AppPage() {
 
     if (isSwapIntent) {
       if (!isEthUsdc) {
-        errorContent = "I currently only support swapping between **ETH** and **USDC**.";
+        errorContent = "I currently only support swapping between ETH and USDC.";
       }
     } else if (isBridgeIntent) {
       if (!isBaseAndArb) {
-        errorContent = "I currently only support bridging between **Base** and **Arbitrum**.";
+        errorContent = "I currently only support bridging between Base and Arbitrum.";
       }
     } else {
-      errorContent = "I didn't recognize that request. You can ask me to **swap ETH/USDC** or **bridge between Base and Arbitrum**.";
+      errorContent = "I didn't recognize that request. You can ask me to swap ETH/USDC or bridge between Base and Arbitrum.";
     }
 
     if (errorContent) {
@@ -219,7 +202,7 @@ export default function AppPage() {
         {
           id: `a_${now}_unsupported`,
           role: 'assistant',
-          content: `${errorContent}\n\n**Supported options:**\n- 🔄 **Swap**: ETH ↔ USDC on **Base**\n- bridge: ETH between **Base** and **Arbitrum**`,
+          content: `${errorContent}\n\nSupported options:\n- 🔄 Swap: ETH ↔ USDC on Base\n- bridge: ETH between Base and Arbitrum`,
           at: new Date().toISOString(),
         },
       ]);
@@ -264,7 +247,7 @@ export default function AppPage() {
       const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyze', prompt, fromAddress: address }),
+        body: JSON.stringify({ action: 'analyze', prompt, fromAddress: address ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045' }),
       });
 
       const data = await res.json();
@@ -308,7 +291,7 @@ export default function AppPage() {
   };
 
   const handleStepComplete = () => {
-    if (!isSimulationMode || !processingMessageId || !trackingReport) return;
+    if (!processingMessageId || !trackingReport) return;
     setMessages((prev) =>
       prev.map((m) =>
         m.id === processingMessageId
@@ -415,7 +398,6 @@ export default function AppPage() {
                             }`}
                         >
                           {m.role === 'assistant' &&
-                            isSimulationMode &&
                             m.id === processingMessageId &&
                             !m.report ? (
                             <div className="flex flex-col items-center justify-center gap-4 py-6 min-w-[200px]">
