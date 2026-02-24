@@ -9,6 +9,7 @@ import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrac
 import Image from 'next/image';
 import { Copy, Check, ShieldCheck } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima';
+import type { IntentResult } from '@/app/api/intent/route';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
 import { RequireWallet } from '@/context/RequireWallet';
 import { useAccount } from 'wagmi';
@@ -173,44 +174,64 @@ export default function AppPage() {
       at: new Date().toISOString(),
     };
 
-    // Validation
-    const p = prompt.toLowerCase();
-    const isSwapIntent = p.includes('swap') || p.includes('convert') || p.includes('exchange');
-    const isBridgeIntent = p.includes('bridge') || p.includes('across') || p.includes('transfer');
 
-    const isEthUsdc = (p.includes('eth') && p.includes('usdc'));
-    const isBaseAndArb = (p.includes('base') && p.includes('arbitrum'));
+    setMessages((prev) => [...prev, userMsg]);
+    setLoading(true);
 
-    let errorContent = null;
-
-    if (isSwapIntent) {
-      if (!isEthUsdc) {
-        errorContent = "I currently only support swapping between ETH and USDC.";
+    // AI Intent Analysis
+    let intent: IntentResult | null = null;
+    try {
+      const intentRes = await fetch('/api/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (intentRes.ok) {
+        intent = await intentRes.json() as IntentResult;
       }
-    } else if (isBridgeIntent) {
-      if (!isBaseAndArb) {
-        errorContent = "I currently only support bridging between Base and Arbitrum.";
-      }
-    } else {
-      errorContent = "I didn't recognize that request. You can ask me to swap ETH/USDC or bridge between Base and Arbitrum.";
+    } catch {
+      // fall through to keyword fallback below
     }
 
-    if (errorContent) {
+    // If AI returned an unsupported intent, show friendly error
+    if (intent && !intent.isValid) {
+      setLoading(false);
       setMessages((prev) => [
         ...prev,
-        userMsg,
         {
           id: `a_${now}_unsupported`,
           role: 'assistant',
-          content: `${errorContent}\n\nSupported options:\n- 🔄 Swap: ETH ↔ USDC on Base\n- bridge: ETH between Base and Arbitrum`,
+          content: intent!.errorMessage ??
+            "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.",
           at: new Date().toISOString(),
         },
       ]);
       return;
     }
 
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
+    // If AI failed entirely (null), do a basic keyword guard
+    if (!intent) {
+      const p2 = prompt.toLowerCase();
+      const isSwapIntent = /swap|convert|exchange/.test(p2);
+      const isBridgeIntent = /bridge|transfer|move.*to|send.*to/.test(p2);
+      const isEthUsdc = p2.includes('eth') && p2.includes('usdc');
+      const isBaseAndArb = p2.includes('base') && (p2.includes('arbitrum') || p2.includes('arb'));
+      if (isSwapIntent && !isEthUsdc) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support swapping between ETH and USDC.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
+        return;
+      }
+      if (isBridgeIntent && !isBaseAndArb) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support bridging between Base and Arbitrum.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
+        return;
+      }
+      if (!isSwapIntent && !isBridgeIntent) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.", at: new Date().toISOString() }]);
+        return;
+      }
+    }
 
     const processingId = `a_${now}_processing`;
     const processingMsg: Message = {
@@ -232,22 +253,18 @@ export default function AppPage() {
     setExecutionPendingMessageId(null);
 
 
-    let intent: '1' | '2' | '3' | '4' = '3';
-    if (p.includes('usdc') && p.includes('eth') && p.includes('base')) {
-      intent = '2';
-    } else if (p.includes('eth') && p.includes('usdc')) {
-      intent = '1';
-    } else if (p.includes('arbitrum') && p.includes('base')) {
-      intent = '4';
-    } else if (p.includes('base') && p.includes('arbitrum')) {
-      intent = '3';
-    }
 
     try {
       const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyze', prompt, fromAddress: address ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045' }),
+        body: JSON.stringify({
+          action: 'analyze',
+          prompt,
+          fromAddress: address ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+          // Pass AI-parsed intent type so backend can skip regex
+          intentType: intent?.type ?? undefined,
+        }),
       });
 
       const data = await res.json();
