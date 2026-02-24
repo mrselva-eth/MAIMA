@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BackgroundCircles } from '@/components/design/BackgroundCircles';
 import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
-import { Copy, Check, ShieldCheck } from 'lucide-react';
+import { Copy, Check, ShieldCheck, Download } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima';
 import type { IntentResult } from '@/app/api/intent/route';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
@@ -149,6 +149,120 @@ export default function AppPage() {
       setTimeout(() => setCopiedId(null), 2000);
     });
   };
+
+  const downloadReport = (m: Message) => {
+    const r = m.report;
+    const ts = new Date(m.at).toLocaleString();
+    const rows = (r?.ranking ?? []).slice(0, 5).map((rank, i) => `
+      <tr style="background:${i % 2 === 0 ? '#f8faff' : '#fff'}">
+        <td style="padding:8px 12px;font-weight:600;color:#1e40af">#${rank.rank ?? i + 1}</td>
+        <td style="padding:8px 12px;font-weight:600">${rank.protocol}</td>
+        <td style="padding:8px 12px">${rank.feeUSD !== null && rank.feeUSD !== undefined ? '$' + Number(rank.feeUSD).toFixed(4) : 'N/A'}</td>
+        <td style="padding:8px 12px">${rank.executionDuration ? Math.round(rank.executionDuration) + 's' : 'N/A'}</td>
+        <td style="padding:8px 12px;color:#555">${rank.reason ?? ''}</td>
+      </tr>`).join('');
+
+    const chainlinkRows = r?.chainlink?.prices?.length
+      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">$${Number(c.price).toFixed(4)}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`).join('')
+      : '';
+
+    const workflowRows = r?.workflow?.length
+      ? r.workflow.map((s, i) => `<tr><td style="padding:6px 12px">${i + 1}. ${s.name}</td><td style="padding:6px 12px;text-transform:uppercase;font-weight:600;color:${s.status === 'ok' ? '#059669' : '#dc2626'}">${s.status}</td><td style="padding:6px 12px;color:#555">${s.details ?? ''}</td></tr>`).join('')
+      : '';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MAIMA Analysis Report</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px 48px;max-width:900px;margin:0 auto}
+    .header{display:flex;align-items:center;gap:16px;border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:24px}
+    .logo{width:48px;height:48px;background:#1e40af;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:800}
+    h1{font-size:22px;color:#1e40af;font-weight:700}
+    .sub{font-size:12px;color:#777;margin-top:2px}
+    .section{margin-bottom:24px}
+    h2{font-size:14px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;border-bottom:1px solid #e5e7ef;padding-bottom:6px}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 12px;font-size:13px}
+    .label{color:#666;font-weight:500}
+    .value{color:#111;font-weight:600}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;border:1px solid #e5e7ef;border-radius:8px;overflow:hidden}
+    thead{background:#1e40af;color:#fff}
+    th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+    .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px}
+    @media print{body{padding:20px 28px}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">M</div>
+    <div>
+      <h1>MAIMA Analysis Report</h1>
+      <div class="sub">Generated · ${ts}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Summary</h2>
+    <div class="kv">
+      <span class="label">Intent Type</span><span class="value">${r?.intentType ?? 'N/A'}</span>
+      <span class="label">Accuracy</span><span class="value">${r?.accuracy ?? 'N/A'}</span>
+      <span class="label">Gas Fee Estimate</span><span class="value">${r?.gasFeeEstimate ?? 'N/A'}</span>
+      <span class="label">Optimistic Estimate</span><span class="value">${r?.optimisticEstimate ?? 'N/A'}</span>
+      ${r?.selectionReason ? `<span class="label">Selection Reason</span><span class="value">${r.selectionReason}</span>` : ''}
+      ${r?.summary ? `<span class="label">Summary</span><span class="value">${r.summary}</span>` : ''}
+    </div>
+  </div>
+
+  ${rows ? `<div class="section">
+    <h2>Protocol Ranking</h2>
+    <table>
+      <thead><tr><th>Rank</th><th>Protocol</th><th>Fee</th><th>Est. Time</th><th>Reason</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${chainlinkRows ? `<div class="section">
+    <h2>Chainlink Oracle Prices</h2>
+    <table>
+      <thead><tr><th>Pair</th><th>Price</th><th>Status</th></tr></thead>
+      <tbody>${chainlinkRows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${workflowRows ? `<div class="section">
+    <h2>Workflow Steps</h2>
+    <table>
+      <thead><tr><th>Step</th><th>Status</th><th>Details</th></tr></thead>
+      <tbody>${workflowRows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${m.result ? `<div class="section">
+    <h2>Execution Result</h2>
+    <div class="kv">
+      <span class="label">Protocol</span><span class="value">${m.result.protocol}</span>
+      <span class="label">Pair</span><span class="value">${m.result.pair}</span>
+      <span class="label">Fee</span><span class="value">${m.result.fee}</span>
+      <span class="label">Input</span><span class="value">${m.result.inputAmount}</span>
+      <span class="label">Output</span><span class="value">${m.result.outputAmount}</span>
+      <span class="label">Tx Hash</span><span class="value" style="word-break:break-all;font-size:11px">${m.result.txHash}</span>
+    </div>
+  </div>` : ''}
+
+  <div class="footer">MAIMA · AI-Powered DeFi Intent Analyzer · Simulation Report</div>
+  <script>window.onload=()=>{window.print();}</script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
 
   useEffect(() => {
     const el = chatScrollContainerRef.current;
@@ -723,6 +837,17 @@ export default function AppPage() {
                             <Copy className="w-3.5 h-3.5" />
                           )}
                         </button>
+                        {(m.report || m.result) && (
+                          <button
+                            type="button"
+                            onClick={() => downloadReport(m)}
+                            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity text-muted-foreground hover:text-blue-500"
+                            aria-label="Download report"
+                            title="Download report as JSON"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
