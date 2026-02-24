@@ -163,7 +163,9 @@ export async function POST(req: NextRequest) {
         const prompt = (body.prompt as string) ?? '';
         const fromAddress = (body.fromAddress as string) ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
         const requestId = `maima_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-        const type = inferType(prompt.toLowerCase());
+        // Accept AI-parsed type from client; fall back to regex
+        const clientType = body.intentType as 'swap' | 'bridge' | undefined;
+        const type = (clientType === 'swap' || clientType === 'bridge') ? clientType : inferType(prompt.toLowerCase());
         maimaRequests.set(requestId, { id: requestId, prompt, fromAddress, type, createdAt: new Date().toISOString() });
         if (type === 'swap' || type === 'bridge') spawnCreWorkflow('cre-maima');
         return NextResponse.json({ success: true, requestId });
