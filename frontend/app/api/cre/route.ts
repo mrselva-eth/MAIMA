@@ -23,9 +23,6 @@ const WORKFLOW_MAP: Record<string, 'cre-maima' | 'cre-swap' | 'cre-bridge'> = {
 };
 
 export async function POST(req: NextRequest) {
-  if (process.env.CRE_SIMULATION_MODE !== 'on') {
-    return NextResponse.json({ success: false, error: 'CRE simulation mode is not enabled' }, { status: 400 });
-  }
   let body: { action?: string; type?: string } = {};
   try {
     body = await req.json();

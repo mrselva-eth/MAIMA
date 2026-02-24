@@ -134,7 +134,6 @@ export async function GET(req: NextRequest) {
           env: {
             LIFI_API_KEY: process.env.LIFI_API_KEY ? 'present' : 'missing',
             CRE_CLI_PATH: process.env.CRE_CLI_PATH,
-            CRE_SIMULATION_MODE: process.env.CRE_SIMULATION_MODE,
           },
           stores: {
             requests: Array.from(maimaRequests.entries()),
@@ -162,11 +161,11 @@ export async function POST(req: NextRequest) {
     switch (action) {
       case 'analyze': {
         const prompt = (body.prompt as string) ?? '';
-        const fromAddress = (body.fromAddress as string) ?? '0x0000000000000000000000000000000000000000';
+        const fromAddress = (body.fromAddress as string) ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
         const requestId = `maima_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
         const type = inferType(prompt.toLowerCase());
         maimaRequests.set(requestId, { id: requestId, prompt, fromAddress, type, createdAt: new Date().toISOString() });
-        if (process.env.CRE_SIMULATION_MODE === 'on') spawnCreWorkflow('cre-maima');
+        if (type === 'swap' || type === 'bridge') spawnCreWorkflow('cre-maima');
         return NextResponse.json({ success: true, requestId });
       }
       case 'cre-report': {
@@ -199,92 +198,86 @@ export async function POST(req: NextRequest) {
         console.log('[maima] run-bridge pushed', request.id, 'queue length', pendingBridgeQueue.length);
         spawnCreWorkflow('cre-bridge');
 
-        // Fast-track for UI if simulation mode is on
-        if (process.env.CRE_SIMULATION_MODE === 'on') {
-          setTimeout(() => {
-            if (!maimaReports.has(request.id)) {
-              console.log('[maima] Simulation fast-track: generating bridge report for', request.id);
-              const bestRoute = {
-                id: "stargate-1",
-                type: "bridge" as const,
-                mainTool: "Stargate",
-                gasCostUSD: "14.20",
-                executionDuration: 380,
-                liquidityScore: "High",
-                reliabilityScore: "99.9%",
-                steps: [
-                  { type: "bridge", tool: "Stargate", action: "Lock on Base", estimate: "3 mins" },
-                  { type: "bridge", tool: "Stargate", action: "Mint on Arbitrum", estimate: "3 mins" }
-                ]
-              };
+        // Always trigger bridge report mock if simulation is active (default)
+        setTimeout(() => {
+          if (!maimaReports.has(request.id)) {
+            console.log('[maima] Simulation fast-track: generating bridge report for', request.id);
+            const bestRoute = {
+              id: "stargate-1",
+              type: "bridge" as const,
+              mainTool: "Stargate",
+              gasCostUSD: "14.20",
+              executionDuration: 380,
+              liquidityScore: "High",
+              reliabilityScore: "99.9%",
+              steps: [
+                { type: "bridge", tool: "Stargate", action: "Lock on Base", estimate: "3 mins" },
+                { type: "bridge", tool: "Stargate", action: "Mint on Arbitrum", estimate: "3 mins" }
+              ]
+            };
 
-              const mockReport = {
-                accuracy: "Oracle Verified (Chainlink)",
-                summary: "Best route found via Stargate (84% lower fees)",
-                timestamp: Date.now(),
-                gasFeeEstimate: "$14.20",
-                optimisticEstimate: "Estimated 2 steps",
-                topBridges: [{ name: "Stargate", score: "98.5%" }, { name: "Across", score: "92.0%" }],
-                topSwaps: [],
-                intentType: "bridge",
-                chainlink: {
-                  prices: [{ symbol: "ETH", price: "$2500" }],
-                  verifiedBy: "Chainlink Oracle Network"
+            const mockReport = {
+              accuracy: "Oracle Verified (Chainlink)",
+              summary: "Best route found via Stargate (84% lower fees)",
+              timestamp: Date.now(),
+              gasFeeEstimate: "$14.20",
+              optimisticEstimate: "Estimated 2 steps",
+              topBridges: [{ name: "Stargate", score: "98.5%" }, { name: "Across", score: "92.0%" }],
+              topSwaps: [],
+              intentType: "bridge",
+              chainlink: {
+                prices: [{ symbol: "ETH", price: "$2500" }],
+                verifiedBy: "Chainlink Oracle Network"
+              },
+              routes: [bestRoute],
+              bestRoute,
+              selectionReason: "Selected Stargate due to lowest fees and high reliability score.",
+              workflow: [
+                { name: "Detect Intent", status: "ok", details: "Bridge intent detected: ETH from Base to Arbitrum", timestamp: Date.now() },
+                { name: "Fetch Quotes", status: "ok", details: "Found 2 valid bridge routes", timestamp: Date.now() },
+                { name: "Verify Prices", status: "ok", details: "ETH price at $2500 verified via Chainlink", timestamp: Date.now() },
+                { name: "Select Route", status: "ok", details: "Stargate selected as optimal path", timestamp: Date.now() }
+              ],
+              ranking: [
+                {
+                  protocol: "Stargate",
+                  feeUSD: 14.20,
+                  executionDuration: 380,
+                  liquidityScore: "High",
+                  reliabilityScore: "99.9%",
+                  rank: 1,
+                  reason: "Best deal",
+                  isSelected: true
                 },
-                routes: [bestRoute],
-                bestRoute,
-                selectionReason: "Selected Stargate due to lowest fees and high reliability score.",
-                workflow: [
-                  { name: "Detect Intent", status: "ok", details: "Bridge intent detected: ETH from Base to Arbitrum", timestamp: Date.now() },
-                  { name: "Fetch Quotes", status: "ok", details: "Found 2 valid bridge routes", timestamp: Date.now() },
-                  { name: "Verify Prices", status: "ok", details: "ETH price at $2500 verified via Chainlink", timestamp: Date.now() },
-                  { name: "Select Route", status: "ok", details: "Stargate selected as optimal path", timestamp: Date.now() }
-                ],
-                ranking: [
-                  {
-                    protocol: "Stargate",
-                    feeUSD: 14.20,
-                    executionDuration: 380,
-                    liquidityScore: "High",
-                    reliabilityScore: "99.9%",
-                    rank: 1,
-                    reason: "Best deal",
-                    isSelected: true
-                  },
-                  {
-                    protocol: "Across",
-                    feeUSD: 18.50,
-                    executionDuration: 420,
-                    liquidityScore: "Medium",
-                    reliabilityScore: "99.5%",
-                    rank: 2,
-                    reason: "Alternative route",
-                    isSelected: false
-                  }
-                ]
-              };
-              maimaReports.set(request.id, mockReport);
-              console.log('[maima] Simulation report stored for', request.id);
-            }
-          }, 3000);
-        }
+                {
+                  protocol: "Across",
+                  feeUSD: 18.50,
+                  executionDuration: 420,
+                  liquidityScore: "Medium",
+                  reliabilityScore: "99.5%",
+                  rank: 2,
+                  reason: "Alternative route",
+                  isSelected: false
+                }
+              ]
+            };
+            maimaReports.set(request.id, mockReport);
+            console.log('[maima] Simulation report stored for', request.id);
+          }
+        }, 3000);
 
         return NextResponse.json({ success: true, message: 'cre-bridge triggered' });
       }
       case 'quote': {
         const payload = body.payload ?? body;
+        console.log('[maima API] Requesting LI.FI quote with payload:', JSON.stringify(payload));
         const res = await fetch(`${LIFI_BASE}/advanced/routes`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
         const data = await res.json();
-        return NextResponse.json(data, { status: res.status });
-      }
-      case 'step': {
-        const payload = (body.step ?? body) as Record<string, unknown>;
-        const res = await fetch(`${LIFI_BASE}/advanced/stepTransaction`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
-        const data = await res.json();
+        if (!res.ok) console.error('[maima API] LI.FI Error:', data);
         return NextResponse.json(data, { status: res.status });
       }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote|step' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima POST]', action, e);

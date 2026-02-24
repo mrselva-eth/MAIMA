@@ -13886,7 +13886,8 @@ function processBridge(nodeRuntime) {
         reason: "Alternative route",
         isSelected: false
       }
-    ]
+    ],
+    simulationMode: true
   };
   const body = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: report2 }));
   httpClient.sendRequest(nodeRuntime, {

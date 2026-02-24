@@ -13851,14 +13851,13 @@ function parseIntent(prompt, fromAddress) {
     fromTokenAddress: fromToken,
     toTokenAddress: toToken,
     fromAmount,
-    fromAddress: fromAddress || "0x0000000000000000000000000000000000000000",
+    fromAddress: fromAddress === "0x0000000000000000000000000000000000000000" || !fromAddress ? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" : fromAddress,
     options: { allowSwitchChain: true }
   };
 }
 function processSwap(nodeRuntime) {
   const httpClient = new ClientCapability;
   const base = nodeRuntime.config.apiBaseUrl;
-  const simulationMode = nodeRuntime.config.simulationMode === true;
   const pendingResp = httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima?action=pending-swap`, method: "GET" }).result();
   const pendingText = new TextDecoder().decode(pendingResp.body);
   let pendingData = {};
@@ -13870,7 +13869,7 @@ function processSwap(nodeRuntime) {
   const request = pendingData.request;
   if (!request?.id)
     return { processed: false, requestId: "", timestamp: Date.now() };
-  const payload = parseIntent(request.prompt, request.fromAddress ?? "0x0");
+  const payload = parseIntent(request.prompt, request.fromAddress ?? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
   const quoteBody = toBase64(JSON.stringify({ action: "quote", payload }));
   const quoteResp = httpClient.sendRequest(nodeRuntime, {
     url: `${base}/api/maima`,
@@ -13990,7 +13989,7 @@ function processSwap(nodeRuntime) {
     ranking,
     selectionReason: bestRoute ? `Selected ${bestRoute.mainTool}` : "No valid route",
     intentType: "swap",
-    ...simulationMode ? { simulationMode: true } : {}
+    simulationMode: true
   };
   const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: report2 }));
   httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody }).result();

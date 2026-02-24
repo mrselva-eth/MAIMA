@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useAccount, useSwitchChain, useWalletClient, usePublicClient } from 'wagmi';
-import { encodeFunctionData, erc20Abi } from 'viem';
 import type { ReportRoute } from '@/lib/maima';
 import {
   CRE_STREAM_DELAY_MS,
@@ -47,10 +45,7 @@ export function useTrackingFlow({
   onStepComplete,
   onExecuteStart,
 }: ProcessTrackingPanelProps) {
-  const { address, chainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient({ chainId });
+  const chainId = SEPOLIA_CHAIN_ID;
   const [phase, setPhase] = useState<TrackingPhase>('steps');
   const [stepIndex, setStepIndex] = useState(0);
   const [logLines, setLogLines] = useState<string[]>([]);
@@ -109,9 +104,22 @@ export function useTrackingFlow({
 
   const topRoutes = sortedRoutes.length ? sortedRoutes.slice(0, 4) : [];
 
-  const top4 = topRoutes.length
-    ? topRoutes.map((route, i) => {
-      return {
+  const top4 = useMemo(() => {
+    if (report?.ranking && report.ranking.length > 0) {
+      return report.ranking.slice(0, 4).map((r) => ({
+        name: r.protocol,
+        metrics: {
+          fee: r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A',
+          duration: r.executionDuration ? `${Math.round(r.executionDuration)}s` : '?',
+          reliability: r.reliabilityScore || 'N/A',
+          liquidity: r.liquidityScore || 'N/A',
+        }
+      }));
+    }
+
+    // Fallback if no ranking array exists
+    return topRoutes.length
+      ? topRoutes.map((route) => ({
         name: route.mainTool,
         metrics: {
           fee: route.gasCostUSD ? `$${route.gasCostUSD}` : 'N/A',
@@ -119,11 +127,14 @@ export function useTrackingFlow({
           reliability: route.reliabilityScore || 'N/A',
           liquidity: route.liquidityScore || 'N/A',
         }
-      };
-    })
-    : fallbackTop;
+      }))
+      : fallbackTop;
+  }, [report?.ranking, topRoutes, fallbackTop]);
 
   const protocolNames = useMemo(() => {
+    if (report?.ranking && report.ranking.length > 0) {
+      return Array.from(new Set(report.ranking.map((r) => r.protocol)));
+    }
     if (sortedRoutes.length) {
       return Array.from(new Set(sortedRoutes.map((route) => route.mainTool)));
     }
@@ -133,19 +144,25 @@ export function useTrackingFlow({
         ? swapWhitelistSet.has(normalizeProtocolName(name))
         : true
     );
-  }, [sortedRoutes, inferredType, enforceSwapWhitelist, swapWhitelistSet]);
+  }, [report?.ranking, sortedRoutes, inferredType, enforceSwapWhitelist, swapWhitelistSet]);
 
   const protocolsToCheck = useMemo(() => protocolNames.slice(0, 6), [protocolNames]);
 
   const protocolFeeMap = useMemo(() => {
-    if (!filteredRoutes.length) return new Map<string, string>();
-    return new Map(
-      filteredRoutes.map((route) => [
-        route.mainTool,
-        route.gasCostUSD ? `$${route.gasCostUSD}` : 'N/A',
-      ])
-    );
-  }, [filteredRoutes]);
+    const map = new Map<string, string>();
+    if (report?.ranking && report.ranking.length > 0) {
+      report.ranking.forEach(r => {
+        map.set(r.protocol, r.feeUSD !== null && r.feeUSD !== undefined ? `$${r.feeUSD.toFixed(4)}` : 'N/A');
+      });
+      return map;
+    }
+    if (filteredRoutes.length) {
+      filteredRoutes.forEach(route => {
+        map.set(route.mainTool, route.gasCostUSD ? `$${route.gasCostUSD}` : 'N/A');
+      });
+    }
+    return map;
+  }, [report?.ranking, filteredRoutes]);
 
   useEffect(() => {
     if (open) {
@@ -363,8 +380,13 @@ export function useTrackingFlow({
     // Set one line immediately so the execution block is visible even if something throws later (e.g. CSP/eval in prod)
     setExecuteLogs((prev) => [...prev, `[${formatTime()}] Starting execution for selection #${index + 1}...`]);
 
-    const selectedRoute = topRoutes[index] ?? null;
-    if (!selectedRoute) {
+    let selectedRoute = topRoutes[index] ?? null;
+    if (report?.ranking && report.ranking.length > 0) {
+      const selectedProtocolName = top4[index]?.name;
+      selectedRoute = report.routes?.find((r) => r.mainTool === selectedProtocolName) ?? selectedRoute;
+    }
+
+    if (!selectedRoute && !top4[index]) {
       setExecuteLogs((prev) => [...prev, `[${formatTime()}] No live route available. Try again.`]);
       setPhase('choose');
       setSelectedIndex(null);
@@ -409,208 +431,47 @@ export function useTrackingFlow({
       `[${formatTime()}] Output (estimated): ${outputAmount}`,
     ]);
 
-    // CRE simulation mode
-    if (report?.simulationMode) {
-      setExecuteLogs((prev) => [
-        ...prev,
-        `[${formatTime()}] Simulation execution: running cre-${inferredType} workflow.`,
-      ]);
-      setIsStreamingExecuteLog(true);
-      const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-      try {
-        const res = await fetch('/api/cre', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: inferredType }),
-        });
-        const data = await res.json();
-        const output = typeof data.output === 'string' ? data.output : '';
-        const lines = output
-          .split(/\r?\n/)
-          .map((line: string) => line.trim())
-          .filter(Boolean)
-          .filter(filterCrePrivateKeyWarning);
-        if (lines.length) {
-          for (const line of lines) {
-            await delay(CRE_STREAM_DELAY_MS);
-            setExecuteLogs((prev) => [...prev, line]);
-          }
-        } else {
-          setExecuteLogs((prev) => [...prev, '(no output from CRE workflow)']);
-        }
-      } catch {
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] CRE run failed (check CRE CLI and server).`]);
-      } finally {
-        setIsStreamingExecuteLog(false);
-      }
-      const result = {
-        protocol,
-        pair,
-        fee,
-        inputAmount,
-        outputAmount,
-        txHash: '0xsimulation',
-        approvalHash: 'N/A',
-      };
-      setFinalResult(result);
-      setPhase('done');
-      onComplete(result);
-      return;
-    }
-
-    if (!walletClient || !address) {
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Wallet not connected.`]);
-      setPhase('choose');
-      setSelectedIndex(null);
-      return;
-    }
-
-    const steps = Array.isArray(selectedRoute.steps) ? selectedRoute.steps : [];
-    if (steps.length === 0) {
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Route has no steps. Unable to execute.`]);
-      setPhase('choose');
-      setSelectedIndex(null);
-      return;
-    }
-
-    if (steps.length > 1) {
-      setExecuteLogs((prev) => [
-        ...prev,
-        `[${formatTime()}] This route has multiple steps. Execution is not supported yet.`,
-      ]);
-      setPhase('choose');
-      setSelectedIndex(null);
-      return;
-    }
-
-    const step = steps[0] as {
-      action?: {
-        fromChainId?: number;
-        toChainId?: number;
-        fromToken?: { address?: string };
-        fromAmount?: string;
-      };
-      estimate?: { approvalAddress?: string };
-    };
-    const fromChainId = step?.action?.fromChainId;
-    const toChainId = step?.action?.toChainId;
-    const fromToken = step?.action?.fromToken?.address;
-    const amountIn = step?.action?.fromAmount;
-    const approvalAddress = step?.estimate?.approvalAddress;
-
-    if (fromChainId && chainId !== fromChainId) {
-      try {
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] Switching network...`]);
-        await switchChainAsync({ chainId: fromChainId });
-      } catch {
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] Network switch rejected.`]);
-        setPhase('choose');
-        setSelectedIndex(null);
-        return;
-      }
-    }
-
-    let approvalHash = getApprovalAddress(selectedRoute);
-    let swapHash = getTransactionHint(selectedRoute);
-    let finalOutput = outputAmount;
-
+    // Execution block replaces the previous wagmi dependencies and purely simulates
+    setExecuteLogs((prev) => [
+      ...prev,
+      `[${formatTime()}] Simulation execution: running cre-${inferredType} workflow.`,
+    ]);
+    setIsStreamingExecuteLog(true);
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
     try {
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Preparing transaction via LI.FI...`]);
-      const stepPayload = {
-        ...step,
-        action: {
-          ...(step?.action ?? {}),
-          fromAddress: address,
-          toAddress: address,
-        },
-      };
-      const stepRes = await fetch('/api/maima', {
+      const res = await fetch('/api/cre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'step', step: stepPayload }),
+        body: JSON.stringify({ type: inferredType }),
       });
-      const stepData = await stepRes.json();
-      const txRequest = stepData?.transactionRequest;
-
-      if (!txRequest?.to || !txRequest?.data) {
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] Failed to prepare transaction.`]);
-        setPhase('choose');
-        setSelectedIndex(null);
-        return;
-      }
-
-      if (approvalAddress && !isNativeToken(fromToken) && amountIn && fromToken) {
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] Approval required.`]);
-        const data = encodeFunctionData({
-          abi: erc20Abi,
-          functionName: 'approve',
-          args: [approvalAddress as `0x${string}`, BigInt(amountIn)],
-        });
-        const approvalTxHash = await walletClient.sendTransaction({
-          to: fromToken as `0x${string}`,
-          data,
-          value: BigInt(0),
-        });
-        approvalHash = approvalTxHash;
-        setExecuteLogs((prev) => [...prev, `[${formatTime()}] Approval tx: ${approvalTxHash}`]);
-        try {
-          await publicClient?.waitForTransactionReceipt({ hash: approvalTxHash });
-        } catch {
-          // continue to swap
+      const data = await res.json();
+      const output = typeof data.output === 'string' ? data.output : '';
+      const lines = output
+        .split(/\r?\n/)
+        .map((line: string) => line.trim())
+        .filter(Boolean)
+        .filter(filterCrePrivateKeyWarning);
+      if (lines.length) {
+        for (const line of lines) {
+          await delay(CRE_STREAM_DELAY_MS);
+          setExecuteLogs((prev) => [...prev, line]);
         }
-      }
-
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Sending swap transaction...`]);
-      const swapTxHash = await walletClient.sendTransaction({
-        to: txRequest.to as `0x${string}`,
-        data: txRequest.data as `0x${string}`,
-        value: txRequest.value ? BigInt(txRequest.value) : BigInt(0),
-      });
-      swapHash = swapTxHash;
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Swap tx: ${swapTxHash}`]);
-
-      try {
-        await publicClient?.waitForTransactionReceipt({ hash: swapTxHash });
-      } catch {
-        // keep estimated output
-      }
-
-      try {
-        const statusParams = new URLSearchParams({ txHash: swapTxHash });
-        if (fromChainId) statusParams.set('fromChain', String(fromChainId));
-        if (toChainId) statusParams.set('toChain', String(toChainId));
-        if (fromChainId && toChainId && fromChainId !== toChainId && selectedRoute?.mainTool) {
-          statusParams.set('bridge', selectedRoute.mainTool);
-        }
-        statusParams.set('action', 'status');
-        const statusRes = await fetch(`/api/maima?${statusParams.toString()}`);
-        const statusData = await statusRes.json();
-        const receiving = statusData?.receiving;
-        if (receiving?.amount && receiving?.token?.decimals) {
-          finalOutput = formatTokenAmount(
-            String(receiving.amount),
-            receiving.token.decimals,
-            receiving.token.symbol
-          );
-        }
-      } catch {
-        // keep estimated output
+      } else {
+        setExecuteLogs((prev) => [...prev, '(no output from CRE workflow)']);
       }
     } catch {
-      setExecuteLogs((prev) => [...prev, `[${formatTime()}] Execution failed or rejected.`]);
-      setPhase('choose');
-      setSelectedIndex(null);
-      return;
+      setExecuteLogs((prev) => [...prev, `[${formatTime()}] CRE run failed (check CRE CLI and server).`]);
+    } finally {
+      setIsStreamingExecuteLog(false);
     }
-
     const result = {
       protocol,
       pair,
       fee,
       inputAmount,
-      outputAmount: finalOutput,
-      txHash: swapHash,
-      approvalHash,
+      outputAmount,
+      txHash: '0xsimulation',
+      approvalHash: 'N/A',
     };
     setFinalResult(result);
     setPhase('done');
