@@ -22,6 +22,26 @@ const WORKFLOW_MAP: Record<string, 'cre-maima' | 'cre-swap' | 'cre-bridge'> = {
   bridge: 'cre-bridge',
 };
 
+function resolveCreCommand(): string {
+  const envPath = process.env.CRE_CLI_PATH?.trim();
+  const isWindows = process.platform === 'win32';
+
+  if (!envPath) return isWindows ? 'cre.cmd' : 'cre';
+
+  if (path.isAbsolute(envPath) && existsSync(envPath)) return envPath;
+
+  const relativeToCwd = path.resolve(ROOT, envPath);
+  if (existsSync(relativeToCwd)) return relativeToCwd;
+
+  const binPath = path.resolve(ROOT, 'bin', isWindows ? 'cre.exe' : 'cre');
+  if (existsSync(binPath)) return binPath;
+
+  const frontendBinPath = path.resolve(ROOT, 'frontend', 'bin', isWindows ? 'cre.exe' : 'cre');
+  if (existsSync(frontendBinPath)) return frontendBinPath;
+
+  return envPath;
+}
+
 export async function POST(req: NextRequest) {
   let body: { action?: string; type?: string } = {};
   try {
@@ -36,7 +56,7 @@ export async function POST(req: NextRequest) {
   }
   const workflowPath = getWorkflowPath(workflow);
   const isWindows = process.platform === 'win32';
-  const cmd = process.env.CRE_CLI_PATH?.trim().replace(/^["']|["']$/g, '') || (isWindows ? 'cre.cmd' : 'cre');
+  const cmd = resolveCreCommand();
   const args = ['workflow', 'simulate', workflowPath, '--target', TARGET, '--non-interactive', '--trigger-index', '0'];
 
   return new Promise<NextResponse>((resolve) => {

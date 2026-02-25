@@ -83,10 +83,10 @@ export default function Navbar() {
         {/* Right: Nav links */}
         <div className="flex items-center gap-4 sm:gap-7 shrink-0 z-10">
           {/* Hackathon Mode Badge */}
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50/80 border border-blue-100 shadow-sm transition-all hover:bg-blue-100/50 cursor-default">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-green-50/80 border border-green-100 shadow-sm transition-all hover:bg-green-100/50 cursor-default">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600"></span>
             </span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e40af] whitespace-nowrap">
               Hackathon Mode
