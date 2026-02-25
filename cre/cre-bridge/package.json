@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "bunx cre-setup"
+    "postinstall": "bun node_modules/@chainlink/cre-sdk/scripts/src/cre-setup.ts"
   },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.0.0"

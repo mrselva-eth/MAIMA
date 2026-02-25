@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { maimaRequests, maimaReports, pendingSwapQueue, pendingBridgeQueue, type MaimaRequest } from '@/lib/maima';
+import { maimaRequests, maimaReports, pendingSwapQueue, pendingBridgeQueue, congestionStore, type MaimaRequest } from '@/lib/maima';
 import { getChainlinkPrice } from '@/lib/chainlink-oracle';
 import path from 'path';
 import { existsSync } from 'fs';
@@ -120,6 +120,11 @@ export async function GET(req: NextRequest) {
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
       }
+      case 'congestion': {
+        const chainId = searchParams.get('chainId') || '8453';
+        const data = congestionStore.get(chainId) ?? null;
+        return NextResponse.json({ success: true, data });
+      }
       default:
         return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|chainlink-price|status' }, { status: 400 });
     }
@@ -151,6 +156,13 @@ export async function POST(req: NextRequest) {
         maimaReports.set(requestId, report);
         maimaRequests.delete(requestId);
         return NextResponse.json({ success: true, requestId });
+      }
+      case 'congestion-report': {
+        const data = body.data as any;
+        if (!data?.chainId) return NextResponse.json({ error: 'data with chainId required' }, { status: 400 });
+        congestionStore.set(String(data.chainId), data);
+        console.log('[maima] congestion-report received', data.chainId, data.status);
+        return NextResponse.json({ success: true });
       }
       case 'run-swap': {
         const request = body.request as Record<string, unknown> | undefined;

@@ -76,8 +76,20 @@ export type AnalyzeReport = {
   simulationMode?: boolean;
 };
 
+// --- Congestion ---
+export type CongestionData = {
+  chainId: string;
+  blockNumber: number;
+  baseFee: string;
+  utilization: number;
+  status: string;
+  color: string;
+  timestamp: number;
+};
+
 // --- Stores ---
 export const maimaRequests = new Map<string, MaimaRequest>();
 export const maimaReports = new Map<string, unknown>();
 export const pendingSwapQueue: MaimaRequest[] = [];
 export const pendingBridgeQueue: MaimaRequest[] = [];
+export const congestionStore = new Map<string, CongestionData>();
