@@ -163,7 +163,10 @@ export default function AppPage() {
       </tr>`).join('');
 
     const chainlinkRows = r?.chainlink?.prices?.length
-      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">$${Number(c.price).toFixed(4)}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`).join('')
+      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => {
+        const numericPrice = Number(String(c.price).replace(/[^0-9.-]/g, ''));
+        return `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">$${Number.isNaN(numericPrice) ? c.price : numericPrice.toFixed(4)}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`;
+      }).join('')
       : '';
 
     const workflowRows = r?.workflow?.length
@@ -196,10 +199,18 @@ export default function AppPage() {
 </head>
 <body>
   <div class="header">
-    <div class="logo">M</div>
+    <img src="/favicon.ico" style="height:48px;width:auto;object-contain" alt="MAIMA">
     <div>
       <h1>MAIMA Analysis Report</h1>
       <div class="sub">Generated · ${ts}</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px;padding:16px;background:#f0f7ff;border:1px solid #cce3ff;border-radius:8px">
+    <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em">Simulation Environment Active</div>
+    <div style="font-size:12px;color:#444;line-height:1.5">
+      <strong>Verification Note:</strong> All route and price data in this report is authentic and real-time. 
+      The execution process is performed in a safe simulation environment via Chainlink CRE.
     </div>
   </div>
 
@@ -251,7 +262,9 @@ export default function AppPage() {
     </div>
   </div>` : ''}
 
-  <div class="footer">MAIMA · AI-Powered DeFi Intent Analyzer · Simulation Report</div>
+  <div class="footer">
+    <div style="font-weight:600;color:#999">MAIMA · AI-Powered DeFi Intent Analyzer</div>
+  </div>
   <script>window.onload=()=>{window.print();}</script>
 </body>
 </html>`;
@@ -492,6 +505,18 @@ export default function AppPage() {
                 }}
                 className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden min-h-0 overscroll-contain"
               >
+                {/* Persistent Disclaimer Banner */}
+                <div className="sticky top-0 z-20 w-full px-4 py-2 bg-blue-50/90 backdrop-blur-sm border-b border-blue-100 flex items-center gap-2 shadow-sm">
+                  <div className="p-0.5 rounded-full bg-blue-500 text-white flex-shrink-0">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-[10px] font-medium text-blue-800">
+                    <strong>Note:</strong> Market routes and price feeds are live. Transaction execution is simulated via Chainlink CRE.
+                  </p>
+                </div>
+
                 {messages.length === 0 && (
                   <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
                     <Image

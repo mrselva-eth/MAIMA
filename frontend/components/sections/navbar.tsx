@@ -81,7 +81,18 @@ export default function Navbar() {
         </Link>
 
         {/* Right: Nav links */}
-        <div className="flex items-center gap-7 sm:gap-9 shrink-0 z-10">
+        <div className="flex items-center gap-4 sm:gap-7 shrink-0 z-10">
+          {/* Hackathon Mode Badge */}
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50/80 border border-blue-100 shadow-sm transition-all hover:bg-blue-100/50 cursor-default">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e40af] whitespace-nowrap">
+              Hackathon Mode
+            </span>
+          </div>
+
           <div className="hidden sm:flex items-center gap-7 sm:gap-9">
             <Link
               href="/app"
