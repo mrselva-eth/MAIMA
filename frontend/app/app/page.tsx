@@ -507,6 +507,20 @@ export default function AppPage() {
                 }`}
             >
               <BackgroundCircles className="!absolute inset-0 z-0 pointer-events-none" />
+              {/* Fixed Background Logo */}
+              {messages.length === 0 && (
+                <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
+                  <Image
+                    src="/images/logo.png"
+                    alt=""
+                    width={140}
+                    height={140}
+                    className="w-[140px] h-[140px] object-contain opacity-40 select-none"
+                    unoptimized
+                    draggable={false}
+                  />
+                </div>
+              )}
               <div
                 ref={chatScrollContainerRef}
                 onScroll={() => {
@@ -529,19 +543,6 @@ export default function AppPage() {
                   </p>
                 </div>
 
-                {messages.length === 0 && (
-                  <div className="absolute inset-0 z-[1] flex items-center justify-center pointer-events-none" aria-hidden>
-                    <Image
-                      src="/images/logo.png"
-                      alt=""
-                      width={140}
-                      height={140}
-                      className="w-[140px] h-[140px] object-contain opacity-40 select-none"
-                      unoptimized
-                      draggable={false}
-                    />
-                  </div>
-                )}
                 <div className="relative z-10 p-4 space-y-4 min-h-full">
                   {messages.map((m) => (
                     <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
