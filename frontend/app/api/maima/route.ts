@@ -39,15 +39,42 @@ function getWorkflowPath(workflow: CreWorkflow): string {
   return 'cre/' + workflow;
 }
 
+function resolveCreCommand(): string {
+  const envPath = process.env.CRE_CLI_PATH?.trim();
+  const isWindows = process.platform === 'win32';
+  const defaultCmd = isWindows ? 'cre.cmd' : 'cre';
+
+  if (!envPath) return 'npx';
+
+  // If it's an absolute path, use it directly
+  if (path.isAbsolute(envPath) && existsSync(envPath)) return envPath;
+
+  // Try resolving relative to CWD
+  const relativeToCwd = path.resolve(process.cwd(), envPath);
+  if (existsSync(relativeToCwd)) return relativeToCwd;
+
+  // Smart search in common locations
+  const binPath = path.resolve(process.cwd(), 'bin', isWindows ? 'cre.exe' : 'cre');
+  if (existsSync(binPath)) return binPath;
+
+  const frontendBinPath = path.resolve(process.cwd(), 'frontend', 'bin', isWindows ? 'cre.exe' : 'cre');
+  if (existsSync(frontendBinPath)) return frontendBinPath;
+
+  return envPath; // Fallback to whatever was provided
+}
+
 function spawnCreWorkflow(workflow: CreWorkflow): void {
   const isWindows = process.platform === 'win32';
   const cwd = getCreCwd();
   const workflowPath = getWorkflowPath(workflow);
-  console.log('[maima] Spawning', workflow, 'cwd=', cwd, 'path=', workflowPath);
-  const cmd = process.env.CRE_CLI_PATH || 'npx';
-  const args = process.env.CRE_CLI_PATH
-    ? ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0']
-    : ['cre', 'workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
+  const cmd = resolveCreCommand();
+
+  console.log('[maima] Spawning', workflow, 'cwd=', cwd, 'path=', workflowPath, 'cmd=', cmd);
+
+  const args = cmd === 'npx'
+    ? ['cre', 'workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0']
+    : ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
+
   const child = spawn(cmd, args, {
     cwd,
     shell: isWindows,

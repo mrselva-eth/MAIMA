@@ -156,6 +156,17 @@ export default function ReportCard({ report, executionPending, result }: ReportC
           <p className="break-all"><strong>Approval:</strong> {result.approvalHash}</p>
         </div>
       ) : null}
+
+      <div className="mt-2 py-1.5 px-3 rounded-md bg-blue-50/50 border border-blue-100 flex items-start gap-2">
+        <div className="mt-0.5 p-0.5 rounded-full bg-blue-500 text-white flex-shrink-0">
+          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-[10px] leading-relaxed text-blue-800/80 font-medium">
+          <strong>Note:</strong> Route data and price feeds are live, but the execution process is currently simulated via Chainlink CRE.
+        </p>
+      </div>
     </div>
   );
 }
