@@ -17,7 +17,6 @@ import {
 type Config = {
   schedule: string;
   apiBaseUrl: string;
-  simulationMode?: boolean;
 };
 
 const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -41,8 +40,8 @@ function toBase64(str: string): string {
   let result = "";
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i];
-    const b = bytes[i + 1];
-    const c = bytes[i + 2];
+    const b = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const c = i + 2 < bytes.length ? bytes[i + 2] : 0;
     result += key[a >> 2];
     result += key[((a & 3) << 4) | (b >> 4)];
     result += i + 1 < bytes.length ? key[((b & 15) << 2) | (c >> 6)] : "=";
@@ -89,7 +88,7 @@ function parseIntent(prompt: string, fromAddress: string): Record<string, unknow
     fromTokenAddress: fromToken,
     toTokenAddress: toToken,
     fromAmount,
-    fromAddress: fromAddress || "0x0000000000000000000000000000000000000000",
+    fromAddress: fromAddress === "0x0000000000000000000000000000000000000000" || !fromAddress ? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" : fromAddress,
     options: { allowSwitchChain: true },
   };
 }
@@ -99,7 +98,6 @@ type SwapProcessResult = { processed: boolean; requestId: string; timestamp: num
 function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   const httpClient = new HTTPClient();
   const base = nodeRuntime.config.apiBaseUrl;
-  const simulationMode = nodeRuntime.config.simulationMode === true;
 
   const pendingResp = httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima?action=pending-swap`, method: "GET" }).result();
   const pendingText = new TextDecoder().decode(pendingResp.body);
@@ -112,7 +110,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   const request = pendingData.request;
   if (!request?.id) return { processed: false, requestId: "", timestamp: Date.now() };
 
-  const payload = parseIntent(request.prompt, request.fromAddress ?? "0x0");
+  const payload = parseIntent(request.prompt, request.fromAddress ?? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
   const quoteBody = toBase64(JSON.stringify({ action: "quote", payload }));
   const quoteResp = httpClient
     .sendRequest(nodeRuntime, {
@@ -148,8 +146,8 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   if (toSymbol && toSymbol !== fromSymbol) {
     try {
       const pr = httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima?action=chainlink-price&symbol=${encodeURIComponent(toSymbol)}&chainId=${clChainId}`, method: "GET" }).result();
-      const prData = JSON.parse(new TextDecoder().decode(pr.body)) as { price?: number; updatedAt?: number };
-      if (prData.price != null) verifiedPrices.push({ symbol: toSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt });
+      const prData = JSON.parse(new TextDecoder().decode(pr.body)) as { price?: number; updatedAt0?: number };
+      if (prData.price != null) verifiedPrices.push({ symbol: toSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt0 });
     } catch {
       // ignore
     }
@@ -268,7 +266,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
     ranking,
     selectionReason: bestRoute ? `Selected ${bestRoute.mainTool}` : "No valid route",
     intentType: "swap" as const,
-    ...(simulationMode ? { simulationMode: true } : {}),
+    simulationMode: true,
   };
 
   const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report }));

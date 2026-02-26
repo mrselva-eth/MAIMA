@@ -8,5 +8,5 @@
   },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.0.0"
-  },
+  }
 }

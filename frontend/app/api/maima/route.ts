@@ -66,12 +66,20 @@ function spawnCreWorkflow(workflow: CreWorkflow): void {
 
 async function parseBody(req: NextRequest): Promise<Record<string, unknown>> {
   const raw = await req.text();
+  console.log('[maima API] Raw body received (len):', raw.length);
   try {
-    return JSON.parse(raw) as Record<string, unknown>;
+    const parsed = JSON.parse(raw);
+    console.log('[maima API] Parsed raw JSON action:', parsed.action);
+    return parsed as Record<string, unknown>;
   } catch {
     try {
-      return JSON.parse(Buffer.from(raw, 'base64').toString('utf8')) as Record<string, unknown>;
-    } catch {
+      const decoded = Buffer.from(raw, 'base64').toString('utf8');
+      console.log('[maima API] Decoded base64 body (len):', decoded.length);
+      const parsed = JSON.parse(decoded);
+      console.log('[maima API] Parsed decoded JSON action:', parsed.action);
+      return parsed as Record<string, unknown>;
+    } catch (e) {
+      console.error('[maima API] parseBody failed', e);
       return {};
     }
   }
@@ -120,6 +128,21 @@ export async function GET(req: NextRequest) {
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
       }
+      case 'diagnostic-status': {
+        return NextResponse.json({
+          success: true,
+          env: {
+            LIFI_API_KEY: process.env.LIFI_API_KEY ? 'present' : 'missing',
+            CRE_CLI_PATH: process.env.CRE_CLI_PATH,
+          },
+          stores: {
+            requests: Array.from(maimaRequests.entries()),
+            reports: Array.from(maimaReports.entries()),
+            pendingSwap: pendingSwapQueue.length,
+            pendingBridge: pendingBridgeQueue.length,
+          }
+        });
+      }
       default:
         return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|chainlink-price|status' }, { status: 400 });
     }
@@ -132,24 +155,32 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await parseBody(req);
   const action = (body.action as string) || '';
+  console.log('[maima API] Action:', action, 'Keys:', Object.keys(body));
 
   try {
     switch (action) {
       case 'analyze': {
         const prompt = (body.prompt as string) ?? '';
-        const fromAddress = (body.fromAddress as string) ?? '0x0000000000000000000000000000000000000000';
+        const fromAddress = (body.fromAddress as string) ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
         const requestId = `maima_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-        const type = inferType(prompt.toLowerCase());
+        // Accept AI-parsed type from client; fall back to regex
+        const clientType = body.intentType as 'swap' | 'bridge' | undefined;
+        const type = (clientType === 'swap' || clientType === 'bridge') ? clientType : inferType(prompt.toLowerCase());
         maimaRequests.set(requestId, { id: requestId, prompt, fromAddress, type, createdAt: new Date().toISOString() });
-        if (process.env.CRE_SIMULATION_MODE === 'on') spawnCreWorkflow('cre-maima');
+        if (type === 'swap' || type === 'bridge') spawnCreWorkflow('cre-maima');
         return NextResponse.json({ success: true, requestId });
       }
       case 'cre-report': {
         const requestId = body.requestId as string;
         const report = body.report;
-        if (!requestId || report === undefined) return NextResponse.json({ error: 'requestId and report required' }, { status: 400 });
+        console.log('[maima] cre-report received', { requestId, hasReport: !!report });
+        if (!requestId || report === undefined) {
+          console.warn('[maima] cre-report invalid payload', body);
+          return NextResponse.json({ error: 'requestId and report required' }, { status: 400 });
+        }
         maimaReports.set(requestId, report);
         maimaRequests.delete(requestId);
+        console.log('[maima] cre-report stored', requestId, 'Total reports:', maimaReports.size);
         return NextResponse.json({ success: true, requestId });
       }
       case 'run-swap': {
@@ -161,27 +192,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, message: 'cre-swap triggered' });
       }
       case 'run-bridge': {
-        const request = body.request as Record<string, unknown> | undefined;
-        if (!request?.id) return NextResponse.json({ error: 'request with id required' }, { status: 400 });
-        pendingBridgeQueue.push({ ...request, type: 'bridge' } as MaimaRequest);
+        const requestJSON = body.request as Record<string, unknown> | undefined;
+        if (!requestJSON?.id) return NextResponse.json({ error: 'request with id required' }, { status: 400 });
+        const request = { ...requestJSON, type: 'bridge' } as MaimaRequest;
+
+        pendingBridgeQueue.push(request);
         console.log('[maima] run-bridge pushed', request.id, 'queue length', pendingBridgeQueue.length);
         spawnCreWorkflow('cre-bridge');
+
         return NextResponse.json({ success: true, message: 'cre-bridge triggered' });
       }
       case 'quote': {
         const payload = body.payload ?? body;
+        console.log('[maima API] Requesting LI.FI quote with payload:', JSON.stringify(payload));
         const res = await fetch(`${LIFI_BASE}/advanced/routes`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
         const data = await res.json();
-        return NextResponse.json(data, { status: res.status });
-      }
-      case 'step': {
-        const payload = (body.step ?? body) as Record<string, unknown>;
-        const res = await fetch(`${LIFI_BASE}/advanced/stepTransaction`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
-        const data = await res.json();
+        if (!res.ok) console.error('[maima API] LI.FI Error:', data);
         return NextResponse.json(data, { status: res.status });
       }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote|step' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima POST]', action, e);

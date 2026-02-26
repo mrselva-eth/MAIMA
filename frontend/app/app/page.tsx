@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAccount } from 'wagmi';
 import Navbar from '@/components/sections/navbar';
-import { RequireWallet } from '@/context/RequireWallet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { BackgroundCircles } from '@/components/design/BackgroundCircles';
 import { ProcessTrackingPanel } from '@/components/app/tracking-wind/ProcessTrackingPanel';
 import Image from 'next/image';
-import { Copy, Check, ShieldCheck } from 'lucide-react';
+import { Copy, Check, ShieldCheck, Download } from 'lucide-react';
 import type { AnalyzeReport } from '@/lib/maima';
+import type { IntentResult } from '@/app/api/intent/route';
 import { useProtocolLogos } from '@/hooks/use-protocol-logos';
+import { RequireWallet } from '@/context/RequireWallet';
+import { useAccount } from 'wagmi';
 
 const THEME_COLOR = '#1e40af';
 
@@ -56,6 +57,7 @@ type Message = {
 };
 
 export default function AppPage() {
+  const { address } = useAccount();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -75,18 +77,13 @@ export default function AppPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement>(null);
   const chatFollowTailRef = useRef(true);
-  const { address } = useAccount();
   const { getLogoUrl } = useProtocolLogos();
 
-  const isSimulationMode =
-    typeof process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE !== 'undefined' &&
-    process.env.NEXT_PUBLIC_CRE_SIMULATION_MODE === 'on';
 
   const processingMessage = processingMessageId
     ? messages.find((m) => m.id === processingMessageId)
     : null;
   const reportNotYetShown =
-    isSimulationMode &&
     trackingOpen &&
     processingMessageId &&
     processingMessage &&
@@ -110,26 +107,13 @@ export default function AppPage() {
           const report = j.report as AnalyzeReport;
           setTrackingReport(report);
           setPendingRequestId(null);
-          if (!isSimulationMode) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === processingMessageId
-                  ? {
-                      ...m,
-                      report,
-                      content: 'Report ready. Review why each protocol was ranked and choose the best option.',
-                    }
-                  : m
-              )
-            );
-          }
         }
       } catch {
         // ignore
       }
     }, pollIntervalMs);
     return () => clearInterval(id);
-  }, [pendingRequestId, processingMessageId, isSimulationMode]);
+  }, [pendingRequestId, processingMessageId]);
 
   const copyMessage = (m: Message) => {
     let text = m.content;
@@ -166,6 +150,135 @@ export default function AppPage() {
     });
   };
 
+  const downloadReport = (m: Message) => {
+    const r = m.report;
+    const ts = new Date(m.at).toLocaleString();
+    const rows = (r?.ranking ?? []).slice(0, 5).map((rank, i) => `
+      <tr>
+        <td style="padding:6px 12px;font-weight:600;color:#1e40af">#${rank.rank ?? i + 1}</td>
+        <td style="padding:6px 12px;font-weight:600">${rank.protocol}</td>
+        <td style="padding:6px 12px">${rank.feeUSD !== null && rank.feeUSD !== undefined ? '$' + Number(rank.feeUSD).toFixed(4) : 'N/A'}</td>
+        <td style="padding:6px 12px">${rank.executionDuration ? Math.round(rank.executionDuration) + 's' : 'N/A'}</td>
+        <td style="padding:6px 12px;color:#555">${rank.reason ?? ''}</td>
+      </tr>`).join('');
+
+    const chainlinkRows = r?.chainlink?.prices?.length
+      ? r.chainlink.prices.map((c: { symbol: string; price: string }) => {
+        const raw = String(c.price ?? '').replace(/^\$/, '');
+        const num = Number(raw);
+        const displayPrice = Number.isFinite(num) ? `$${num.toFixed(2)}` : c.price;
+        return `<tr><td style="padding:6px 12px;font-weight:500">${c.symbol}</td><td style="padding:6px 12px">${displayPrice}</td><td style="padding:6px 12px;color:#059669">✔ Verified</td></tr>`;
+      }).join('')
+      : '';
+
+
+    const workflowRows = r?.workflow?.length
+      ? r.workflow.map((s, i) => `<tr><td style="padding:6px 12px">${i + 1}. ${s.name}</td><td style="padding:6px 12px;text-transform:uppercase;font-weight:600;color:${s.status === 'ok' ? '#059669' : '#dc2626'}">${s.status}</td><td style="padding:6px 12px;color:#555">${s.details ?? ''}</td></tr>`).join('')
+      : '';
+
+    const logoUrl = `${window.location.origin}/images/logo.png`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MAIMA Analysis Report</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px 48px;max-width:900px;margin:0 auto;position:relative}
+    .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;opacity:0.10;pointer-events:none;z-index:0;user-select:none}
+    .watermark img{width:100%;height:100%;object-fit:contain}
+    .content{position:relative;z-index:1}
+    .header{display:flex;align-items:center;gap:16px;border-bottom:2px solid #1e40af;padding-bottom:16px;margin-bottom:24px}
+    .logo-img{width:48px;height:48px;object-fit:contain;border-radius:10px}
+    h1{font-size:22px;color:#1e40af;font-weight:700}
+    .sub{font-size:12px;color:#777;margin-top:2px}
+    .section{margin-bottom:24px}
+    h2{font-size:14px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;border-bottom:1px solid #e5e7ef;padding-bottom:6px}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 12px;font-size:13px}
+    .label{color:#666;font-weight:500}
+    .value{color:#111;font-weight:600}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;border:1px solid #e5e7ef;border-radius:8px;overflow:hidden}
+    thead{background:#1e40af;color:#fff}
+    th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+    .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .footer img{width:18px;height:18px;object-fit:contain;opacity:0.5}
+    @media print{body{padding:20px 28px}.watermark{position:fixed}}
+  </style>
+</head>
+<body>
+  <div class="watermark"><img src="${logoUrl}" alt="" /></div>
+  <div class="content">
+  <div class="header">
+    <img class="logo-img" src="${logoUrl}" alt="MAIMA" />
+    <div>
+      <h1>MAIMA Analysis Report</h1>
+      <div class="sub">Generated · ${ts}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Summary</h2>
+    <div class="kv">
+      <span class="label">Intent Type</span><span class="value">${r?.intentType ?? 'N/A'}</span>
+      <span class="label">Accuracy</span><span class="value">${r?.accuracy ?? 'N/A'}</span>
+      <span class="label">Gas Fee Estimate</span><span class="value">${r?.gasFeeEstimate ?? 'N/A'}</span>
+      <span class="label">Optimistic Estimate</span><span class="value">${r?.optimisticEstimate ?? 'N/A'}</span>
+      ${r?.selectionReason ? `<span class="label">Selection Reason</span><span class="value">${r.selectionReason}</span>` : ''}
+      ${r?.summary ? `<span class="label">Summary</span><span class="value">${r.summary}</span>` : ''}
+    </div>
+  </div>
+
+  ${rows ? `<div class="section">
+    <h2>Protocol Ranking</h2>
+    <table>
+      <thead><tr><th>Rank</th><th>Protocol</th><th>Fee</th><th>Est. Time</th><th>Reason</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${chainlinkRows ? `<div class="section">
+    <h2>Chainlink Oracle Prices</h2>
+    <table>
+      <thead><tr><th>Pair</th><th>Price</th><th>Status</th></tr></thead>
+      <tbody>${chainlinkRows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${workflowRows ? `<div class="section">
+    <h2>Workflow Steps</h2>
+    <table>
+      <thead><tr><th>Step</th><th>Status</th><th>Details</th></tr></thead>
+      <tbody>${workflowRows}</tbody>
+    </table>
+  </div>` : ''}
+
+  ${m.result ? `<div class="section">
+    <h2>Execution Result</h2>
+    <div class="kv">
+      <span class="label">Protocol</span><span class="value">${m.result.protocol}</span>
+      <span class="label">Pair</span><span class="value">${m.result.pair}</span>
+      <span class="label">Fee</span><span class="value">${m.result.fee}</span>
+      <span class="label">Input</span><span class="value">${m.result.inputAmount}</span>
+      <span class="label">Output</span><span class="value">${m.result.outputAmount}</span>
+      <span class="label">Tx Hash</span><span class="value" style="word-break:break-all;font-size:11px">${m.result.txHash}</span>
+    </div>
+  </div>` : ''}
+
+  <div class="footer"><img src="${logoUrl}" alt="" />MAIMA · AI-Powered DeFi Intent Analyzer · Simulation Report</div>
+  </div>
+  <script>window.onload=()=>{window.print();}</script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
+
   useEffect(() => {
     const el = chatScrollContainerRef.current;
     if (!el || !chatFollowTailRef.current) return;
@@ -182,16 +295,74 @@ export default function AppPage() {
     if (!prompt || loading) return;
     setInput('');
 
+    const now = Date.now();
     const userMsg: Message = {
-      id: `u_${Date.now()}`,
+      id: `u_${now}`,
       role: 'user',
       content: prompt,
       at: new Date().toISOString(),
     };
+
+
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
-    const processingId = `a_${Date.now()}`;
+    // AI Intent Analysis
+    let intent: IntentResult | null = null;
+    try {
+      const intentRes = await fetch('/api/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      if (intentRes.ok) {
+        intent = await intentRes.json() as IntentResult;
+      }
+    } catch {
+      // fall through to keyword fallback below
+    }
+
+    // If AI returned an unsupported intent, show friendly error
+    if (intent && !intent.isValid) {
+      setLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `a_${now}_unsupported`,
+          role: 'assistant',
+          content: intent!.errorMessage ??
+            "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.",
+          at: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
+    // If AI failed entirely (null), do a basic keyword guard
+    if (!intent) {
+      const p2 = prompt.toLowerCase();
+      const isSwapIntent = /swap|convert|exchange/.test(p2);
+      const isBridgeIntent = /bridge|transfer|move.*to|send.*to/.test(p2);
+      const isEthUsdc = p2.includes('eth') && p2.includes('usdc');
+      const isBaseAndArb = p2.includes('base') && (p2.includes('arbitrum') || p2.includes('arb'));
+      if (isSwapIntent && !isEthUsdc) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support swapping between ETH and USDC.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
+        return;
+      }
+      if (isBridgeIntent && !isBaseAndArb) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support bridging between Base and Arbitrum.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
+        return;
+      }
+      if (!isSwapIntent && !isBridgeIntent) {
+        setLoading(false);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.", at: new Date().toISOString() }]);
+        return;
+      }
+    }
+
+    const processingId = `a_${now}_processing`;
     const processingMsg: Message = {
       id: processingId,
       role: 'assistant',
@@ -210,25 +381,19 @@ export default function AppPage() {
     setTrackingRunId((n) => n + 1);
     setExecutionPendingMessageId(null);
 
-    // Prompt ? intent mapping
-    let intent: '1' | '2' | '3' | '4' = '3';
-    const p = prompt.toLowerCase();
 
-    if (p.includes('usdc') && p.includes('eth') && p.includes('base')) {
-      intent = '2';
-    } else if (p.includes('eth') && p.includes('usdc')) {
-      intent = '1';
-    } else if (p.includes('arbitrum') && p.includes('base')) {
-      intent = '4';
-    } else if (p.includes('base') && p.includes('arbitrum')) {
-      intent = '3';
-    }
 
     try {
       const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyze', prompt, fromAddress: address }),
+        body: JSON.stringify({
+          action: 'analyze',
+          prompt,
+          fromAddress: address ?? '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+          // Pass AI-parsed intent type so backend can skip regex
+          intentType: intent?.type ?? undefined,
+        }),
       });
 
       const data = await res.json();
@@ -272,7 +437,7 @@ export default function AppPage() {
   };
 
   const handleStepComplete = () => {
-    if (!isSimulationMode || !processingMessageId || !trackingReport) return;
+    if (!processingMessageId || !trackingReport) return;
     setMessages((prev) =>
       prev.map((m) =>
         m.id === processingMessageId
@@ -379,7 +544,6 @@ export default function AppPage() {
                             }`}
                         >
                           {m.role === 'assistant' &&
-                            isSimulationMode &&
                             m.id === processingMessageId &&
                             !m.report ? (
                             <div className="flex flex-col items-center justify-center gap-4 py-6 min-w-[200px]">
@@ -688,6 +852,17 @@ export default function AppPage() {
                             <Copy className="w-3.5 h-3.5" />
                           )}
                         </button>
+                        {(m.report || m.result) && (
+                          <button
+                            type="button"
+                            onClick={() => downloadReport(m)}
+                            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity text-muted-foreground hover:text-blue-500"
+                            aria-label="Download report"
+                            title="Download report as JSON"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
