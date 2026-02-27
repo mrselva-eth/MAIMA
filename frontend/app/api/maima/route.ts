@@ -20,7 +20,14 @@ function lifiHeaders(): Record<string, string> {
 }
 
 function inferType(promptText: string): 'swap' | 'bridge' {
-  return /bridge|cross[-\s]?chain|base\s*to\s*arbitrum|arbitrum\s*to\s*base/.test(promptText) ? 'bridge' : 'swap';
+  const p = promptText.toLowerCase();
+  const bridgeKeywords = [
+    'bridge', 'cross-chain', 'cross chain', 'transfer from', 'send from',
+    'to arbitrum', 'to base', 'to polygon', 'to optimism', 'to ethereum', 'to bsc', 'to avalanche',
+    'from base', 'from arbitrum', 'from polygon', 'from optimism', 'from ethereum', 'from bsc', 'from avalanche'
+  ];
+  if (bridgeKeywords.some(kw => p.includes(kw))) return 'bridge';
+  return 'swap';
 }
 
 function getCreCwd(): string {
@@ -141,6 +148,7 @@ export async function GET(req: NextRequest) {
       case 'chainlink-price': {
         const symbol = searchParams.get('symbol');
         const chainId = Number(searchParams.get('chainId')) || 8453;
+        console.log(`[maima API] chainlink-price requested for symbol=${symbol}, chainId=${chainId}`);
         if (!symbol) return NextResponse.json({ error: 'symbol required' }, { status: 400 });
         const result = await getChainlinkPrice(symbol, Number.isFinite(chainId) ? chainId : 8453);
         if (!result) return NextResponse.json({ error: 'No price feed' }, { status: 404 });

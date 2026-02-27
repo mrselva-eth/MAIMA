@@ -8,6 +8,7 @@ import {
   STEP_DELAY_MS,
   DEFAULT_BRIDGES,
   DEFAULT_SWAPS,
+  CHAIN_NAMES,
   SEPOLIA_CHAIN_ID,
   SWAP_PROTOCOL_WHITELIST,
   type TrackingPhase,
@@ -245,18 +246,29 @@ export function useTrackingFlow({
           }
         }
         await delay(CRE_STREAM_DELAY_MS);
+
+        if (report?.routes?.length === 0) {
+          setLogLines((prev) => [
+            ...prev,
+            `[${formatTime()}] Selection error: ${report.summary}`,
+            `[${formatTime()}] No valid routes were found for this request.`,
+          ]);
+          setPhase('done');
+          return;
+        }
+
         setLogLines((prev) => [
           ...prev,
           `[${formatTime()}] Checking protocols.`,
           `[${formatTime()}] Analysing best protocol for this ${intentType} pair.`,
           `[${formatTime()}] Found the best one. Reason: ${selectionReason}.`,
         ]);
+        setPhase('choose');
       } catch {
         setLogLines((prev) => [...prev, `[${formatTime()}] CRE maima run failed (check CRE CLI and server).`]);
       } finally {
         setIsStreamingCreLog(false);
       }
-      setPhase('choose');
       onStepComplete();
     })();
   }, [open, report?.simulationMode, report?.intentType, report?.bestRoute, report?.selectionReason, prompt, onStepComplete]);
@@ -421,6 +433,34 @@ export function useTrackingFlow({
       return;
     }
 
+    let payloadLogs: string[] = [];
+    if (selectedRoute) {
+      const fromChainId = selectedRoute.fromToken?.chainId ?? 1;
+      const toChainId = selectedRoute.toToken?.chainId ?? 1;
+      const fromChain = CHAIN_NAMES[fromChainId] ?? String(fromChainId);
+      const toChain = CHAIN_NAMES[toChainId] ?? String(toChainId);
+      const fromAddress = selectedRoute.fromToken?.address ?? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+      const toAddress = selectedRoute.toToken?.address ?? '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+
+      payloadLogs = [
+        `[${formatTime()}] --- LI.FI Routing Payload ---`,
+        `[${formatTime()}] Source Chain: ${fromChain} (${fromChainId})`,
+        `[${formatTime()}] Dest Chain: ${toChain} (${toChainId})`,
+        `[${formatTime()}] Source Token: ${fromAddress}`,
+        `[${formatTime()}] Dest Token: ${toAddress}`,
+        `[${formatTime()}] Amount (wei): ${selectedRoute.fromAmount ?? '0'}`,
+        `[${formatTime()}] ---------------------------`
+      ];
+
+      if (report?.chainlink?.prices && report.chainlink.prices.length > 0) {
+        payloadLogs.push(`[${formatTime()}] --- Chainlink Oracle ---`);
+        report.chainlink.prices.forEach((p: { symbol: string; price: string }) => {
+          payloadLogs.push(`[${formatTime()}] Verified ${p.symbol}: ${p.price}`);
+        });
+        payloadLogs.push(`[${formatTime()}] ---------------------------`);
+      }
+    }
+
     setExecuteLogs((prev) => [
       ...prev,
       `[${formatTime()}] User chose ${protocol}. Execution process continues below.`,
@@ -429,6 +469,7 @@ export function useTrackingFlow({
       `[${formatTime()}] Fee: ${fee}`,
       `[${formatTime()}] Input: ${inputAmount}`,
       `[${formatTime()}] Output (estimated): ${outputAmount}`,
+      ...payloadLogs
     ]);
 
     // Execution block replaces the previous wagmi dependencies and purely simulates
@@ -472,6 +513,7 @@ export function useTrackingFlow({
       outputAmount,
       txHash: '0xsimulation',
       approvalHash: 'N/A',
+      accuracy: report?.accuracy ?? 'N/A'
     };
     setFinalResult(result);
     setPhase('done');

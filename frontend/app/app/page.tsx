@@ -352,22 +352,11 @@ export default function AppPage() {
     if (!intent) {
       const p2 = prompt.toLowerCase();
       const isSwapIntent = /swap|convert|exchange/.test(p2);
-      const isBridgeIntent = /bridge|transfer|move.*to|send.*to/.test(p2);
-      const isEthUsdc = p2.includes('eth') && p2.includes('usdc');
-      const isBaseAndArb = p2.includes('base') && (p2.includes('arbitrum') || p2.includes('arb'));
-      if (isSwapIntent && !isEthUsdc) {
-        setLoading(false);
-        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support swapping between ETH and USDC.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
-        return;
-      }
-      if (isBridgeIntent && !isBaseAndArb) {
-        setLoading(false);
-        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: 'I currently only support bridging between Base and Arbitrum.\n\n- 🔄 Swap: ETH ↔ USDC on Base\n- 🌉 Bridge: ETH between Base and Arbitrum', at: new Date().toISOString() }]);
-        return;
-      }
+      const isBridgeIntent = /bridge|transfer|move.*to|send.*to|cross.chain/.test(p2);
+
       if (!isSwapIntent && !isBridgeIntent) {
         setLoading(false);
-        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.", at: new Date().toISOString() }]);
+        setMessages((prev) => [...prev, { id: `a_${now}_unsupported`, role: 'assistant', content: "I didn't recognize that request. Try: 'Swap 10 USDC to ETH on Polygon' or 'Bridge 1 ETH from Ethereum to Base'.", at: new Date().toISOString() }]);
         return;
       }
     }
@@ -605,8 +594,8 @@ export default function AppPage() {
                                 return (
                                   <>
                                     <p className="flex items-center gap-1.5">
-                                      <strong>Accuracy:</strong> {m.report.accuracy}
-                                      {m.report.accuracy.includes('Oracle') && (
+                                      <strong>Accuracy:</strong> {m.report.accuracy || 'N/A'}
+                                      {m.report.accuracy?.includes('Oracle') && (
                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20">
                                           <ShieldCheck className="w-2.5 h-2.5" />
                                           Chainlink
@@ -632,7 +621,7 @@ export default function AppPage() {
                                       {reportType === 'bridge' ? (
                                         <div>
                                           <p className="font-medium text-foreground">Top bridges</p>
-                                          {m.report.topBridges.length ? (
+                                          {m.report.topBridges?.length ? (
                                             <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
                                               {m.report.topBridges.slice(0, 5).map((b, i) => (
                                                 <li key={i} className="flex items-center gap-2 min-h-[28px]">
@@ -659,7 +648,7 @@ export default function AppPage() {
                                       ) : (
                                         <div>
                                           <p className="font-medium text-foreground">Top swaps</p>
-                                          {m.report.topSwaps.length ? (
+                                          {m.report.topSwaps?.length ? (
                                             <ul className="list-disc list-inside text-muted-foreground space-y-1.5">
                                               {m.report.topSwaps.slice(0, 5).map((s, i) => (
                                                 <li key={i} className="flex items-center gap-2 min-h-[28px]">

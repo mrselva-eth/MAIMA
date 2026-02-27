@@ -285,6 +285,20 @@ export function ProcessTrackingPanel({
                       <span className="text-gray-500">Output</span>
                       <span className="text-gray-200">{finalResult.outputAmount}</span>
                     </div>
+                    {finalResult.accuracy && (
+                      <div className="flex justify-between gap-2">
+                        <span className="text-gray-500">Accuracy</span>
+                        <span className="text-gray-200">
+                          {finalResult.accuracy.includes('Chainlink') ? (
+                            <span className="text-[#375bd2] font-semibold tracking-wide">
+                              {finalResult.accuracy}
+                            </span>
+                          ) : (
+                            finalResult.accuracy
+                          )}
+                        </span>
+                      </div>
+                    )}
                     <div className="pt-1 border-t border-white/10">
                       <span className="text-gray-500 block mb-0.5">Tx</span>
                       <span className="text-gray-300 break-all text-[10px]">{finalResult.txHash}</span>

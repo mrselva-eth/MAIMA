@@ -23,12 +23,77 @@ type Config = {
 
 // ── Token addresses ────────────────────────────────────────────────────────────
 const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+
+// USDC per chain
+const USDC_ETH = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const USDC_ARB = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+const USDC_POLY = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+const USDC_OP = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607";
+const USDC_AVAX = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
+
+// WBTC per chain
+const WBTC_ETH = "0x2260FAC5E0542104311146e4601460a519623217";
+const WBTC_BASE = "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c";
+const WBTC_ARB = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f";
+const WBTC_POLY = "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6";
+const WBTC_OP = "0x68f180fcCe68B2551062086053805B77B9bf0a2095";
+const WBTC_AVAX = "0x50B7545627a5162F82a992c33B87aDc75187B218";
+
+// LINK per chain
+const LINK_ETH = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
+const LINK_BASE = "0x88Fb150DB41287C483829ad321959600522032F5";
+const LINK_POLY = "0xb0897686c545045aFc77CF20eC7A532E3120E0F1";
+const LINK_OP = "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6";
+const LINK_AVAX = "0x5947BB275c521040051D82396192181b413227A3";
+const LINK_ARB = "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4";
+
+// DAI per chain
+const DAI_ETH = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+const DAI_BASE = "0x50c5725949A6E00329949b2100771f7B995777D4";
+const DAI_POLY = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
+const DAI_OP = "0xDA10009cEd72fc32591f4c00BB1F5c7e14B5892B";
+const DAI_ARB = "0xDA10009cEd72fc32591f4c00BB1F5c7e14B5892B";
+const DAI_AVAX = "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70";
 
 // ── Chain IDs ──────────────────────────────────────────────────────────────────
+const ETH_CHAIN_ID = 1;
 const BASE_CHAIN_ID = 8453;
 const ARB_CHAIN_ID = 42161;
+const POLY_CHAIN_ID = 137;
+const OP_CHAIN_ID = 10;
+const AVAX_CHAIN_ID = 43114;
+const SEPOLIA_CHAIN_ID = 11155111;
+
+const TOKENS: Record<string, string> = {
+  eth: ETH_ADDRESS,
+  usdc: USDC_ETH,
+  usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  dai: DAI_ETH,
+  link: LINK_ETH,
+  wbtc: WBTC_ETH,
+  matic: ETH_ADDRESS,
+  bnb: ETH_ADDRESS,
+  avax: ETH_ADDRESS,
+};
+
+const CHAINS: Record<string, number> = {
+  ethereum: ETH_CHAIN_ID,
+  mainnet: ETH_CHAIN_ID,
+  eth: ETH_CHAIN_ID,
+  polygon: POLY_CHAIN_ID,
+  matic: POLY_CHAIN_ID,
+  arbitrum: ARB_CHAIN_ID,
+  arb: ARB_CHAIN_ID,
+  optimism: OP_CHAIN_ID,
+  op: OP_CHAIN_ID,
+  base: BASE_CHAIN_ID,
+  bsc: 56,
+  binance: 56,
+  avalanche: AVAX_CHAIN_ID,
+  avax: AVAX_CHAIN_ID,
+  sepolia: SEPOLIA_CHAIN_ID,
+};
 
 // ── Allowed bridge protocols ───────────────────────────────────────────────────
 const ALLOWED_BRIDGE_PROTOCOLS = ["Stargate", "Across", "Hop", "Connext", "Celer"];
@@ -82,31 +147,117 @@ function scoreForIndex(index: number): string {
   return `${Math.max(88, 98 - index * 2)}%`;
 }
 
+function getTokenAddress(tokenName: string, chainId: number): string {
+  if (tokenName === "eth" || tokenName === "matic" || tokenName === "bnb" || tokenName === "avax") {
+    return ETH_ADDRESS; // LI.FI native gas
+  }
+  if (tokenName === "usdc") {
+    if (chainId === BASE_CHAIN_ID) return USDC_BASE;
+    if (chainId === ARB_CHAIN_ID) return USDC_ARB;
+    if (chainId === POLY_CHAIN_ID) return USDC_POLY;
+    if (chainId === OP_CHAIN_ID) return USDC_OP;
+    if (chainId === AVAX_CHAIN_ID) return USDC_AVAX;
+    return USDC_ETH;
+  }
+  if (tokenName === "wbtc") {
+    if (chainId === BASE_CHAIN_ID) return WBTC_BASE;
+    if (chainId === ARB_CHAIN_ID) return WBTC_ARB;
+    if (chainId === POLY_CHAIN_ID) return WBTC_POLY;
+    if (chainId === OP_CHAIN_ID) return WBTC_OP;
+    if (chainId === AVAX_CHAIN_ID) return WBTC_AVAX;
+    return WBTC_ETH;
+  }
+  if (tokenName === "link") {
+    if (chainId === BASE_CHAIN_ID) return LINK_BASE;
+    if (chainId === POLY_CHAIN_ID) return LINK_POLY;
+    if (chainId === OP_CHAIN_ID) return LINK_OP;
+    if (chainId === AVAX_CHAIN_ID) return LINK_AVAX;
+    if (chainId === ARB_CHAIN_ID) return LINK_ARB;
+    return LINK_ETH;
+  }
+  if (tokenName === "dai") {
+    if (chainId === BASE_CHAIN_ID) return DAI_BASE;
+    if (chainId === POLY_CHAIN_ID) return DAI_POLY;
+    if (chainId === OP_CHAIN_ID) return DAI_OP;
+    if (chainId === ARB_CHAIN_ID) return DAI_ARB;
+    if (chainId === AVAX_CHAIN_ID) return DAI_AVAX;
+    return DAI_ETH;
+  }
+  return TOKENS[tokenName] || ETH_ADDRESS;
+}
+
 /**
  * Parse the user's bridge intent from their prompt.
- * Detects direction (Base→Arbitrum or Arbitrum→Base) and amount.
- * Defaults to ETH Base→Arbitrum if unspecified.
+ * Detects direction and amount.
  */
 function parseIntent(prompt: string, fromAddress: string): Record<string, unknown> {
   const p = prompt.toLowerCase();
 
-  // Detect direction
-  const arbToBase = /arbitrum\s*(to|-?>)\s*base/.test(p);
+  // Detect chains
+  let fromChainId = BASE_CHAIN_ID;
+  let toChainId = ARB_CHAIN_ID;
 
-  const fromChainId = arbToBase ? ARB_CHAIN_ID : BASE_CHAIN_ID;
-  const toChainId = arbToBase ? BASE_CHAIN_ID : ARB_CHAIN_ID;
+  // Let's find all mentioned chains and their index in the string
+  const foundChains: { id: number; index: number }[] = [];
+  for (const [name, id] of Object.entries(CHAINS)) {
+    const idx = p.indexOf(name);
+    if (idx !== -1) {
+      foundChains.push({ id, index: idx });
+    }
+  }
 
-  // Detect token: USDC or ETH
-  const isUsdc = /usdc/.test(p);
-  const fromTokenAddress = isUsdc
-    ? arbToBase ? USDC_ARB : USDC_BASE
-    : ETH_ADDRESS;
-  const toTokenAddress = isUsdc
-    ? arbToBase ? USDC_BASE : USDC_ARB
-    : ETH_ADDRESS;
+  // Sort by appearance in text
+  foundChains.sort((a, b) => a.index - b.index);
 
-  const decimals = isUsdc ? 6 : 18;
-  const defaultAmt = isUsdc ? "100" : "0.01";
+  if (foundChains.length >= 2) {
+    fromChainId = foundChains[0].id;
+    toChainId = foundChains[1].id;
+  } else if (foundChains.length === 1) {
+    toChainId = foundChains[0].id; // Default source remains Base if only destination specified
+  }
+
+  // Detect tokens: "bridge [amount] [fromToken] to [toToken]"
+  const words = p.split(/\s+/);
+  const tokenNames = Object.keys(TOKENS);
+
+  // Set accurate native token based on chain (Default is ETH if unspecified)
+  let fromTokenName = "eth";
+  if (fromChainId === POLY_CHAIN_ID) fromTokenName = "matic";
+  if (fromChainId === AVAX_CHAIN_ID) fromTokenName = "avax";
+  if (fromChainId === 56) fromTokenName = "bnb";
+
+  let toTokenName = "eth";
+  if (toChainId === POLY_CHAIN_ID) toTokenName = "matic";
+  if (toChainId === AVAX_CHAIN_ID) toTokenName = "avax";
+  if (toChainId === 56) toTokenName = "bnb";
+
+  let foundFrom = false;
+
+  for (const word of words) {
+    const cleanWord = word.replace(/[^a-z]/g, "");
+    if (tokenNames.includes(cleanWord)) {
+      if (!foundFrom) {
+        fromTokenName = cleanWord;
+        foundFrom = true;
+      } else {
+        toTokenName = cleanWord;
+        break;
+      }
+    }
+  }
+
+  // If we only found one token natively, mirror it to the destination
+  if (foundFrom && words.indexOf(toTokenName) === -1 && toTokenName !== fromTokenName) {
+    toTokenName = fromTokenName; // Example: Bridge USDC from Base to OP => fromToken is USDC, toToken should also be USDC automatically
+  }
+
+  const fromTokenAddress = getTokenAddress(fromTokenName, fromChainId);
+  const toTokenAddress = getTokenAddress(toTokenName, toChainId);
+
+  const isUsdc = fromTokenName === "usdc" || toTokenName === "usdc";
+  const isWbtc = fromTokenName === "wbtc" || toTokenName === "wbtc";
+  const decimals = isUsdc ? 6 : (isWbtc ? 8 : 18);
+  const defaultAmt = isUsdc ? "100" : (isWbtc ? "0.01" : "1");
   const numMatch = p.match(/\d+(\.\d+)?/);
   const amountStr = numMatch?.[0] ?? defaultAmt;
   const [whole, frac = ""] = amountStr.split(".");
@@ -276,7 +427,7 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
       tags.includes("RECOMMENDED") || tags.includes("FASTEST") ? "High" : "Medium";
 
     const highRel = new Set(["stargate", "across", "hop", "connext", "celer"]);
-    const reliabilityScore = highRel.has(normalizeProtocolName(getMainTool(r)))
+    const reliabilityScore = highRel.has((getMainTool(r) || "").toLowerCase())
       ? "99.9%"
       : "98.5%";
 
@@ -297,6 +448,7 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
     };
   });
 
+  // Weights: Gas 40% | Time 30% | Reliability 30% (same formula as cre-swap)
   // ── 6. Score and rank routes ─────────────────────────────────────────────────
   // Weights: Gas 40% | Time 30% | Reliability 30% (same formula as cre-swap)
   const sorted = routeSummaries
@@ -320,8 +472,7 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
     {
       name: "Intent parsed",
       status: "ok" as const,
-      details: `Bridge request detected: ${fromSymbol ?? "token"} ${(payload.fromChainId as number) === BASE_CHAIN_ID ? "Base" : "Arbitrum"
-        } → ${(payload.toChainId as number) === ARB_CHAIN_ID ? "Arbitrum" : "Base"}`,
+      details: `Bridge request detected: ${fromSymbol ?? "token"} ${payload.fromChainId === BASE_CHAIN_ID ? "Base" : "Arbitrum"} → ${payload.toChainId === ARB_CHAIN_ID ? "Arbitrum" : "Base"}`,
       timestamp: now,
     },
     {

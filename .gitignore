@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+
+# Executables
+bin/
+frontend/bin/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+.next/
+out/
+build/
+cre/*/tmp.js
+cre/*/tmp.wasm

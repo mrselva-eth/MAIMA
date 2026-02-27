@@ -13796,8 +13796,36 @@ var sendErrorResponse = (error) => {
   hostBindings.sendResponse(payload);
 };
 var ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+var USDC_ETH = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 var USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+var USDC_ARB = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+var USDC_POLY = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+var USDC_OP = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607";
+var USDC_AVAX = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
+var WBTC_ETH = "0x2260FAC5E0542104311146e4601460a519623217";
+var WBTC_BASE = "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c";
+var WBTC_ARB = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f";
+var WBTC_POLY = "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6";
+var WBTC_OP = "0x68f180fcCe68B2551062086053805B77B9bf0a2095";
+var WBTC_AVAX = "0x50B7545627a5162F82a992c33B87aDc75187B218";
+var LINK_ETH = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
+var LINK_BASE = "0x88Fb150DB41287C483829ad321959600522032F5";
+var LINK_POLY = "0xb0897686c545045aFc77CF20eC7A532E3120E0F1";
+var LINK_OP = "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6";
+var LINK_AVAX = "0x5947BB275c521040051D82396192181b413227A3";
+var LINK_ARB = "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4";
+var DAI_ETH = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+var DAI_BASE = "0x50c5725949A6E00329949b2100771f7B995777D4";
+var DAI_POLY = "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063";
+var DAI_OP = "0xDA10009cEd72fc32591f4c00BB1F5c7e14B5892B";
+var DAI_ARB = "0xDA10009cEd72fc32591f4c00BB1F5c7e14B5892B";
+var DAI_AVAX = "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70";
+var ETH_CHAIN_ID = 1;
 var BASE_CHAIN_ID = 8453;
+var ARB_CHAIN_ID = 42161;
+var POLY_CHAIN_ID = 137;
+var OP_CHAIN_ID = 10;
+var AVAX_CHAIN_ID = 43114;
 var SEPOLIA_CHAIN_ID = 11155111;
 var ALLOWED_SWAP_PROTOCOLS = ["Uniswap V3", "1inch", "Curve", "KyberSwap", "Paraswap"];
 function toBase64(str) {
@@ -13833,21 +13861,143 @@ function parseGasFee(value2) {
 function scoreForIndex(index) {
   return `${Math.max(90, 98 - index * 2)}%`;
 }
+var TOKENS = {
+  eth: ETH_ADDRESS,
+  usdc: USDC_ETH,
+  usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  dai: DAI_ETH,
+  link: LINK_ETH,
+  wbtc: WBTC_ETH,
+  matic: ETH_ADDRESS,
+  bnb: ETH_ADDRESS,
+  avax: ETH_ADDRESS
+};
+var CHAINS = {
+  ethereum: ETH_CHAIN_ID,
+  mainnet: ETH_CHAIN_ID,
+  eth: ETH_CHAIN_ID,
+  polygon: POLY_CHAIN_ID,
+  matic: POLY_CHAIN_ID,
+  arbitrum: ARB_CHAIN_ID,
+  arb: ARB_CHAIN_ID,
+  optimism: OP_CHAIN_ID,
+  op: OP_CHAIN_ID,
+  base: BASE_CHAIN_ID,
+  bsc: 56,
+  binance: 56,
+  avalanche: AVAX_CHAIN_ID,
+  avax: AVAX_CHAIN_ID,
+  sepolia: SEPOLIA_CHAIN_ID
+};
+function getTokenAddress(tokenName, chainId) {
+  if (tokenName === "eth" || tokenName === "matic" || tokenName === "bnb" || tokenName === "avax") {
+    return ETH_ADDRESS;
+  }
+  if (tokenName === "usdc") {
+    if (chainId === BASE_CHAIN_ID)
+      return USDC_BASE;
+    if (chainId === ARB_CHAIN_ID)
+      return USDC_ARB;
+    if (chainId === POLY_CHAIN_ID)
+      return USDC_POLY;
+    if (chainId === OP_CHAIN_ID)
+      return USDC_OP;
+    if (chainId === AVAX_CHAIN_ID)
+      return USDC_AVAX;
+    return USDC_ETH;
+  }
+  if (tokenName === "wbtc") {
+    if (chainId === BASE_CHAIN_ID)
+      return WBTC_BASE;
+    if (chainId === ARB_CHAIN_ID)
+      return WBTC_ARB;
+    if (chainId === POLY_CHAIN_ID)
+      return WBTC_POLY;
+    if (chainId === OP_CHAIN_ID)
+      return WBTC_OP;
+    if (chainId === AVAX_CHAIN_ID)
+      return WBTC_AVAX;
+    return WBTC_ETH;
+  }
+  if (tokenName === "link") {
+    if (chainId === BASE_CHAIN_ID)
+      return LINK_BASE;
+    if (chainId === POLY_CHAIN_ID)
+      return LINK_POLY;
+    if (chainId === OP_CHAIN_ID)
+      return LINK_OP;
+    if (chainId === AVAX_CHAIN_ID)
+      return LINK_AVAX;
+    if (chainId === ARB_CHAIN_ID)
+      return LINK_ARB;
+    return LINK_ETH;
+  }
+  if (tokenName === "dai") {
+    if (chainId === BASE_CHAIN_ID)
+      return DAI_BASE;
+    if (chainId === POLY_CHAIN_ID)
+      return DAI_POLY;
+    if (chainId === OP_CHAIN_ID)
+      return DAI_OP;
+    if (chainId === ARB_CHAIN_ID)
+      return DAI_ARB;
+    if (chainId === AVAX_CHAIN_ID)
+      return DAI_AVAX;
+    return DAI_ETH;
+  }
+  return TOKENS[tokenName] || ETH_ADDRESS;
+}
 function parseIntent(prompt, fromAddress) {
   const p = prompt.toLowerCase();
-  const isUsdcToEth = /usdc\s*(to|->)\s*eth/.test(p);
-  const fromToken = isUsdcToEth ? USDC_BASE : ETH_ADDRESS;
-  const toToken = isUsdcToEth ? ETH_ADDRESS : USDC_BASE;
-  const decimals = isUsdcToEth ? 6 : 18;
-  const defaultAmt = isUsdcToEth ? "100" : "1";
+  let chainId = BASE_CHAIN_ID;
+  const onMatch = p.match(/\bon\s+([a-z]+)/);
+  if (onMatch && CHAINS[onMatch[1]]) {
+    chainId = CHAINS[onMatch[1]];
+  } else {
+    for (const [name, id] of Object.entries(CHAINS)) {
+      if (p.includes(name)) {
+        chainId = id;
+        break;
+      }
+    }
+  }
+  const words = p.split(/\s+/);
+  const tokenNames = Object.keys(TOKENS);
+  let fromTokenName = "eth";
+  if (chainId === POLY_CHAIN_ID)
+    fromTokenName = "matic";
+  if (chainId === AVAX_CHAIN_ID)
+    fromTokenName = "avax";
+  if (chainId === 56)
+    fromTokenName = "bnb";
+  let toTokenName = "usdc";
+  let foundFrom = false;
+  for (const word of words) {
+    const cleanWord = word.replace(/[^a-z]/g, "");
+    if (tokenNames.includes(cleanWord)) {
+      if (!foundFrom) {
+        fromTokenName = cleanWord;
+        foundFrom = true;
+      } else {
+        toTokenName = cleanWord;
+        break;
+      }
+    }
+  }
+  const fromToken = getTokenAddress(fromTokenName, chainId);
+  const toToken = getTokenAddress(toTokenName, chainId);
+  const isUsdc = fromTokenName === "usdc" || toTokenName === "usdc";
+  const isWbtc = fromTokenName === "wbtc" || toTokenName === "wbtc";
+  const decimals = isUsdc ? 6 : isWbtc ? 8 : 18;
+  const defaultAmt = isUsdc ? "100" : isWbtc ? "0.01" : "1";
   const numMatch = p.match(/\d+(\.\d+)?/);
   const amountStr = numMatch?.[0] ?? defaultAmt;
   const [whole, frac = ""] = amountStr.split(".");
   const fracPadded = (frac + "0".repeat(decimals)).slice(0, decimals);
   const fromAmount = `${whole}${fracPadded}`.replace(/^0+/, "") || "0";
   return {
-    fromChainId: BASE_CHAIN_ID,
-    toChainId: BASE_CHAIN_ID,
+    fromChainId: chainId,
+    toChainId: chainId,
     fromTokenAddress: fromToken,
     toTokenAddress: toToken,
     fromAmount,
@@ -13880,15 +14030,28 @@ function processSwap(nodeRuntime) {
   let lifiData = {};
   try {
     lifiData = JSON.parse(new TextDecoder().decode(quoteResp.body));
-  } catch {
-    return { processed: false, requestId: request.id, timestamp: Date.now() };
-  }
+  } catch {}
   const routes = Array.isArray(lifiData.routes) ? lifiData.routes : [];
-  if (routes.length === 0)
-    return { processed: false, requestId: request.id, timestamp: Date.now() };
+  if (routes.length === 0) {
+    const errorReport = {
+      accuracy: "N/A",
+      summary: "No routes found for the requested swap.",
+      timestamp: Date.now(),
+      workflow: [
+        { name: "Intent parsed", status: "ok", details: "Swap request detected", timestamp: Date.now() },
+        { name: "Quote requested", status: "error", details: "LI.FI returned no routes", timestamp: Date.now() + 50 }
+      ],
+      topSwaps: [],
+      topBridges: [],
+      intentType: "swap"
+    };
+    const creReportBody2 = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
+    httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody2 }).result();
+    return { processed: true, requestId: request.id, timestamp: Date.now() };
+  }
   const fromSymbol = routes[0]?.fromToken?.symbol;
   const toSymbol = routes[0]?.toToken?.symbol;
-  const clChainId = payload.fromChainId === SEPOLIA_CHAIN_ID ? 11155111 : 8453;
+  const clChainId = Number(payload.fromChainId);
   const verifiedPrices = [];
   if (fromSymbol) {
     try {
@@ -13944,8 +14107,24 @@ function processSwap(nodeRuntime) {
       return true;
     return allowedSet.has(normalizeProtocolName(route.mainTool));
   });
-  if (filtered.length === 0)
-    return { processed: false, requestId: request.id, timestamp: Date.now() };
+  if (filtered.length === 0) {
+    const errorReport = {
+      accuracy: "N/A",
+      summary: "No whitelisted protocols found for this swap.",
+      timestamp: Date.now(),
+      workflow: [
+        { name: "Intent parsed", status: "ok", details: "Swap request detected", timestamp: Date.now() },
+        { name: "Quote requested", status: "ok", details: `Found ${routes.length} route(s)`, timestamp: Date.now() + 50 },
+        { name: "Protocol validation", status: "error", details: "No whitelisted protocols found", timestamp: Date.now() + 100 }
+      ],
+      topSwaps: [],
+      topBridges: [],
+      intentType: "swap"
+    };
+    const creReportBody2 = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
+    httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody2 }).result();
+    return { processed: true, requestId: request.id, timestamp: Date.now() };
+  }
   const sorted = filtered.map((route) => {
     const fee = parseGasFee(route.gasCostUSD) ?? 9999;
     const duration = route.executionDuration ?? 9999;
@@ -13956,7 +14135,7 @@ function processSwap(nodeRuntime) {
   const topSwaps = Array.from(new Set(sorted.map((r) => r.mainTool))).slice(0, 5).map((name, i2) => ({ name, score: scoreForIndex(i2) }));
   const now = Date.now();
   const workflow2 = [
-    { name: "Intent parsed", status: "ok", details: "Swap request detected", timestamp: now },
+    { name: "Intent parsed", status: "ok", details: `${fromSymbol} to ${toSymbol} on chain ${clChainId}`, timestamp: now },
     { name: "Quote requested", status: "ok", details: `Requested ${routes.length} route(s) from LI.FI`, timestamp: now + 50 },
     { name: "Protocol validation", status: enforceWhitelist ? "ok" : "warn", details: enforceWhitelist ? `Whitelist enforced` : "Whitelist not enforced", timestamp: now + 100 },
     { name: "Ranking", status: "ok", details: "Sorted by Gas Fee (40%), Time (30%), Reliability (30%)", timestamp: now + 150 },
@@ -14002,10 +14181,10 @@ var initWorkflow = (config) => {
 function onTrigger(runtime2) {
   runtime2.log("cre-swap workflow running.");
   const result = runtime2.runInNodeMode(processSwap, consensusIdenticalAggregation())().result();
-  runtime2.log("[1] Intent parsed — swap.");
+  runtime2.log("[1] Intent parsed.");
   runtime2.log("[2] Quote — LI.FI.");
-  runtime2.log("[3] Protocol validation — swap whitelist.");
-  runtime2.log("[4] Ranking — gas/time/reliability.");
+  runtime2.log("[3] Protocol validation.");
+  runtime2.log("[4] Ranking.");
   runtime2.log("[5] Report submitted for request " + result.requestId);
   return result;
 }
