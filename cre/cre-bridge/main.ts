@@ -341,6 +341,7 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
       topSwaps: [],
       topBridges: [],
       intentType: "bridge" as const,
+      simulationMode: true,
     };
     const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
     httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody }).result();

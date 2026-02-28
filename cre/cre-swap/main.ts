@@ -302,6 +302,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
       topSwaps: [],
       topBridges: [],
       intentType: "swap" as const,
+      simulationMode: true,
     };
     const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
     httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody }).result();
@@ -409,6 +410,7 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
       topSwaps: [],
       topBridges: [],
       intentType: "swap" as const,
+      simulationMode: true,
     };
     const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
     httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody }).result();

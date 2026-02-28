@@ -256,6 +256,7 @@ export function useTrackingFlow({
             `[${formatTime()}] No valid routes were found for this request.`,
           ]);
           setPhase('done');
+          onStepComplete();
           return;
         }
 
