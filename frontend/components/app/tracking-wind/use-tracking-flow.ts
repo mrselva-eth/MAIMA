@@ -129,8 +129,8 @@ export function useTrackingFlow({
           liquidity: route.liquidityScore || 'N/A',
         }
       }))
-      : fallbackTop;
-  }, [report?.ranking, topRoutes, fallbackTop]);
+      : (report ? [] : fallbackTop);
+  }, [report, topRoutes, fallbackTop]);
 
   const protocolNames = useMemo(() => {
     if (report?.ranking && report.ranking.length > 0) {
@@ -139,6 +139,7 @@ export function useTrackingFlow({
     if (sortedRoutes.length) {
       return Array.from(new Set(sortedRoutes.map((route) => route.mainTool)));
     }
+    if (report) return [];
     const baseList = inferredType === 'bridge' ? DEFAULT_BRIDGES : DEFAULT_SWAPS;
     return baseList.filter((name) =>
       inferredType === 'swap' && enforceSwapWhitelist
@@ -247,10 +248,11 @@ export function useTrackingFlow({
         }
         await delay(CRE_STREAM_DELAY_MS);
 
-        if (report?.routes?.length === 0) {
+        const hasRoutes = Array.isArray(report?.routes) && report.routes.length > 0;
+        if (!hasRoutes) {
           setLogLines((prev) => [
             ...prev,
-            `[${formatTime()}] Selection error: ${report.summary}`,
+            `[${formatTime()}] Selection error: ${report?.summary ?? 'No valid routes were found.'}`,
             `[${formatTime()}] No valid routes were found for this request.`,
           ]);
           setPhase('done');

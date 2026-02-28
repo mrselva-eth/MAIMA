@@ -17,6 +17,7 @@ import {
 type Config = {
   schedule: string;
   apiBaseUrl: string;
+  lifiApiKey?: string;
 };
 
 const ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
@@ -266,13 +267,18 @@ function processSwap(nodeRuntime: NodeRuntime<Config>): SwapProcessResult {
   if (!request?.id) return { processed: false, requestId: "", timestamp: Date.now() };
 
   const payload = parseIntent(request.prompt, request.fromAddress ?? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
-  const quoteBody = toBase64(JSON.stringify({ action: "quote", payload }));
+
+  const lifiHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (nodeRuntime.config.lifiApiKey) {
+    lifiHeaders["x-lifi-api-key"] = nodeRuntime.config.lifiApiKey;
+  }
+
   const quoteResp = httpClient
     .sendRequest(nodeRuntime, {
-      url: `${base}/api/maima`,
+      url: `https://li.quest/v1/advanced/routes`,
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: quoteBody,
+      headers: lifiHeaders,
+      body: toBase64(JSON.stringify(payload)),
     })
     .result();
   let lifiData: { routes?: unknown[] } = {};

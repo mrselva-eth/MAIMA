@@ -19,6 +19,7 @@ import {
 type Config = {
   schedule: string;
   apiBaseUrl: string;
+  lifiApiKey?: string;
 };
 
 // ── Token addresses ────────────────────────────────────────────────────────────
@@ -305,14 +306,18 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
     request.fromAddress ?? "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
   );
 
-  // ── 3. Fetch live routes from LI.FI via backend quote action ────────────────
-  const quoteBody = toBase64(JSON.stringify({ action: "quote", payload }));
+  // ── 3. Fetch live routes from LI.FI via direct API call ─────────────────────
+  const lifiHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (nodeRuntime.config.lifiApiKey) {
+    lifiHeaders["x-lifi-api-key"] = nodeRuntime.config.lifiApiKey;
+  }
+
   const quoteResp = httpClient
     .sendRequest(nodeRuntime, {
-      url: `${base}/api/maima`,
+      url: `https://li.quest/v1/advanced/routes`,
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: quoteBody,
+      headers: lifiHeaders,
+      body: toBase64(JSON.stringify(payload)),
     })
     .result();
 
@@ -324,7 +329,23 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
   }
 
   const routes = Array.isArray(lifiData.routes) ? lifiData.routes : [];
-  if (routes.length === 0) return { processed: false, requestId: request.id, timestamp: Date.now() };
+  if (routes.length === 0) {
+    const errorReport = {
+      accuracy: "N/A",
+      summary: "No routes found for the requested bridge.",
+      timestamp: Date.now(),
+      workflow: [
+        { name: "Intent parsed", status: "ok" as const, details: "Bridge request detected", timestamp: Date.now() },
+        { name: "Quote requested", status: "error" as const, details: "LI.FI returned no routes", timestamp: Date.now() + 50 },
+      ],
+      topSwaps: [],
+      topBridges: [],
+      intentType: "bridge" as const,
+    };
+    const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report: errorReport }));
+    httpClient.sendRequest(nodeRuntime, { url: `${base}/api/maima`, method: "POST", headers: { "Content-Type": "application/json" }, body: creReportBody }).result();
+    return { processed: true, requestId: request.id, timestamp: Date.now() };
+  }
 
   // ── 4. Chainlink oracle price verification ───────────────────────────────────
   const fromSymbol = (routes[0] as { fromToken?: { symbol?: string } })?.fromToken?.symbol;

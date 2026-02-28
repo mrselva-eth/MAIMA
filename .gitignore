@@ -16,3 +16,4 @@ out/
 build/
 cre/*/tmp.js
 cre/*/tmp.wasm
+**/.cre_build_tmp.js

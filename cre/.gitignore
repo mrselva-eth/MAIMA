@@ -8,6 +8,7 @@ tmp.js
 tmp.wasm
 **/tmp.js
 **/tmp.wasm
+**/.cre_build_tmp.js
 
 # Dependencies
 node_modules/
@@ -30,6 +31,8 @@ Thumbs.db
 .env
 .env.* 
 !.env.example
+config.staging.json
+config.production.json
 
 
 # Misc caches

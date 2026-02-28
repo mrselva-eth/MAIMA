@@ -191,7 +191,7 @@ export function ProcessTrackingPanel({
                 </div>
               ))}
 
-              {(phase === 'choose' || phase === 'execute' || phase === 'done') && (
+              {(phase === 'choose' || phase === 'execute' || phase === 'done') && top4.length > 0 && (
                 <div className="my-3 pl-7 border-l-2 border-emerald-500/30 ml-2 space-y-2">
                   <p className="text-emerald-400/90 font-medium text-xs">
                     {phase === 'choose' ? `Top 4 ${inferredType}s - choose one` : `Top 4 ${inferredType}s (chosen)`}
