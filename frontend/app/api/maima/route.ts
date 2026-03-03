@@ -1,12 +1,11 @@
 /**
  * Single MAIMA API route. All actions via ?action= (GET) or body.action (POST).
- * GET: queue | report | pending-swap | pending-bridge | chainlink-price | status
+ * GET: queue | report | pending-swap | pending-bridge | status
  * POST: analyze | cre-report | run-swap | run-bridge | quote | step
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { maimaRequests, maimaReports, pendingSwapQueue, pendingBridgeQueue, type MaimaRequest } from '@/lib/maima';
-import { getChainlinkPrice } from '@/lib/chainlink-oracle';
 import path from 'path';
 import { existsSync } from 'fs';
 import { spawn } from 'child_process';
@@ -145,15 +144,6 @@ export async function GET(req: NextRequest) {
         if (request) console.log('[maima] pending-bridge consumed', (request as MaimaRequest).id);
         return NextResponse.json({ success: true, request });
       }
-      case 'chainlink-price': {
-        const symbol = searchParams.get('symbol');
-        const chainId = Number(searchParams.get('chainId')) || 8453;
-        console.log(`[maima API] chainlink-price requested for symbol=${symbol}, chainId=${chainId}`);
-        if (!symbol) return NextResponse.json({ error: 'symbol required' }, { status: 400 });
-        const result = await getChainlinkPrice(symbol, Number.isFinite(chainId) ? chainId : 8453);
-        if (!result) return NextResponse.json({ error: 'No price feed' }, { status: 404 });
-        return NextResponse.json({ symbol: result.pair?.split('/')[0], price: result.price, updatedAt: result.updatedAt, chainId: result.chainId });
-      }
       case 'status': {
         const txHash = searchParams.get('txHash');
         if (!txHash) return NextResponse.json({ error: 'txHash required' }, { status: 400 });
@@ -179,7 +169,7 @@ export async function GET(req: NextRequest) {
         });
       }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|chainlink-price|status' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|status' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima GET]', action, e);

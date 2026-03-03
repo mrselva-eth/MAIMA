@@ -103,6 +103,32 @@ export default function ReportCard({ report, executionPending, result }: ReportC
         )}
       </div>
 
+      {report.chainlink?.prices?.length ? (
+        <div className="rounded-lg border border-gray-200 bg-white p-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-foreground">Verified price feeds</p>
+            <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">
+              Chainlink Oracle
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {report.chainlink.prices.map((p, i) => (
+              <div key={i} className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50/30 px-2 py-1.5">
+                <span className="font-semibold text-blue-900">{p.symbol}</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-foreground font-mono">{p.price}</span>
+                  {p.updatedAt ? (
+                    <span className="text-[9px] text-muted-foreground">
+                      Updated: {new Date(p.updatedAt).toLocaleTimeString()}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {report.workflow?.length ? (
         <div className="rounded-lg border border-gray-200 bg-white p-2.5 space-y-2">
           <p className="font-medium text-foreground">Workflow report</p>

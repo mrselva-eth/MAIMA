@@ -1,11 +1,5 @@
 /**
  * MAIMA – Main CRE workflow (orchestrator only)
- *
- * cre-maima is the main orchestrator. It does NOT do analysis.
- * - GET /api/maima?action=queue → for each request, if report not done yet:
- *   - If swap  → POST /api/maima { action: 'run-swap', request }
- *   - If bridge → POST /api/maima { action: 'run-bridge', request }
- * cre-swap and cre-bridge do the actual analysis (LI.FI, Chainlink, ranking, report).
  */
 
 import {
@@ -32,18 +26,17 @@ type QueueRequest = {
 };
 
 function toBase64(str: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(str);
-  const key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const bytes = new TextEncoder().encode(str);
   let result = "";
   for (let i = 0; i < bytes.length; i += 3) {
     const a = bytes[i];
     const b = i + 1 < bytes.length ? bytes[i + 1] : 0;
     const c = i + 2 < bytes.length ? bytes[i + 2] : 0;
-    result += key[a >> 2];
-    result += key[((a & 3) << 4) | (b >> 4)];
-    result += i + 1 < bytes.length ? key[((b & 15) << 2) | (c >> 6)] : "=";
-    result += i + 2 < bytes.length ? key[c & 63] : "=";
+    result += chars[a >> 2];
+    result += chars[((a & 3) << 4) | (b >> 4)];
+    result += i + 1 < bytes.length ? chars[((b & 15) << 2) | (c >> 6)] : "=";
+    result += i + 2 < bytes.length ? chars[c & 63] : "=";
   }
   return result;
 }

@@ -59,7 +59,7 @@ export default function Navbar() {
                 MAIMA — DeFi Optimistic Solution
               </span>
               <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                Swap or bridge → report (accuracy, gas).
+                AI-powered intent-based DeFi execution layer
               </span>
             </div>
           ) : !nameError ? (
