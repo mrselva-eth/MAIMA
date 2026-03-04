@@ -307,6 +307,7 @@ LIFI_API_KEY=
 OPENAI_API_KEY=
 CRE_SIMULATION_MODE=on
 NEXT_PUBLIC_CRE_SIMULATION_MODE=on
+CRE_CLI_PATH=bin/cre.exe   # project-local CRE binary under frontend/bin (no global PATH needed)
 ```
 
 ---

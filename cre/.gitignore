@@ -8,6 +8,8 @@ main.js
 main.wasm
 **/main.js
 **/main.wasm
+**/main.bundled.js
+**/.cre_build_tmp.js
 **/.cre_build_tmp.js
 
 # Dependencies
