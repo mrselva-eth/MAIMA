@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import type { ReportRoute } from '@/lib/maima';
 import {
   CRE_STREAM_DELAY_MS,
@@ -46,6 +47,7 @@ export function useTrackingFlow({
   onStepComplete,
   onExecuteStart,
 }: ProcessTrackingPanelProps) {
+  const { toast } = useToast();
   const chainId = SEPOLIA_CHAIN_ID;
   const [phase, setPhase] = useState<TrackingPhase>('steps');
   const [stepIndex, setStepIndex] = useState(0);
@@ -482,11 +484,19 @@ export function useTrackingFlow({
     ]);
     setIsStreamingExecuteLog(true);
     const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const oraclePrices: { symbol: string; price: string }[] = [];
     try {
-      const res = await fetch('/api/cre', {
+      const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: inferredType }),
+        body: JSON.stringify({
+          action: inferredType === 'bridge' ? 'run-bridge' : 'run-swap',
+          request: {
+            id: report?.requestId ?? `retry_${Date.now()}`,
+            prompt,
+            fromAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+          }
+        }),
       });
       const data = await res.json();
       const output = typeof data.output === 'string' ? data.output : '';
@@ -499,6 +509,11 @@ export function useTrackingFlow({
         for (const line of lines) {
           await delay(CRE_STREAM_DELAY_MS);
           setExecuteLogs((prev) => [...prev, line]);
+          // Parse oracle verification logs: [ORACLE] Verified ETH: $2645.12
+          const match = line.match(/\[ORACLE\] Verified ([A-Z]+): (\$?\d+\.?\d*)/);
+          if (match) {
+            oraclePrices.push({ symbol: match[1], price: match[2].startsWith('$') ? match[2] : `$${match[2]}` });
+          }
         }
       } else {
         setExecuteLogs((prev) => [...prev, '(no output from CRE workflow)']);
@@ -508,6 +523,20 @@ export function useTrackingFlow({
     } finally {
       setIsStreamingExecuteLog(false);
     }
+
+    // Compare with initial report prices
+    if (report?.chainlink?.prices && oraclePrices.length > 0) {
+      report.chainlink.prices.forEach(oldP => {
+        const newP = oraclePrices.find(p => p.symbol === oldP.symbol);
+        if (newP && oldP.price !== newP.price) {
+          toast({
+            title: 'Live Price Update',
+            description: `The Chainlink Oracle price for ${oldP.symbol} has changed from ${oldP.price} to ${newP.price} since analysis.`,
+          });
+        }
+      });
+    }
+
     const result = {
       protocol,
       pair,
@@ -516,7 +545,8 @@ export function useTrackingFlow({
       outputAmount,
       txHash: '0xsimulation',
       approvalHash: 'N/A',
-      accuracy: report?.accuracy ?? 'N/A'
+      accuracy: report?.accuracy ?? 'N/A',
+      executionVerifiedPrices: oraclePrices.length > 0 ? oraclePrices : undefined,
     };
     setFinalResult(result);
     setPhase('done');

@@ -24,6 +24,8 @@ type FinalResult = {
   outputAmount: string;
   txHash: string;
   approvalHash: string;
+  accuracy?: string;
+  executionVerifiedPrices?: { symbol: string; price: string }[];
 };
 
 function formatMessageTime(iso: string): string {

@@ -13,6 +13,8 @@ type FinalResultLike = {
   outputAmount: string;
   txHash: string;
   approvalHash: string;
+  accuracy?: string;
+  executionVerifiedPrices?: { symbol: string; price: string }[];
 };
 
 type ReportCardProps = {
@@ -188,6 +190,19 @@ export default function ReportCard({ report, executionPending, result }: ReportC
           <p><strong>Input:</strong> {result.inputAmount} {'->'} <strong>Output:</strong> {result.outputAmount}</p>
           <p className="break-all"><strong>Tx:</strong> {result.txHash}</p>
           <p className="break-all"><strong>Approval:</strong> {result.approvalHash}</p>
+          {result.executionVerifiedPrices && (
+            <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+              <p className="text-[10px] uppercase font-bold text-blue-600 tracking-tight">Final Oracle Verification</p>
+              <div className="grid grid-cols-2 gap-2">
+                {result.executionVerifiedPrices.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between rounded bg-blue-50/50 px-2 py-1 border border-blue-100/50">
+                    <span className="font-bold text-blue-900">{p.symbol}</span>
+                    <span className="font-mono text-foreground">{p.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 

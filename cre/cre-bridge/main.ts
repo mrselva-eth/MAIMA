@@ -302,15 +302,23 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
     const verifiedPrices: { symbol: string; price: string; updatedAt?: number }[] = [];
 
     if (fromSymbol) {
+      nodeRuntime.log(`[ORACLE] Verifying price for ${fromSymbol} via Chainlink...`);
       const prData = getChainlinkPrice(nodeRuntime, fromSymbol, clChainId);
       if (prData?.price != null) {
+        nodeRuntime.log(`[ORACLE] Verified ${fromSymbol}: $${Number(prData.price).toFixed(2)} (Updated: ${new Date(prData.updatedAt || Date.now()).toLocaleTimeString()})`);
         verifiedPrices.push({ symbol: fromSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt });
+      } else {
+        nodeRuntime.log(`[ORACLE] Price for ${fromSymbol} unavailable via Chainlink.`);
       }
     }
     if (toSymbol && toSymbol !== fromSymbol) {
+      nodeRuntime.log(`[ORACLE] Verifying price for ${toSymbol} via Chainlink...`);
       const prData = getChainlinkPrice(nodeRuntime, toSymbol, clChainId);
       if (prData?.price != null) {
+        nodeRuntime.log(`[ORACLE] Verified ${toSymbol}: $${Number(prData.price).toFixed(2)} (Updated: ${new Date(prData.updatedAt || Date.now()).toLocaleTimeString()})`);
         verifiedPrices.push({ symbol: toSymbol, price: `$${Number(prData.price).toFixed(2)}`, updatedAt: prData.updatedAt });
+      } else {
+        nodeRuntime.log(`[ORACLE] Price for ${toSymbol} unavailable via Chainlink.`);
       }
     }
 
@@ -413,6 +421,7 @@ function processBridge(nodeRuntime: NodeRuntime<Config>): BridgeProcessResult {
       selectionReason: bestRoute ? `Selected ${bestRoute.mainTool}` : "No valid route",
       intentType: "bridge" as const,
       simulationMode: true,
+      requestId: request.id,
     };
 
     const creReportBody = toBase64(JSON.stringify({ action: "cre-report", requestId: request.id, report }));

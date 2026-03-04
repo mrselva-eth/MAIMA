@@ -204,7 +204,6 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'requestId and report required' }, { status: 400 });
         }
         maimaReports.set(requestId, report);
-        maimaRequests.delete(requestId);
         console.log('[maima] cre-report stored', requestId, 'Total reports:', maimaReports.size);
         return NextResponse.json({ success: true, requestId });
       }

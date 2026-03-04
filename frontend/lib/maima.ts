@@ -74,6 +74,7 @@ export type AnalyzeReport = {
   selectionReason?: string;
   intentType?: 'swap' | 'bridge';
   simulationMode?: boolean;
+  requestId?: string;
 };
 
 // --- Stores ---
