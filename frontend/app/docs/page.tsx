@@ -112,7 +112,7 @@ export default function DocsPage() {
                   Prerequisites: Node.js 18+, a Web3 wallet (e.g. MetaMask). Clone the repo and install:
                 </p>
                 <pre className="bg-[#0f172a] text-gray-100 rounded-xl p-4 overflow-x-auto text-sm mb-4">
-{`git clone https://github.com/mrselva-eth/MAIMA.git
+                  {`git clone https://github.com/mrselva-eth/MAIMA.git
 cd MAIMA
 pnpm install`}
                 </pre>
@@ -159,7 +159,7 @@ pnpm install`}
                     <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt; returns report (LI.FI routes ranked, accuracy, gas, recommended protocol)
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=quote</code> (used by analyze), <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code> (used by app for execution)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code> (used by app for execution)
                   </li>
                   <li>
                     <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/queue</code> — Active requests (polled by CRE workflows)

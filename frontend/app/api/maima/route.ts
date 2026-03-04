@@ -227,16 +227,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, message: 'cre-bridge triggered' });
       }
-      case 'quote': {
-        const payload = body.payload ?? body;
-        console.log('[maima API] Requesting LI.FI quote with payload:', JSON.stringify(payload));
-        const res = await fetch(`${LIFI_BASE}/advanced/routes`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (!res.ok) console.error('[maima API] LI.FI Error:', data);
-        return NextResponse.json(data, { status: res.status });
-      }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima POST]', action, e);

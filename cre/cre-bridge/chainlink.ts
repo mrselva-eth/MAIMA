@@ -2,8 +2,8 @@ import {
     cre,
     encodeCallMsg,
     LAST_FINALIZED_BLOCK_NUMBER,
-    bytesToBigint,
 } from "@chainlink/cre-sdk";
+import { bytesToBigint } from "@chainlink/cre-sdk";
 import { type Address } from "viem";
 
 const AGGREGATOR_V3_ABI_SELECTORS = {
