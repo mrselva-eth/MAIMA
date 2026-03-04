@@ -95,7 +95,7 @@ NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=
 LIFI_API_KEY=
 CRE_SIMULATION_MODE=on
 NEXT_PUBLIC_CRE_SIMULATION_MODE=on
-CRE_CLI_PATH=              # optional: full path to cre.exe if not on PATH
+CRE_CLI_PATH=bin/cre.exe   # project-local CRE binary under frontend/bin (no global PATH needed)
 ```
 
 **3. Run**
