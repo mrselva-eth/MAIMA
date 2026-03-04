@@ -40,50 +40,40 @@ function getWorkflowPath(workflow: CreWorkflow): string {
 }
 
 function resolveCreCommand(): string {
-  const envPath = process.env.CRE_CLI_PATH?.trim();
-  const isWindows = process.platform === 'win32';
-  const defaultCmd = isWindows ? 'cre.cmd' : 'cre';
-
-  if (!envPath) return 'npx';
-
-  // If it's an absolute path, use it directly
-  if (path.isAbsolute(envPath) && existsSync(envPath)) return envPath;
-
-  // Try resolving relative to CWD
-  const relativeToCwd = path.resolve(process.cwd(), envPath);
-  if (existsSync(relativeToCwd)) return relativeToCwd;
-
-  // Smart search in common locations
-  const binPath = path.resolve(process.cwd(), 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(binPath)) return binPath;
-
-  const frontendBinPath = path.resolve(process.cwd(), 'frontend', 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(frontendBinPath)) return frontendBinPath;
-
-  return envPath; // Fallback to whatever was provided
+  const envPathRaw = process.env.CRE_CLI_PATH?.trim();
+  if (!envPathRaw) return 'cre';
+  return process.platform === 'win32' ? envPathRaw.replace(/\//g, '\\') : envPathRaw;
 }
 
 function spawnCreWorkflow(workflow: CreWorkflow): void {
-  const isWindows = process.platform === 'win32';
   const cwd = getCreCwd();
   const workflowPath = getWorkflowPath(workflow);
   const cmd = resolveCreCommand();
+  const isWindows = process.platform === 'win32';
+  const isPathCommand = cmd.includes('\\') || cmd.includes('/') || path.isAbsolute(cmd);
 
   console.log('[maima] Spawning', workflow, 'cwd=', cwd, 'path=', workflowPath, 'cmd=', cmd);
 
-  const args = cmd === 'npx'
-    ? ['cre', 'workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0']
-    : ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
+  const args = ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
 
   const child = spawn(cmd, args, {
     cwd,
-    shell: isWindows,
+    shell: isWindows && !isPathCommand,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, CI: 'true' },
   });
   const tag = `[maima ${workflow}]`;
-  child.stdout?.on('data', (d) => console.log(tag, d.toString().trim()));
-  child.stderr?.on('data', (d) => console.warn(tag, d.toString().trim()));
+  let lastLine = '';
+  const emitUniqueLines = (chunk: Buffer, logFn: (prefix: string, line: string) => void) => {
+    const lines = chunk.toString().split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    for (const line of lines) {
+      if (line === lastLine) continue;
+      lastLine = line;
+      logFn(tag, line);
+    }
+  };
+  child.stdout?.on('data', (d: Buffer) => emitUniqueLines(d, console.log));
+  child.stderr?.on('data', (d: Buffer) => emitUniqueLines(d, console.warn));
   child.on('error', (err) => console.warn('[maima] spawn', workflow, err.message));
   child.on('exit', (code) => {
     if (code !== 0) console.warn('[maima]', workflow, 'exited with code', code);

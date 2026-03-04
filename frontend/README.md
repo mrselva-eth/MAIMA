@@ -33,7 +33,6 @@ frontend/
 ├── lib/
 │   ├── maima.ts                # Types + in-memory stores
 │   ├── chainlink-oracle.ts     # Chainlink Price Feed reads
-│   └── cre-trigger.ts          # CRE spawn helpers
 ├── hooks/
 ├── context/                    # RequireWallet
 └── .env.example
@@ -66,7 +65,7 @@ Copy `.env.example` to `.env`:
 | `LIFI_API_KEY` | No | LI.FI API key (better rate limits) |
 | `CRE_SIMULATION_MODE` | No | `on` \| `off` — spawns CRE workflows on analyze |
 | `NEXT_PUBLIC_CRE_SIMULATION_MODE` | No | `on` \| `off` — UI shows simulation mode |
-| `CRE_CLI_PATH` | No | Full path to cre.exe if not on PATH |
+| `CRE_CLI_PATH` | No | Project-local path to CRE CLI (default: `bin/cre.exe`; no global PATH needed) |
 
 ### Run
 

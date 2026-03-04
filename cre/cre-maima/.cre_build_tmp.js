@@ -3837,9 +3837,9 @@ class Report {
     return this.report;
   }
 }
-var file_capabilities_networking_http_v1alpha_client = /* @__PURE__ */ fileDesc("CjFjYXBhYmlsaXRpZXMvbmV0d29ya2luZy9odHRwL3YxYWxwaGEvY2xpZW50LnByb3RvEiRjYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEiSgoNQ2FjaGVTZXR0aW5ncxINCgVzdG9yZRgBIAEoCBIqCgdtYXhfYWdlGAIgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uIqoCCgdSZXF1ZXN0EgsKA3VybBgBIAEoCRIOCgZtZXRob2QYAiABKAkSSwoHaGVhZGVycxgDIAMoCzI6LmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYS5SZXF1ZXN0LkhlYWRlcnNFbnRyeRIMCgRib2R5GAQgASgMEioKB3RpbWVvdXQYBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SSwoOY2FjaGVfc2V0dGluZ3MYBiABKAsyMy5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuQ2FjaGVTZXR0aW5ncxouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKrAQoIUmVzcG9uc2USEwoLc3RhdHVzX2NvZGUYASABKA0STAoHaGVhZGVycxgCIAMoCzI7LmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYS5SZXNwb25zZS5IZWFkZXJzRW50cnkSDAoEYm9keRgDIAEoDBouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATKYAQoGQ2xpZW50EmwKC1NlbmRSZXF1ZXN0Ei0uY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLlJlcXVlc3QaLi5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuUmVzcG9uc2UaIIK1GBwIAhIYaHR0cC1hY3Rpb25zQDEuMC4wLWFscGhhQuoBCihjb20uY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhQgtDbGllbnRQcm90b1ABogIDQ05IqgIkQ2FwYWJpbGl0aWVzLk5ldHdvcmtpbmcuSHR0cC5WMWFscGhhygIkQ2FwYWJpbGl0aWVzXE5ldHdvcmtpbmdcSHR0cFxWMWFscGhh4gIwQ2FwYWJpbGl0aWVzXE5ldHdvcmtpbmdcSHR0cFxWMWFscGhhXEdQQk1ldGFkYXRh6gInQ2FwYWJpbGl0aWVzOjpOZXR3b3JraW5nOjpIdHRwOjpWMWFscGhhYgZwcm90bzM", [file_google_protobuf_duration, file_tools_generator_v1alpha_cre_metadata]);
-var RequestSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_client, 1);
-var ResponseSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_client, 2);
+var file_capabilities_networking_http_v1alpha_client = /* @__PURE__ */ fileDesc("CjFjYXBhYmlsaXRpZXMvbmV0d29ya2luZy9odHRwL3YxYWxwaGEvY2xpZW50LnByb3RvEiRjYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEiSgoNQ2FjaGVTZXR0aW5ncxINCgVzdG9yZRgBIAEoCBIqCgdtYXhfYWdlGAIgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uIh4KDEhlYWRlclZhbHVlcxIOCgZ2YWx1ZXMYASADKAki7wMKB1JlcXVlc3QSCwoDdXJsGAEgASgJEg4KBm1ldGhvZBgCIAEoCRJPCgdoZWFkZXJzGAMgAygLMjouY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLlJlcXVlc3QuSGVhZGVyc0VudHJ5QgIYARIMCgRib2R5GAQgASgMEioKB3RpbWVvdXQYBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SSwoOY2FjaGVfc2V0dGluZ3MYBiABKAsyMy5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuQ2FjaGVTZXR0aW5ncxJWCg1tdWx0aV9oZWFkZXJzGAcgAygLMj8uY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLlJlcXVlc3QuTXVsdGlIZWFkZXJzRW50cnkaLgoMSGVhZGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaZwoRTXVsdGlIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEkEKBXZhbHVlGAIgASgLMjIuY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLkhlYWRlclZhbHVlczoCOAEi8QIKCFJlc3BvbnNlEhMKC3N0YXR1c19jb2RlGAEgASgNElAKB2hlYWRlcnMYAiADKAsyOy5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuUmVzcG9uc2UuSGVhZGVyc0VudHJ5QgIYARIMCgRib2R5GAMgASgMElcKDW11bHRpX2hlYWRlcnMYBCADKAsyQC5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuUmVzcG9uc2UuTXVsdGlIZWFkZXJzRW50cnkaLgoMSGVhZGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaZwoRTXVsdGlIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEkEKBXZhbHVlGAIgASgLMjIuY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLkhlYWRlclZhbHVlczoCOAEymAEKBkNsaWVudBJsCgtTZW5kUmVxdWVzdBItLmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYS5SZXF1ZXN0Gi4uY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLlJlc3BvbnNlGiCCtRgcCAISGGh0dHAtYWN0aW9uc0AxLjAuMC1hbHBoYULqAQooY29tLmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYUILQ2xpZW50UHJvdG9QAaICA0NOSKoCJENhcGFiaWxpdGllcy5OZXR3b3JraW5nLkh0dHAuVjFhbHBoYcoCJENhcGFiaWxpdGllc1xOZXR3b3JraW5nXEh0dHBcVjFhbHBoYeICMENhcGFiaWxpdGllc1xOZXR3b3JraW5nXEh0dHBcVjFhbHBoYVxHUEJNZXRhZGF0YeoCJ0NhcGFiaWxpdGllczo6TmV0d29ya2luZzo6SHR0cDo6VjFhbHBoYWIGcHJvdG8z", [file_google_protobuf_duration, file_tools_generator_v1alpha_cre_metadata]);
+var RequestSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_client, 2);
+var ResponseSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_client, 3);
 
 class SendRequester {
   runtime;
@@ -8828,7 +8828,7 @@ class NetworkLookup {
         return;
       return map.get(chainSelector);
     };
-    if (!chainSelector && !chainSelectorName) {
+    if (chainSelector === undefined && !chainSelectorName) {
       return;
     }
     if (chainFamily && chainSelector !== undefined) {
@@ -8962,7 +8962,7 @@ class Int64 {
     return safe ? new Int64(this.value * i2.value) : new Int64(BigInt.asIntN(64, this.value * i2.value));
   }
   div(i2, safe = true) {
-    return new Int64(this.value / i2.value);
+    return safe ? new Int64(this.value / i2.value) : new Int64(BigInt.asIntN(64, this.value / i2.value));
   }
 }
 
@@ -8982,7 +8982,7 @@ class UInt64 {
       return v;
     }
     if (!Number.isFinite(v) || !Number.isInteger(v))
-      throw new Error("int64 requires an integer number");
+      throw new Error("uint64 requires an integer number");
     const bi = BigInt(v);
     if (bi > UInt64.UINT64_MAX)
       throw new Error("uint64 overflow");
@@ -9003,7 +9003,7 @@ class UInt64 {
     return safe ? new UInt64(this.value * i2.value) : new UInt64(BigInt.asUintN(64, this.value * i2.value));
   }
   div(i2, safe = true) {
-    return new UInt64(this.value / i2.value);
+    return safe ? new UInt64(this.value / i2.value) : new UInt64(BigInt.asUintN(64, this.value / i2.value));
   }
 }
 
@@ -9011,8 +9011,8 @@ class Decimal {
   coeffecient;
   exponent;
   static parse(s) {
-    const m = /^([+-])?(\d+)(?:\.(\d+))?$/.exec(s.trim());
-    if (!m)
+    const m = /^([+-])?(\d*)(?:\.(\d*))?$/.exec(s.trim());
+    if (!m || m[2] === "" && (m[3] === undefined || m[3] === ""))
       throw new Error("invalid decimal string");
     const signStr = m[1] ?? "+";
     const intPart = m[2] ?? "0";
@@ -9249,7 +9249,7 @@ function unwrap(value) {
   }
 }
 function isValueProto(value) {
-  return value.$typeName && typeof value.$typeName === "string" && value.$typeName === "values.v1.Value";
+  return value != null && typeof value.$typeName === "string" && value.$typeName === "values.v1.Value";
 }
 async function standardValidate(schema, input) {
   let result = schema["~standard"].validate(input);
@@ -13259,7 +13259,7 @@ var validateGlobalHostBindings = () => {
     return globalHostBindingsSchema.parse(globalFunctions);
   } catch (error) {
     const missingFunctions = Object.keys(globalHostBindingsSchema.shape).filter((key) => !(key in globalFunctions));
-    throw new Error(`Missing required global host functions: ${missingFunctions.join(", ")}. ` + `This indicates the runtime environment is not properly configured.`);
+    throw new Error(`Missing required global host functions: ${missingFunctions.join(", ")}. ` + `The CRE WASM runtime must provide these functions on globalThis. ` + `This usually means the workflow is being executed outside the CRE WASM environment, ` + `or the host runtime version is incompatible with this SDK version.`);
   }
 };
 var _hostBindings = null;
@@ -13341,6 +13341,7 @@ class CapabilityError extends Error {
 class DonModeError extends Error {
   constructor() {
     super("cannot use Runtime inside RunInNodeMode");
+    this.name = "DonModeError";
   }
 }
 
@@ -13355,9 +13356,10 @@ class SecretsError extends Error {
   secretRequest;
   error;
   constructor(secretRequest, error) {
-    super(`error fetching ${secretRequest}: ${error}`);
+    super(`secret retrieval failed for ${secretRequest.id || "unknown"} (namespace: ${secretRequest.namespace || "default"}): ${error}. Verify the secret name is correct and that the secret has been configured for this workflow`);
     this.secretRequest = secretRequest;
     this.error = error;
+    this.name = "SecretsError";
   }
 }
 
@@ -13394,7 +13396,7 @@ class BaseRuntimeImpl {
     if (!this.helpers.call(req)) {
       return {
         result: () => {
-          throw new CapabilityError(`Capability not found ${capabilityId}`, {
+          throw new CapabilityError(`Capability '${capabilityId}' not found: the host rejected the call to method '${method}'. Verify the capability ID is correct and the capability is available in this CRE environment`, {
             callbackId,
             method,
             capabilityId
@@ -13422,7 +13424,7 @@ class BaseRuntimeImpl {
     const awaitResponse = this.helpers.await(awaitRequest, this.maxResponseSize);
     const capabilityResponse = awaitResponse.responses[callbackId];
     if (!capabilityResponse) {
-      throw new CapabilityError(`No response found for callback ID ${callbackId}`, {
+      throw new CapabilityError(`No response found for capability '${capabilityId}' method '${method}' (callback ID ${callbackId}): the host returned a response map that does not contain an entry for this call`, {
         capabilityId,
         method,
         callbackId
@@ -13434,7 +13436,7 @@ class BaseRuntimeImpl {
         try {
           return anyUnpack(response.value, outputSchema);
         } catch {
-          throw new CapabilityError(`Error cannot unwrap payload`, {
+          throw new CapabilityError(`Failed to deserialize response payload for capability '${capabilityId}' method '${method}': the response could not be unpacked into the expected output schema`, {
             capabilityId,
             method,
             callbackId
@@ -13442,13 +13444,13 @@ class BaseRuntimeImpl {
         }
       }
       case "error":
-        throw new CapabilityError(`Error ${response.value}`, {
+        throw new CapabilityError(`Capability '${capabilityId}' method '${method}' returned an error: ${response.value}`, {
           capabilityId,
           method,
           callbackId
         });
       default:
-        throw new CapabilityError(`Error cannot unwrap ${response.case}`, {
+        throw new CapabilityError(`Unexpected response type '${response.case}' for capability '${capabilityId}' method '${method}': expected 'payload' or 'error'`, {
           capabilityId,
           method,
           callbackId
@@ -13625,6 +13627,12 @@ class Runtime extends RuntimeImpl {
     super(config, nextCallId, WasmRuntimeHelpers.getInstance(), maxResponseSize);
   }
 }
+function toI32ResponseSize(maxResponseSize) {
+  if (maxResponseSize > 2147483647n || maxResponseSize < -2147483648n) {
+    throw new Error(`maxResponseSize ${maxResponseSize} exceeds i32 range. Expected a value between -2147483648 and 2147483647`);
+  }
+  return Math.trunc(Number(maxResponseSize));
+}
 
 class WasmRuntimeHelpers {
   static instance;
@@ -13642,17 +13650,17 @@ class WasmRuntimeHelpers {
     return hostBindings.callCapability(toBinary(CapabilityRequestSchema, request)) >= 0;
   }
   await(request, maxResponseSize) {
-    const responseSize = Math.trunc(Number(maxResponseSize));
+    const responseSize = toI32ResponseSize(maxResponseSize);
     const response = hostBindings.awaitCapabilities(toBinary(AwaitCapabilitiesRequestSchema, request), responseSize);
     const responseBytes = Array.isArray(response) ? new Uint8Array(response) : response;
     return fromBinary(AwaitCapabilitiesResponseSchema, responseBytes);
   }
   getSecrets(request, maxResponseSize) {
-    const responseSize = Math.trunc(Number(maxResponseSize));
+    const responseSize = toI32ResponseSize(maxResponseSize);
     return hostBindings.getSecrets(toBinary(GetSecretsRequestSchema, request), responseSize) >= 0;
   }
   awaitSecrets(request, maxResponseSize) {
-    const responseSize = Math.trunc(Number(maxResponseSize));
+    const responseSize = toI32ResponseSize(maxResponseSize);
     const response = hostBindings.awaitSecrets(toBinary(AwaitSecretsRequestSchema, request), responseSize);
     const responseBytes = Array.isArray(response) ? new Uint8Array(response) : response;
     return fromBinary(AwaitSecretsResponseSchema, responseBytes);
@@ -13684,10 +13692,10 @@ class Runner {
     try {
       args = JSON.parse(argsString);
     } catch (e) {
-      throw new Error("Invalid request: could not parse arguments");
+      throw new Error("Invalid request: could not parse WASI arguments as JSON. Ensure the WASM runtime is passing valid arguments to the workflow");
     }
     if (args.length !== 2) {
-      throw new Error("Invalid request: must contain payload");
+      throw new Error(`Invalid request: expected exactly 2 WASI arguments (script name and base64-encoded request payload), but received ${args.length}`);
     }
     const base64Request = args[1];
     const bytes = Buffer.from(base64Request, "base64");
@@ -13695,7 +13703,7 @@ class Runner {
   }
   async run(initFn) {
     const runtime = new Runtime(this.config, 0, this.request.maxResponseSize);
-    var result;
+    let result;
     try {
       const workflow = await initFn(this.config, {
         getSecret: runtime.getSecret.bind(runtime)
@@ -13708,7 +13716,7 @@ class Runner {
           result = this.handleExecutionPhase(this.request, workflow, runtime);
           break;
         default:
-          throw new Error("Unknown request type");
+          throw new Error(`Unknown request type '${this.request.request.case}': expected 'subscribe' or 'trigger'. This may indicate a version mismatch between the SDK and the CRE runtime`);
       }
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e);
@@ -13721,17 +13729,25 @@ class Runner {
   }
   async handleExecutionPhase(req, workflow, runtime) {
     if (req.request.case !== "trigger") {
-      throw new Error("cannot handle non-trigger request as a trigger");
+      throw new Error(`cannot handle non-trigger request as a trigger: received request type '${req.request.case}' in handleExecutionPhase. This is an internal SDK error`);
     }
     const triggerMsg = req.request.value;
     const id = BigInt(triggerMsg.id);
     if (id > BigInt(Number.MAX_SAFE_INTEGER)) {
-      throw new Error(`Trigger ID ${id} exceeds safe integer range`);
+      throw new Error(`Trigger ID ${id} exceeds JavaScript safe integer range (Number.MAX_SAFE_INTEGER = ${Number.MAX_SAFE_INTEGER}). This trigger ID cannot be safely represented as a number`);
     }
     const index = Number(triggerMsg.id);
     if (Number.isFinite(index) && index >= 0 && index < workflow.length) {
       const entry = workflow[index];
       const schema = entry.trigger.outputSchema();
+      if (!triggerMsg.payload) {
+        return create(ExecutionResultSchema, {
+          result: {
+            case: "error",
+            value: `trigger payload is missing for handler at index ${index} (trigger ID ${triggerMsg.id}). The trigger event must include a payload`
+          }
+        });
+      }
       const payloadAny = triggerMsg.payload;
       const decoded = fromBinary(schema, payloadAny.value);
       const adapted = entry.trigger.adapt(decoded);
@@ -13749,13 +13765,19 @@ class Runner {
       }
     }
     return create(ExecutionResultSchema, {
-      result: { case: "error", value: "trigger not found" }
+      result: {
+        case: "error",
+        value: `trigger not found: no workflow handler registered at index ${index} (trigger ID ${triggerMsg.id}). The workflow has ${workflow.length} handler(s) registered. Verify the trigger subscription matches a registered handler`
+      }
     });
   }
   handleSubscribePhase(req, workflow) {
     if (req.request.case !== "subscribe") {
       return create(ExecutionResultSchema, {
-        result: { case: "error", value: "subscribe request expected" }
+        result: {
+          case: "error",
+          value: `subscribe request expected but received '${req.request.case}' in handleSubscribePhase. This is an internal SDK error`
+        }
       });
     }
     const subscriptions = workflow.map((entry) => ({
@@ -13791,6 +13813,11 @@ var prepareErrorResponse = (error) => {
 var sendErrorResponse = (error) => {
   const payload = prepareErrorResponse(error);
   if (payload === null) {
+    console.error("Failed to serialize error response: the error could not be converted to a string. Original error:", error);
+    const fallback = prepareErrorResponse("Unknown error: the original error could not be serialized");
+    if (fallback !== null) {
+      hostBindings.sendResponse(fallback);
+    }
     return;
   }
   hostBindings.sendResponse(payload);
