@@ -1,79 +1,87 @@
-# MAIMA
-
-# Problem Statement
-
-Decentralized Finance is powerful, but interacting with it — especially across multiple blockchains — is unnecessarily complex. To perform a simple cross-chain swap, users must manually compare DEXs, bridges, gas fees, slippage, and liquidity, navigating a fragmented ecosystem that demands deep technical knowledge. This complexity creates friction, inefficiency, and risk, preventing mainstream adoption. DeFi lacks an intelligent, trust-minimized system that understands user intent and seamlessly orchestrates optimized cross-chain execution on their behalf.
-
-
-## Multichain AI Intent Management Application
-
-> AI-Powered Intent-Based DeFi Execution
-> Built on Chainlink CRE for Trust-Minimized Cross-Chain Orchestration
 
 ---
 
-##  Overview
+# MAIMA
 
-MAIMA is an AI-powered DeFi orchestration layer that converts **natural language intents** into optimized, verified, cross-chain execution plans.
+### Multichain AI Intent Management Application
 
-Instead of manually choosing:
+**AI-Powered Intent-Based DeFi Execution**
+Built with **Chainlink CRE for Trust-Minimized Cross-Chain Orchestration**
 
-* Which chain
-* Which DEX
-* Which bridge
-* Gas strategy
-* Slippage tolerance
+---
+
+# Problem Statement
+
+Decentralized Finance (DeFi) offers powerful financial capabilities, but interacting with it—especially across multiple blockchains—remains unnecessarily complex. Performing even a simple cross-chain swap requires users to manually evaluate decentralized exchanges, bridges, gas fees, slippage, and liquidity conditions across fragmented ecosystems. This process demands significant technical knowledge and introduces friction, inefficiency, and risk. As a result, many potential users are discouraged from participating in DeFi. What the ecosystem lacks is an intelligent, trust-minimized system that can understand user intent and automatically orchestrate optimized cross-chain transactions on their behalf.
+
+---
+
+# Overview
+
+MAIMA is an **AI-powered DeFi orchestration layer** that converts **natural language intents** into optimized and verified cross-chain execution plans.
+
+Instead of manually selecting:
+
+* Which blockchain to use
+* Which decentralized exchange to trade on
+* Which bridge to transfer assets through
+* Gas optimization strategies
+* Slippage tolerances
 * Route optimization
 
-Users simply type:
+Users simply type a command such as:
 
-```bash
+```
 swap 100 usdc to eth
 bridge 1 eth to arbitrum
 swap 500 usdc from base to eth on arbitrum with lowest gas
 ```
 
-MAIMA:
+MAIMA automatically:
 
-1. Parses intent using AI
+1. Parses the user intent using AI
 2. Aggregates routes across DEXs and bridges
-3. Verifies pricing using Chainlink oracles
-4. Ranks routes by gas, speed, and reliability
-5. Executes through secure CRE workflows
+3. Verifies price data using Chainlink oracles
+4. Ranks routes based on cost, speed, and reliability
+5. Executes the transaction through secure CRE workflows
 
 ---
 
-##  The Core Problem
+# The Core Problem
 
 ### DeFi is Powerful — But Fragmented
 
-Users today must:
+Today, users must manually:
 
 * Compare multiple DEXs (Uniswap, 1inch, KyberSwap)
-* Compare bridges (Hop, Stargate, etc.)
-* Estimate gas manually
-* Evaluate slippage
-* Trust centralized APIs for pricing
+* Evaluate bridge protocols (Hop, Stargate, etc.)
+* Estimate transaction gas costs
+* Manage slippage risks
+* Trust centralized APIs for routing data
 * Understand chain-specific mechanics
 
-Even experienced users struggle.
+Even experienced users face challenges navigating these systems.
 
-This leads to:
+This results in:
 
-*  Poor UX
-*  Gas inefficiency
-*  Risk of bad routing
-*  Reduced adoption
+* Poor user experience
+* Inefficient routing and higher gas costs
+* Increased risk of unfavorable trades
+* Slower adoption of decentralized finance
 
 ---
 
-##  The MAIMA Solution
+# The MAIMA Solution
 
-MAIMA introduces **Intent-Based DeFi Execution**.
+MAIMA introduces **Intent-Based DeFi Execution**, allowing users to interact with DeFi using natural language while the system handles complex routing decisions.
 
-###  Step 1 — AI Intent Parsing
+---
 
-OpenAI converts natural language into a structured `Intent`:
+## Step 1 — AI Intent Parsing
+
+Natural language inputs are converted into structured transaction intents using OpenAI.
+
+Example:
 
 ```json
 {
@@ -88,67 +96,66 @@ OpenAI converts natural language into a structured `Intent`:
 
 ---
 
-###  Step 2 — CRE Orchestration
+## Step 2 — CRE Orchestration
 
-All backend logic runs inside **Chainlink Runtime Environment (CRE)**.
+All backend logic runs inside the **Chainlink Runtime Environment (CRE)**.
 
 CRE enables:
 
-* Multi-step workflows
+* Multi-step decentralized workflows
 * Cross-chain orchestration
-* Decentralized execution logic
+* Automated execution pipelines
 * Modular worker spawning
-* Oracle-triggered validation
+* Oracle-driven validation
 
-MAIMA uses:
+MAIMA uses the following workflows:
 
-* `cre-maima` → orchestrator
-* `cre-swap` → swap analysis worker
-* `cre-bridge` → bridge analysis worker
+* **cre-maima** — orchestration workflow
+* **cre-swap** — swap analysis worker
+* **cre-bridge** — bridge analysis worker
 
 ---
 
-###  Step 3 — Multi-Protocol Aggregation
+## Step 3 — Multi-Protocol Aggregation
 
-We use:
+MAIMA aggregates liquidity routes using **LI.FI**.
 
-* **LI.FI** advanced routes API
-* 20+ chains
-* 250+ DEXs and bridges
+Supported ecosystem scale:
+
+* **20+ blockchains**
+* **250+ DEXs and bridge protocols**
 
 Each route includes:
 
 * Gas cost (USD)
-* Output amount
-* Execution time
+* Expected output amount
+* Estimated execution time
 * Protocol metadata
 
 ---
 
-###  Step 4 — Oracle Verification
+## Step 4 — Oracle Verification
 
-Every quoted route is verified using:
+Each quoted route is verified using **Chainlink Price Feeds**.
 
-* **Chainlink Price Feeds**
-
-If deviation is detected between:
+The system compares:
 
 * LI.FI quoted output
-* Chainlink oracle fair value
+* Chainlink oracle price
 
-The route is flagged.
+If a significant deviation is detected, the route is flagged.
 
 This ensures:
 
-* Transparency
-* Trust minimization
-* Protection against manipulated pricing
+* Transparent pricing
+* Trust-minimized routing
+* Protection against manipulated price quotes
 
 ---
 
-###  Step 5 — Smart Ranking Engine
+## Step 5 — Smart Ranking Engine
 
-Routes are scored by:
+Routes are scored based on weighted metrics:
 
 | Factor         | Weight |
 | -------------- | ------ |
@@ -156,9 +163,9 @@ Routes are scored by:
 | Execution Time | 30%    |
 | Reliability    | 30%    |
 
-Lower score = Better route.
+Lower score indicates a better route.
 
-Reliability uses protocol whitelisting:
+Reliability is determined using protocol whitelisting including:
 
 * Uniswap
 * 1inch
@@ -168,7 +175,7 @@ Reliability uses protocol whitelisting:
 
 ---
 
-##  Architecture
+# Architecture
 
 ```
 User Input
@@ -179,68 +186,67 @@ cre-maima (Orchestrator)
    ↓
 cre-swap / cre-bridge
    ↓
-LI.FI (Route Aggregation)
+LI.FI Route Aggregation
    ↓
 Chainlink Price Feed Verification
    ↓
 Ranking Engine
    ↓
-Frontend Report
+Frontend Analysis Report
    ↓
-Wallet Execution
+Wallet Transaction Execution
 ```
 
-All computation runs inside CRE workflows.
-
-The API only routes and spawns execution.
+All computation occurs inside **CRE workflows**, while the API layer only handles request routing and workflow spawning.
 
 ---
 
-##  Key Features
+# Key Features
 
-###  AI Intent Layer
+### AI Intent Layer
 
-Natural language → structured DeFi actions
+Converts natural language into structured DeFi actions.
 
-###  Cross-Chain Automation
+### Cross-Chain Automation
 
-Swap + Bridge orchestration in one system
+Supports both swaps and bridging across multiple blockchains.
 
-###  Oracle Guard
+### Oracle Guard
 
-Chainlink price verification before recommendation
+Uses Chainlink price feeds to validate routing outcomes.
 
-###  Transparent Reporting
+### Transparent Reporting
 
-Downloadable JSON reports for auditability
+Users can download a complete JSON analysis report for transparency.
 
-###  Simulation Mode
+### Simulation Mode
 
-Full workflow testing without real transactions
+Developers can test the entire workflow pipeline without executing real blockchain transactions.
 
-###  Decentralized Backend
+### Decentralized Backend Logic
 
-CRE ensures trust-minimized orchestration
-
----
-
-##  Tech Stack
-
-| Layer          | Technology                           |
-| -------------- | ------------------------------------ |
-| Frontend       | Next.js, React, RainbowKit, viem     |
-| API            | Next.js API Routes                   |
-| Backend        | Chainlink CRE (TypeScript workflows) |
-| AI             | OpenAI (Intent Parsing)              |
-| Aggregation    | LI.FI                                |
-| Price Security | Chainlink Price Feeds                |
+CRE ensures that the orchestration logic remains modular and trust-minimized.
 
 ---
 
-##  Project Structure
+# Tech Stack
+
+| Layer       | Technology                           |
+| ----------- | ------------------------------------ |
+| Frontend    | Next.js, React, RainbowKit, viem     |
+| API         | Next.js API Routes                   |
+| Backend     | Chainlink CRE (TypeScript Workflows) |
+| AI          | OpenAI (Intent Parsing)              |
+| Aggregation | LI.FI                                |
+| Oracle Data | Chainlink Price Feeds                |
+
+---
+
+# Project Structure
 
 ```
 MAIMA/
+│
 ├── frontend/
 │   ├── app/app/page.tsx
 │   ├── app/api/maima/
@@ -259,38 +265,63 @@ MAIMA/
 
 ---
 
-##  Data Sources
+# Data Sources
 
 ### LI.FI
 
 * Endpoint: `/v1/advanced/routes`
-* Provides: routes, gasCostUSD, toAmount, duration
-* Used for: Multi-protocol aggregation
+* Provides: routing data, gas cost, expected output amount, execution time
+* Purpose: Multi-protocol route aggregation
 
 ### Chainlink Price Feeds
 
-* Networks: Base, Sepolia
-* Feeds: ETH/USD, USDC/USD, LINK/USD, WBTC/USD, DAI/USD
-* Used for: Fair value validation
+Supported networks:
+
+* Base
+* Sepolia
+
+Example feeds:
+
+* ETH / USD
+* USDC / USD
+* LINK / USD
+* WBTC / USD
+* DAI / USD
+
+Used for **price verification and routing validation**.
 
 ---
 
-##  Quick Start
+## Documentation
 
-### Prerequisites
+- **[Architecture Guide](ARCHITECTURE.md)** — Detailed system design and data flow.
+- **[Development Guide](DEVELOPMENT.md)** — Setup, workflow development, and testing.
+
+---
+
+## Quick Start
+
+## Prerequisites
 
 * Node.js 18+
 * pnpm
-* CRE CLI
+* Chainlink CRE CLI
 * OpenAI API Key
 * LI.FI API Key
 
 ---
 
-### Install
+## Installation
+
+Install dependencies:
 
 ```bash
 pnpm install
+```
+
+Then install dependencies for each module:
+
+```bash
 cd frontend && pnpm install
 cd ../cre/cre-maima && pnpm install
 cd ../cre/cre-swap && pnpm install
@@ -299,35 +330,38 @@ cd ../cre/cre-bridge && pnpm install
 
 ---
 
-### Configure `.env`
+## Configure Environment Variables
 
-```env
+Create a `.env` file:
+
+```
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=
 LIFI_API_KEY=
 OPENAI_API_KEY=
 CRE_SIMULATION_MODE=on
 NEXT_PUBLIC_CRE_SIMULATION_MODE=on
-CRE_CLI_PATH=bin/cre.exe   # project-local CRE binary under frontend/bin (no global PATH needed)
+CRE_CLI_PATH=bin/cre.exe
 ```
 
 ---
 
-### Compile CRE Workflows
+## Compile CRE Workflows
 
-```bash
+```
 cd cre/cre-swap
 pnpm run build
 ```
 
 ---
 
-### Run
+## Run the Application
 
-```bash
-cd frontend && pnpm dev
+```
+cd frontend
+pnpm dev
 ```
 
-Open:
+Open the application:
 
 ```
 http://localhost:3000
@@ -335,26 +369,34 @@ http://localhost:3000
 
 ---
 
-##  Why MAIMA Matters
+# Why MAIMA Matters
 
-DeFi complexity is the biggest barrier to adoption.
+DeFi complexity remains one of the largest barriers to mainstream adoption.
 
-MAIMA transforms:
+MAIMA transforms the current ecosystem:
 
-Manual Protocol Selection → Intent-Based Execution
-Fragmented Chains → Unified Orchestration
-Blind Routing → Oracle-Verified Decisions
+| Current DeFi                 | MAIMA                     |
+| ---------------------------- | ------------------------- |
+| Manual Protocol Selection    | Intent-Based Execution    |
+| Fragmented Multi-Chain Tools | Unified Orchestration     |
+| Blind Routing Decisions      | Oracle-Verified Execution |
 
-We believe the future of DeFi is:
+We believe the future of decentralized finance is:
 
-> AI-driven, cross-chain, and intent-native.
+> **AI-driven, cross-chain, and intent-native.**
 
 ---
 
-## Upcoming Updates
+# Upcoming Updates
 
-1. We are going to create our own De-Fi Layer
-2. Intent based multiple workflows creation engine
-3. Integrate Anti-Intelligence System into MAIMA Architecture
-4. Real Execution of De-Fi transactions
-5. We going to add standard defi Ui also , if user wants they can switch chatinterface or standard UI
+Planned improvements for the MAIMA ecosystem include:
+
+1. Development of a dedicated **MAIMA DeFi execution layer**
+2. **Intent-based multi-workflow orchestration engine**
+3. Integration of an **anti-manipulation intelligence system**
+4. Full **on-chain execution of DeFi transactions**
+5. Optional **standard DeFi interface** alongside the chat-based interface
+
+---
+
+
