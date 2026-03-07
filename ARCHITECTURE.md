@@ -9,7 +9,9 @@ MAIMA is a decentralized orchestration layer designed to simplify cross-chain De
 ```mermaid
 graph TD
     User((User)) -->|Natural Language| Frontend[Next.js Frontend]
-    Frontend -->|POST /api/maima/analyze| API[Next.js API Layer]
+    Frontend -->|POST /api/intent| Intent[AI Intent Parser]
+    Intent -->|Parsed intent| Frontend
+    Frontend -->|POST /api/maima action=analyze| API[Next.js API Layer]
     API -->|Queue Request| Store[(In-Memory Request Store)]
     API -->|Spawn| CRE_M[cre-maima Orchestrator]
     
@@ -37,6 +39,7 @@ graph TD
 
 ### 1. Frontend (Next.js)
 - **Chat Interface**: Captures user intent via natural language.
+- **AI Intent Parsing**: Calls `/api/intent` (OpenRouter/OpenAI) to parse prompts into structured swap/bridge intents before submitting to the analysis pipeline.
 - **Process Tracking**: A real-time UI component that reflects the state of the back-end CRE workflows.
 - **Wallet Integration**: Uses RainbowKit and wagmi for secure, client-side transaction execution.
 
@@ -44,13 +47,13 @@ graph TD
 - Acts as the stateful bridge between the UI and the stateless CRE runtime.
 - Manages an in-memory queue of pending requests.
 - Spawns CRE workflows using the `cre` CLI.
-- Proxies LI.FI status checks and stores generated analysis reports.
+- Proxies LI.FI status checks (optional, for tx status) and stores generated analysis reports.
 
 ### 3. Chainlink Runtime Environment (CRE)
 The "Brain" of the system. All complex logic (route aggregation, verification, ranking) is isolated here.
 - **Orchestrator (`cre-maima`)**: Continuously monitors the API queue and delegates processing to specialized workers.
 - **Specialized Workers (`cre-swap`, `cre-bridge`)**:
-    - **Intent Parsing**: Converts prompts into structured parameters.
+    - **Intent Parsing**: Converts prompts into structured parameters (LI.FI API key configured in `config.staging.json`).
     - **Multi-Protocol Aggregation**: Direct interaction with LI.FI to find routes.
     - **Oracle Guard**: Uses Chainlink Price Feeds (e.g., ETH/USD on Base) to verify the "Fair Market Value" of a trade.
     - **Ranking Engine**: Applies a weighted scoring model (40% Gas, 30% Speed, 30% Reliability).
@@ -58,15 +61,16 @@ The "Brain" of the system. All complex logic (route aggregation, verification, r
 ## Data Flow: The Journey of an Intent
 
 1. **Input**: User types "Swap 1 ETH to USDC on Base".
-2. **Analysis**: 
-    - API receives the prompt and puts it in the `maimaRequests` store.
-    - `cre-maima` is spawned; it sees the request and triggers `cre-swap`.
+2. **Intent Parsing**: Frontend calls `/api/intent` to get structured intent (type, tokens, amount, chains). If invalid (e.g. testnet), user sees a friendly error.
+3. **Analysis**:
+    - Frontend posts to `/api/maima` with `action=analyze`; API puts the request in `maimaRequests` and spawns `cre-maima`.
+    - `cre-maima` polls the queue, sees the request, and delegates to `cre-swap` (or `cre-bridge` for cross-chain).
     - `cre-swap` fetches routes from LI.FI.
     - `cre-swap` queries Chainlink for the current ETH and USDC prices.
     - `cre-swap` flags any routes where the LI.FI output deviates significantly from the Chainlink price.
     - `cre-swap` calculates scores and picks the best route.
-3. **Reporting**: `cre-swap` sends a detailed report back to `/api/maima?action=cre-report`.
-4. **Execution**: The UI shows the "Verified" route. The user clicks "Confirm", and the frontend initiates the transaction via their wallet.
+4. **Reporting**: `cre-swap` sends a detailed report back to `/api/maima` with `action=cre-report`. API stores it; frontend polls `?action=report&requestId=...`.
+5. **Execution**: The UI shows the verified route. The user clicks "Confirm", and the frontend initiates the transaction via their wallet.
 
 ## Security Controls
 

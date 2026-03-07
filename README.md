@@ -5,14 +5,14 @@
 
 ### Multichain AI Intent Management Application
 
-**AI-Powered Intent-Based DeFi Execution**
-Built with **Chainlink CRE for Trust-Minimized Cross-Chain Orchestration**
+**AI-Powered Intent-Based DeFi Execution** — Built with **Chainlink CRE** for trust-minimized cross-chain orchestration.  
+*Chainlink CRE Hackathon Submission.*
 
 ---
 
 # Problem Statement
 
-Decentralized Finance (DeFi) offers powerful financial capabilities, but interacting with it—especially across multiple blockchains—remains unnecessarily complex. Performing even a simple cross-chain swap requires users to manually evaluate decentralized exchanges, bridges, gas fees, slippage, and liquidity conditions across fragmented ecosystems. This process demands significant technical knowledge and introduces friction, inefficiency, and risk. As a result, many potential users are discouraged from participating in DeFi. What the ecosystem lacks is an intelligent, trust-minimized system that can understand user intent and automatically orchestrate optimized cross-chain transactions on their behalf.
+Decentralized Finance (DeFi) offers powerful financial capabilities, but interacting with it especially across multiple blockchains remains unnecessarily complex. Performing even a simple cross-chain swap requires users to manually evaluate decentralized exchanges, bridges, gas fees, slippage, and liquidity conditions across fragmented ecosystems. This process demands significant technical knowledge and introduces friction, inefficiency, and risk. As a result, many potential users are discouraged from participating in DeFi. What the ecosystem lacks is an intelligent, trust minimized system that can understand user intent and automatically orchestrate optimized cross-chain transactions on their behalf.
 
 ---
 
@@ -336,12 +336,11 @@ Create a `.env` file:
 
 ```
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=
-LIFI_API_KEY=
-OPENAI_API_KEY=
-CRE_SIMULATION_MODE=on
-NEXT_PUBLIC_CRE_SIMULATION_MODE=on
+AI_API_KEY=
 CRE_CLI_PATH=bin/cre.exe
 ```
+
+LI.FI API key is configured in `cre/cre-swap/config.staging.json` and `cre/cre-bridge/config.staging.json` (copy from `config.staging.example.json`).
 
 ---
 
@@ -387,15 +386,39 @@ We believe the future of decentralized finance is:
 
 ---
 
-# Upcoming Updates
+# Upcoming Implementation
 
-Planned improvements for the MAIMA ecosystem include:
+We are actively working on extending MAIMA beyond its current capabilities. The following features represent our roadmap for bringing intent-based DeFi to production.
 
-1. Development of a dedicated **MAIMA DeFi execution layer**
-2. **Intent-based multi-workflow orchestration engine**
-3. Integration of an **anti-manipulation intelligence system**
-4. Full **on-chain execution of DeFi transactions**
-5. Optional **standard DeFi interface** alongside the chat-based interface
+---
+
+### 1. MAIMA DeFi Execution Layer
+
+Today, the API orchestrates CRE workflows and the frontend handles user interaction. We plan to introduce a dedicated **execution layer** that sits between the ranked route output and the user's wallet. This layer will standardize transaction submission, handle chain-specific signing flows, manage gas estimation and retries, and provide a consistent interface for tracking execution status across multiple chains. The goal is to make MAIMA's backend as reliable and user-friendly as the analysis layer already is.
+
+---
+
+### 2. Intent-Based Multi-Workflow Orchestration Engine
+
+Right now, cre-maima delegates each request to either cre-swap or cre-bridge. The next step is a more flexible **orchestration engine** that can compose multiple workflows for a single intent. For example, a user might ask to "swap 100 USDC to ETH on Arbitrum," which could require a bridge from Base plus a swap on Arbitrum. The engine would automatically sequence and coordinate the right workflows, handle dependencies, and surface a unified execution plan. This moves MAIMA from single-step intents toward true cross-chain, multi-step flows.
+
+---
+
+### 3. Anti-Manipulation Intelligence System
+
+Routing and execution are vulnerable to MEV, sandwich attacks, and stale or manipulated quotes. We intend to integrate an **anti-manipulation layer** that combines Chainlink oracles, execution-time price checks, and heuristic detection of suspicious routing behavior. Routes that deviate beyond acceptable thresholds would be flagged or filtered before the user sees them. This builds on our existing oracle verification and extends it into execution-time protection.
+
+---
+
+### 4. Full On-Chain Execution of DeFi Transactions
+
+The current implementation runs CRE workflows in simulation mode. Users see real route data and rankings, but transactions are not submitted on-chain. Our roadmap includes **full on-chain execution**: real transactions, real confirmations, and real finality. This requires careful integration with the execution layer above, proper error handling for failed txs, and clear user feedback at each stage. We are designing this with security and user control as top priorities.
+
+---
+
+### 5. Standard DeFi Interface Alongside Chat
+
+The chat interface is powerful for users who prefer natural language. Some users, however, are more comfortable with a **standard DeFi interface**—token selectors, amount fields, chain dropdowns, and a "Swap" or "Bridge" button. We plan to offer both: the chat for intent-native interaction and a traditional form-based UI for those who want explicit control. Both will share the same CRE backend and oracle verification, so the underlying security and ranking logic stay consistent.
 
 ---
 

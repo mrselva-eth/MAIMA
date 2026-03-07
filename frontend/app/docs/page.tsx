@@ -123,7 +123,7 @@ cd ../cre/cre-maima && pnpm install`}
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
                   <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — WalletConnect Cloud PID</li>
-                  <li><code className="bg-muted px-1 rounded text-sm">OPENAI_API_KEY</code> — For AI intent parsing</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">AI_API_KEY</code> — For AI intent parsing (OpenRouter or OpenAI)</li>
                   <li><code className="bg-muted px-1 rounded text-sm">LIFI_API_KEY</code> — For route aggregation</li>
                   <li><code className="bg-muted px-1 rounded text-sm">CRE_CLI_PATH</code> — Path to <code className="bg-muted px-1 rounded text-sm">bin/cre.exe</code> for local simulation</li>
                 </ul>
