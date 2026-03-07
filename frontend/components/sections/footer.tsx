@@ -6,7 +6,7 @@ import { BackgroundBeams } from '@/components/design/background-beams';
 
 export default function Footer() {
   return (
-    <footer className="relative w-full overflow-hidden bg-[#0f172a] text-white mt-24 sm:mt-28 md:mt-32">
+    <footer className="relative w-full overflow-hidden bg-[#0f172a] text-white">
       <BackgroundBeams className="opacity-90" />
       <div className="relative z-10 w-full px-6 sm:px-8 lg:px-12 py-14 lg:py-16">
         <div className="w-full max-w-7xl mx-auto">

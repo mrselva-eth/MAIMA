@@ -56,7 +56,7 @@ export default function Navbar() {
           {isAppPage ? (
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-semibold truncate sm:text-base" style={{ color: NAV_COLOR }}>
-                MAIMA — DeFi Optimistic Solution
+                MAIMA (DeFi Optimistic Solution)
               </span>
               <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 AI-powered intent-based DeFi execution layer
