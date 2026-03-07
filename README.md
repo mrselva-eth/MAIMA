@@ -98,6 +98,7 @@ Example:
   "destinationChain": "Arbitrum"
 }
 ```
+<img width="884" height="630" alt="Screenshot 2026-03-07 192134" src="https://github.com/user-attachments/assets/f9fe170b-cea0-4584-8e2f-c7261fe18054" />
 
 ---
 
@@ -119,6 +120,8 @@ MAIMA uses the following workflows:
 * **cre-swap** — swap analysis worker
 * **cre-bridge** — bridge analysis worker
 
+<img width="441" height="547" alt="Screenshot 2026-03-07 192818" src="https://github.com/user-attachments/assets/f6081f2e-a39b-476d-a4c8-aa94eb27e4bf" />
+
 ---
 
 ## Step 3 — Multi-Protocol Aggregation
@@ -136,6 +139,8 @@ Each route includes:
 * Expected output amount
 * Estimated execution time
 * Protocol metadata
+
+<img width="440" height="291" alt="Screenshot 2026-03-07 192831" src="https://github.com/user-attachments/assets/4faf0a36-c678-4ea6-927b-efee28ecd7dd" />
 
 ---
 
@@ -155,6 +160,7 @@ This ensures:
 * Transparent pricing
 * Trust-minimized routing
 * Protection against manipulated price quotes
+<img width="502" height="280" alt="Screenshot 2026-03-07 192849" src="https://github.com/user-attachments/assets/784f8b12-df90-4186-bb2d-d93a070d7189" />
 
 ---
 
@@ -177,6 +183,7 @@ Reliability is determined using protocol whitelisting including:
 * Curve
 * KyberSwap
 * Paraswap
+<img width="383" height="507" alt="Screenshot 2026-03-07 192925" src="https://github.com/user-attachments/assets/0aa69fec-785f-4c34-872c-e847707bbd8d" />
 
 ---
 
