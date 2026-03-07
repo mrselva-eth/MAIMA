@@ -24,15 +24,11 @@ Create a `.env` file in the `frontend/` directory:
 # Required for Wallet Interaction
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=...
 
-# Required for AI Interaction
-OPENAI_API_KEY=...
+# Required for AI intent parsing (OpenRouter or OpenAI)
+AI_API_KEY=...
 
 # Optional: For better rate limits
 LIFI_API_KEY=...
-
-# Simulation Mode (Recommended for Dev)
-CRE_SIMULATION_MODE=on
-NEXT_PUBLIC_CRE_SIMULATION_MODE=on
 
 # Path to the CRE CLI (on Windows, usually bin/cre.exe)
 CRE_CLI_PATH=bin/cre.exe
@@ -61,7 +57,7 @@ The output (`main.wasm`) is what the `cre` CLI executes during simulation or pro
 ## Testing & Simulation
 
 ### Automated Simulation
-The frontend API can automatically spawn simulations if `CRE_SIMULATION_MODE=on`. 
+The frontend API can automatically spawn CRE workflow simulations when a user submits an analysis request. 
 
 ### Manual Simulation
 You can run a workflow manually using the `cre` CLI from the repository root:

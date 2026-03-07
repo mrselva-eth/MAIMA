@@ -1,63 +1,55 @@
-
 # CRE Workflows
 
-**Chainlink CRE (Chainlink Runtime Environment) workflows powering the MAIMA backend automation layer.**
+**Chainlink CRE (Chainlink Runtime Environment) workflows power the MAIMA backend.**
 
-All **analysis logic** — including routing via LI.FI, Chainlink price verification, and protocol ranking — is executed inside CRE workflows. The frontend API acts only as an **orchestration layer and gateway**, while CRE performs the computational and decision logic.
+All analysis logic—route aggregation via LI.FI, Chainlink price verification, and protocol ranking runs inside CRE. The Next.js API is a thin orchestration layer: it queues requests, spawns workflows, and stores reports. CRE does the heavy lifting.
 
----
-
-# Architecture Overview
-
-MAIMA uses a **modular workflow architecture** built on Chainlink CRE.
-
-| Workflow       | Description                                                                                          | Trigger                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **cre-maima**  | Main orchestrator workflow. Polls incoming requests and delegates tasks to the appropriate workflow. | Triggered by API when a user submits an analysis request |
-| **cre-swap**   | Performs swap route analysis including LI.FI routing, price verification, and ranking.               | Spawned when a swap request is detected                  |
-| **cre-bridge** | Performs cross-chain bridge analysis with route validation and ranking.                              | Spawned when a bridge request is detected                |
-
-
+Built for the **Chainlink CRE Hackathon**.
 
 ---
 
-# Workflow Execution Flow
+## Architecture Overview
+
+MAIMA uses a modular workflow architecture:
+
+| Workflow       | Role                                                                                                  | Trigger                                                         |
+| -------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **cre-maima**  | Main orchestrator. Polls the API queue, checks which intents are unprocessed, and delegates to workers. | Spawned by the API when a user submits an analysis request      |
+| **cre-swap**   | Swap analysis worker. Fetches routes from LI.FI, verifies prices with Chainlink, ranks protocols.     | Spawned when cre-maima detects a swap intent                    |
+| **cre-bridge** | Bridge analysis worker. Same pipeline as cre-swap, tuned for cross-chain routes.                      | Spawned when cre-maima detects a bridge intent                  |
+
+
+
+---
+
+## Workflow Execution Flow
 
 ### 1. Request Polling
 
-The **cre-maima** workflow periodically polls the API queue:
+**cre-maima** runs on a cron schedule. Each run, it polls:
 
 ```
 GET /api/maima?action=queue
 ```
 
-It retrieves user intents that have not yet been processed.
+to fetch all pending user intents. For each intent without a report, it delegates to the right worker.
 
 ---
 
 ### 2. Intent Delegation
 
-For each pending request:
+Depending on the detected intent type:
 
-* **Swap request**
+- **Swap** → `POST { action: "run-swap", request }`
+- **Bridge** → `POST { action: "run-bridge", request }`
 
-  ```
-  POST { action: "run-swap", request }
-  ```
-
-* **Bridge request**
-
-  ```
-  POST { action: "run-bridge", request }
-  ```
-
-The API places the request into the appropriate queue and spawns the corresponding workflow.
+The API pushes the request into the swap or bridge queue and spawns the corresponding workflow (cre-swap or cre-bridge).
 
 ---
 
-### 3. Workflow Processing
+### 3. Worker Processing
 
-The **cre-swap** or **cre-bridge** workflow then executes the analysis pipeline.
+**cre-swap** or **cre-bridge** then runs the full analysis pipeline.
 
 #### Step 1 — Fetch Pending Request
 
@@ -152,33 +144,33 @@ The frontend then displays the **best protocols to the user for execution**.
 
 ---
 
-# Repository Structure
+## Repository Structure
 
 ```
 cre/
 │
-├── cre-maima/          # Orchestrator workflow
-│   ├── main.ts
+├── cre-maima/          # Orchestrator
+│   ├── main.ts         # Queue polling, delegation logic
+│   ├── workflow.yaml   # Triggers, staging/production config paths
 │   ├── config.staging.json
-│   ├── config.production.json
-│   └── workflow.yaml
+│   └── config.production.json
 │
-├── cre-swap/           # Swap analysis workflow
-│   ├── main.ts
-│   ├── config.staging.json
-│   └── workflow.yaml
+├── cre-swap/           # Swap worker
+│   ├── main.ts         # LI.FI + Chainlink + ranking
+│   ├── workflow.yaml
+│   └── config.staging.json
 │
-├── cre-bridge/         # Bridge analysis workflow
+├── cre-bridge/         # Bridge worker
 │   ├── main.ts
-│   ├── config.staging.json
-│   └── workflow.yaml
+│   ├── workflow.yaml
+│   └── config.staging.json
 │
 └── README.md
 ```
 
 ---
 
-# Configuration
+## Configuration
 
 Each workflow contains environment-specific configuration files:
 
@@ -207,80 +199,48 @@ Example:
 
 ---
 
-# Running Workflows
+## Running Workflows
 
-Workflows are **normally spawned automatically by the API**.
-
-However, they can also be executed manually for **testing or debugging**.
-
-Run from the repository root:
+In production, workflows are **spawned automatically by the API** when users submit intents. For development and debugging, you can run them manually from the **repository root**:
 
 ```bash
 cre workflow simulate cre/cre-maima --target staging-settings --non-interactive --trigger-index 0
-```
-
-```bash
 cre workflow simulate cre/cre-swap --target staging-settings --non-interactive --trigger-index 0
-```
-
-```bash
 cre workflow simulate cre/cre-bridge --target staging-settings --non-interactive --trigger-index 0
 ```
 
----
-
-# Prerequisites
-
-Before running workflows, ensure the following are installed and configured:
-
-* **Chainlink CRE CLI**
-* **Node.js / pnpm**
-* **project.yaml** configured at the repository root
-* **MAIMA API server running**
-
-Example API:
-
-```
-http://localhost:3000
-```
+Ensure the MAIMA frontend (and API) is running at `http://localhost:3000` so workflows can reach the queue and report endpoints.
 
 ---
 
-# Installing Dependencies
+## Prerequisites
 
-Each workflow uses the **Chainlink CRE SDK**.
+- **Chainlink CRE CLI** installed and on your PATH
+- **Node.js 18+** and **pnpm** (or bun)
+- **project.yaml** at the repository root (contains RPC config)
+- **MAIMA API** running (frontend `pnpm dev`)
 
-Install dependencies in each workflow directory:
+---
 
-```bash
-cd cre/cre-maima
-pnpm install
-```
+## Installing Dependencies
 
-```bash
-cd ../cre-swap
-pnpm install
-```
+Each workflow depends on `@chainlink/cre-sdk`. Install in each directory:
 
 ```bash
-cd ../cre-bridge
-pnpm install
+cd cre/cre-maima && pnpm install
+cd ../cre-swap && pnpm install
+cd ../cre-bridge && pnpm install
 ```
 
 ---
 
-# Key Design Principles
+## Design Principles
 
-MAIMA's CRE architecture follows three core principles:
+**Separation of concerns** — The frontend renders the UI. The API handles HTTP and workflow spawning. CRE runs all analysis and decision logic. This keeps the API thin and makes it easy to reason about security and correctness.
 
-**1. Separation of Concerns**
-Frontend handles UI, API handles orchestration, CRE handles analysis and automation.
+**Deterministic automation** — Route aggregation, price checks, and ranking are fully automated inside CRE. No manual intervention is required once an intent is submitted.
 
-**2. Deterministic Automation**
-All route analysis and ranking logic runs inside CRE workflows.
-
-**3. Secure Protocol Selection**
-Only trusted protocols and verified price feeds are used in route evaluation.
+**Trust-minimized execution** — Only whitelisted protocols and Chainlink-verified prices are used. Users are protected from unsafe or manipulated routes.
 
 
 

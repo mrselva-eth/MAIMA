@@ -1,32 +1,30 @@
-
----
-
 # MAIMA Frontend
 
-Frontend application for **MAIMA — Multichain AI Intent Management Application**, built with **Next.js**.
-It provides a **chat-based interface for DeFi interactions**, allowing users to perform swaps or bridges using **natural language commands** while tracking the analysis process powered by **Chainlink CRE workflows**.
+The frontend for **MAIMA — Multichain AI Intent Management Application**. It provides a chat-based interface for DeFi interactions, letting users perform swaps and bridges using natural language while the backend, powered by **Chainlink CRE workflows**, analyzes routes, verifies prices, and ranks protocols in real time.
+
+Built for the **Chainlink CRE Hackathon**.
 
 ---
 
-# Overview
+## Overview
 
-The MAIMA frontend provides an intuitive interface for interacting with DeFi protocols.
+The MAIMA frontend is designed for users who want DeFi without the complexity. Instead of navigating multiple DEXs and bridges, they type what they want. The system handles the rest.
 
 ### Core Sections
 
-| Section              | Description                                                            |
-| -------------------- | ---------------------------------------------------------------------- |
-| **Home**             | Landing page with project overview, features, and workflow explanation |
-| **App**              | Wallet-gated chat interface for submitting swap or bridge intents      |
-| **Process Tracking** | Real-time tracking of analysis, protocol ranking, and execution steps  |
+| Section              | Description                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
+| **Home**             | Landing page: project overview, features, and how the CRE pipeline works    |
+| **App**              | Wallet-gated chat interface for submitting swap or bridge intents           |
+| **Process Tracking** | Side panel showing real-time analysis progress, protocol ranking, and steps  |
 
-Users can:
+Typical flow:
 
 1. Connect a wallet
-2. Enter a natural-language request (e.g., *"swap 100 USDC to ETH"*)
-3. Allow MAIMA to analyze routes
-4. Select a recommended protocol
-5. Execute the transaction
+2. Enter a request in plain English (e.g., *"swap 100 USDC to ETH on Base"*)
+3. Watch MAIMA analyze routes, verify prices, and rank protocols
+4. Review the report and select a recommended route
+5. Execute the transaction (or simulate, depending on mode)
 
 ---
 
@@ -64,7 +62,8 @@ frontend/
 │   │   └── page.tsx
 │   │
 │   ├── api/
-│   │   ├── maima/route.ts       # Main backend API route
+│   │   ├── maima/route.ts       # Main API: analysis, queue, reports
+│   │   ├── intent/route.ts      # AI intent parsing (OpenRouter/OpenAI)
 │   │   └── cre/route.ts         # CRE simulation trigger
 │   │
 │   ├── docs/                    # Documentation pages
@@ -121,20 +120,20 @@ cp .env.example .env
 
 Then configure the variables below.
 
-| Variable                                | Required | Description                                       |
-| --------------------------------------- | -------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | Yes      | WalletConnect project ID from WalletConnect Cloud |
-| `LIFI_API_KEY`                          | Optional | LI.FI API key for higher rate limits              |
-| `CRE_SIMULATION_MODE`                   | Optional | Enables local CRE workflow simulation             |
-| `NEXT_PUBLIC_CRE_SIMULATION_MODE`       | Optional | Displays simulation mode indicator in UI          |
-| `CRE_CLI_PATH`                          | Optional | Path to local CRE CLI binary                      |
+| Variable                                | Required | Description                                               |
+| --------------------------------------- | -------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | Yes      | WalletConnect project ID (from [WalletConnect Cloud](https://cloud.walletconnect.com)) |
+| `AI_API_KEY`                            | Yes      | For AI intent parsing (OpenRouter or OpenAI)              |
+| `CRE_CLI_PATH`                          | Optional | Path to CRE CLI binary (e.g. `bin/cre.exe` on Windows)    |
+
+**Note:** LI.FI API key is configured in `cre/cre-swap/config.staging.json` and `cre/cre-bridge/config.staging.json` (copy from `config.staging.example.json`).
 
 Example:
 
 ```
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=xxxx
-CRE_SIMULATION_MODE=on
-NEXT_PUBLIC_CRE_SIMULATION_MODE=on
+AI_API_KEY=sk-...
+CRE_CLI_PATH=bin/cre.exe
 ```
 
 ---
@@ -170,80 +169,71 @@ Navigate to the **App** section and connect your wallet to begin using the chat 
 
 # API Routes
 
-The frontend uses **Next.js API routes** to interact with CRE workflows and manage request queues.
+The frontend exposes **Next.js API routes** that act as the bridge between the UI and CRE workflows. All analysis logic runs inside CRE; the API handles queueing, spawning workflows, and storing reports.
 
 ---
 
 ## `/api/maima`
 
-Primary API route handling analysis, queue management, and reports.
+Primary route for analysis, queue management, and reports. Supports both GET and POST; the action is specified via query params (GET) or body (POST).
 
-### GET Endpoints
+### GET Actions
 
-| Endpoint                    | Description                           |
-| --------------------------- | ------------------------------------- |
-| `?action=queue`             | Retrieve pending requests             |
-| `?action=report&requestId=` | Fetch report for a request            |
-| `?action=pending-swap`      | Retrieve next swap request            |
-| `?action=pending-bridge`    | Retrieve next bridge request          |
-| `?action=status&txHash=`    | Check transaction status via LI.FI    |
-| `?action=diagnostic-status` | Inspect internal request/report state |
+| Action                     | Description                                           |
+| -------------------------- | ----------------------------------------------------- |
+| `?action=queue`            | List all pending analysis requests                    |
+| `?action=report&requestId=`| Fetch the CRE-generated report for a given request    |
+| `?action=pending-swap`     | Consume next swap request (used by cre-swap)          |
+| `?action=pending-bridge`   | Consume next bridge request (used by cre-bridge)      |
+| `?action=status&txHash=`   | Check transaction status via LI.FI                    |
+| `?action=diagnostic-status`| Inspect internal state (requests, reports, queues)    |
+
+### POST Actions
+
+| Action              | Description                                                  |
+| ------------------- | ------------------------------------------------------------ |
+| `action=analyze`    | Enqueue a user intent; spawns cre-maima to process it        |
+| `action=cre-report` | Receive and store the report generated by cre-swap/cre-bridge|
+| `action=run-swap`   | Push request to swap queue and spawn cre-swap                |
+| `action=run-bridge` | Push request to bridge queue and spawn cre-bridge            |
 
 ---
 
-### POST Endpoints
+## `/api/intent`
 
-| Action              | Description                            |
-| ------------------- | -------------------------------------- |
-| `action=analyze`    | Parse AI intent and enqueue request    |
-| `action=cre-report` | Store report generated by CRE workflow |
-| `action=run-swap`   | Trigger swap analysis worker           |
-| `action=run-bridge` | Trigger bridge analysis worker         |
+Parses natural language into structured DeFi intents (swap vs. bridge, tokens, amount, chains). Uses OpenRouter/OpenAI with a keyword fallback if no API key is configured. Returns `{ type, fromToken, toToken, amount, fromChain, toChain, isValid, reason, errorMessage }`.
 
 ---
 
 ## `/api/cre`
 
-Used for **CRE workflow simulation during development**.
-
-### POST Request
-
-```
-{ type: "maima" | "swap" | "bridge" }
-```
-
-This triggers the corresponding CRE workflow when **simulation mode is enabled**.
+Used for **manual CRE workflow simulation** during development. Accepts a POST body `{ type: "maima" | "swap" | "bridge" }` and triggers the corresponding workflow when simulation mode is on.
 
 ---
 
 # Tech Stack
 
-| Category    | Technology              |
-| ----------- | ----------------------- |
-| Framework   | Next.js 14              |
-| UI          | React                   |
-| Web3        | wagmi, viem, RainbowKit |
-| Styling     | Tailwind CSS            |
-| Animations  | Framer Motion           |
-| Components  | Radix UI                |
-| Icons       | Lucide React            |
-| Routing     | LI.FI                   |
-| Price Feeds | Chainlink               |
+| Category    | Technology                    |
+| ----------- | ----------------------------- |
+| Framework   | Next.js 16                    |
+| UI          | React 19                      |
+| Web3        | wagmi, viem, RainbowKit       |
+| Styling     | Tailwind CSS 4                |
+| Animations  | Framer Motion, motion         |
+| Components  | Radix UI                      |
+| Icons       | Lucide React                  |
+| Route Data  | LI.FI                         |
+| Price Feeds | Chainlink                     |
 
 ---
 
 # Design Goals
 
-MAIMA frontend is built around three key principles:
+The frontend is built around three principles:
 
-**User Simplicity**
-Allow users to interact with DeFi using **natural language instead of complex interfaces**.
+**Simplicity** — DeFi should not require expertise. Users describe what they want in plain language; the system handles routing, verification, and ranking.
 
-**Transparency**
-Provide full visibility into route analysis and allow users to download detailed reports.
+**Transparency** — Users see how routes are ranked, which protocols are used, and how Chainlink prices were applied. Reports are downloadable for auditability.
 
-**Security Awareness**
-Integrate **Chainlink price verification and protocol validation** to prevent unsafe transactions.
-
----
+**Security** — Chainlink price feeds and protocol whitelisting ensure users are not steered toward manipulated or unsafe routes. Simulation mode lets developers test without risk.
 

@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
-    const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+    const apiKey = process.env.AI_API_KEY;
+    const model = process.env.AI_MODEL || process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
 
     if (!apiKey) {
         // Graceful fallback to keyword analysis if no API key
