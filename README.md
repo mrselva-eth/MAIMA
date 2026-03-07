@@ -5,7 +5,9 @@
 
 ### Multichain AI Intent Management Application
 
-<img width="1919" height="893" alt="image" src="https://github.com/user-attachments/assets/9440cecb-791e-4e4b-97f6-3d0aa94a99c0" />
+
+<img width="1919" height="905" alt="image" src="https://github.com/user-attachments/assets/d95594e4-7df6-4a1c-98fe-5fe65fefe407" />
+
 
 
 **AI-Powered Intent-Based DeFi Execution** — Built with **Chainlink CRE** for trust-minimized cross-chain orchestration.  
