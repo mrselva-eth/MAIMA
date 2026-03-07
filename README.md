@@ -160,6 +160,7 @@ This ensures:
 * Transparent pricing
 * Trust-minimized routing
 * Protection against manipulated price quotes
+<img width="502" height="280" alt="Screenshot 2026-03-07 192849" src="https://github.com/user-attachments/assets/784f8b12-df90-4186-bb2d-d93a070d7189" />
 
 <img width="502" height="280" alt="Screenshot 2026-03-07 192849" src="https://github.com/user-attachments/assets/784f8b12-df90-4186-bb2d-d93a070d7189" />
 
@@ -184,6 +185,7 @@ Reliability is determined using protocol whitelisting including:
 * Curve
 * KyberSwap
 * Paraswap
+<img width="383" height="507" alt="Screenshot 2026-03-07 192925" src="https://github.com/user-attachments/assets/0aa69fec-785f-4c34-872c-e847707bbd8d" />
 
 <img width="383" height="507" alt="Screenshot 2026-03-07 192925" src="https://github.com/user-attachments/assets/0aa69fec-785f-4c34-872c-e847707bbd8d" />
 
