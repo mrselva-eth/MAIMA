@@ -23,23 +23,9 @@ const WORKFLOW_MAP: Record<string, 'cre-maima' | 'cre-swap' | 'cre-bridge'> = {
 };
 
 function resolveCreCommand(): string {
-  const envPath = process.env.CRE_CLI_PATH?.trim();
-  const isWindows = process.platform === 'win32';
-
-  if (!envPath) return isWindows ? 'cre.cmd' : 'cre';
-
-  if (path.isAbsolute(envPath) && existsSync(envPath)) return envPath;
-
-  const relativeToCwd = path.resolve(ROOT, envPath);
-  if (existsSync(relativeToCwd)) return relativeToCwd;
-
-  const binPath = path.resolve(ROOT, 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(binPath)) return binPath;
-
-  const frontendBinPath = path.resolve(ROOT, 'frontend', 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(frontendBinPath)) return frontendBinPath;
-
-  return envPath;
+  const envPathRaw = process.env.CRE_CLI_PATH?.trim();
+  if (!envPathRaw) return 'cre';
+  return process.platform === 'win32' ? envPathRaw.replace(/\//g, '\\') : envPathRaw;
 }
 
 export async function POST(req: NextRequest) {
@@ -57,10 +43,11 @@ export async function POST(req: NextRequest) {
   const workflowPath = getWorkflowPath(workflow);
   const isWindows = process.platform === 'win32';
   const cmd = resolveCreCommand();
+  const isPathCommand = cmd.includes('\\') || cmd.includes('/') || path.isAbsolute(cmd);
   const args = ['workflow', 'simulate', workflowPath, '--target', TARGET, '--non-interactive', '--trigger-index', '0'];
 
   return new Promise<NextResponse>((resolve) => {
-    const child = spawn(cmd, args, { cwd: ROOT, shell: isWindows, env: { ...process.env, CI: 'true' } });
+    const child = spawn(cmd, args, { cwd: ROOT, shell: isWindows && !isPathCommand, env: { ...process.env, CI: 'true' } });
     let stdout = '';
     let stderr = '';
     child.stdout?.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });

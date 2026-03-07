@@ -4,10 +4,13 @@ out/
 
 # Generated build outputs (CRE workflow compile)
 pnpm-lock.yaml
-tmp.js
-tmp.wasm
-**/tmp.js
-**/tmp.wasm
+main.js
+main.wasm
+**/main.js
+**/main.wasm
+**/main.bundled.js
+**/.cre_build_tmp.js
+**/.cre_build_tmp.js
 
 # Dependencies
 node_modules/
@@ -30,6 +33,8 @@ Thumbs.db
 .env
 .env.* 
 !.env.example
+config.staging.json
+config.production.json
 
 
 # Misc caches

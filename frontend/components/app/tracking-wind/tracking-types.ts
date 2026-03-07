@@ -13,9 +13,13 @@ export const DEFAULT_SWAPS = ['Uniswap V3', '1inch', 'Curve', 'KyberSwap', 'Para
 
 export const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum',
+  10: 'Optimism',
+  56: 'BSC',
   137: 'Polygon',
-  42161: 'Arbitrum',
   8453: 'Base',
+  42161: 'Arbitrum',
+  43114: 'Avalanche',
+  11155111: 'Sepolia',
 };
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -43,6 +47,8 @@ export type ProcessTrackingState = {
     outputAmount: string;
     txHash: string;
     approvalHash: string;
+    accuracy?: string;
+    executionVerifiedPrices?: { symbol: string; price: string }[];
   } | null;
 };
 

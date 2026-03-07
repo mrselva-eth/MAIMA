@@ -191,7 +191,7 @@ export function ProcessTrackingPanel({
                 </div>
               ))}
 
-              {(phase === 'choose' || phase === 'execute' || phase === 'done') && (
+              {(phase === 'choose' || phase === 'execute' || phase === 'done') && top4.length > 0 && (
                 <div className="my-3 pl-7 border-l-2 border-emerald-500/30 ml-2 space-y-2">
                   <p className="text-emerald-400/90 font-medium text-xs">
                     {phase === 'choose' ? `Top 4 ${inferredType}s - choose one` : `Top 4 ${inferredType}s (chosen)`}
@@ -285,6 +285,35 @@ export function ProcessTrackingPanel({
                       <span className="text-gray-500">Output</span>
                       <span className="text-gray-200">{finalResult.outputAmount}</span>
                     </div>
+                    {finalResult.accuracy && (
+                      <div className="flex justify-between gap-2">
+                        <span className="text-gray-500">Accuracy</span>
+                        <span className="text-gray-200">
+                          {finalResult.accuracy.includes('Chainlink') ? (
+                            <span className="text-[#375bd2] font-semibold tracking-wide">
+                              {finalResult.accuracy}
+                            </span>
+                          ) : (
+                            finalResult.accuracy
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {finalResult.executionVerifiedPrices && (
+                      <div className="pt-1.5 mt-0.5 border-t border-white/5 space-y-1">
+                        <span className="text-[9px] uppercase tracking-wider text-blue-400 font-bold">
+                          Final Oracle Verification
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {finalResult.executionVerifiedPrices.map((p, i) => (
+                            <div key={i} className="flex flex-col">
+                              <span className="text-[10px] text-gray-400">{p.symbol}</span>
+                              <span className="text-[#60a5fa] font-mono leading-none">{p.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="pt-1 border-t border-white/10">
                       <span className="text-gray-500 block mb-0.5">Tx</span>
                       <span className="text-gray-300 break-all text-[10px]">{finalResult.txHash}</span>

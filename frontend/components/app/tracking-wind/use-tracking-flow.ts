@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import type { ReportRoute } from '@/lib/maima';
 import {
   CRE_STREAM_DELAY_MS,
@@ -8,6 +9,7 @@ import {
   STEP_DELAY_MS,
   DEFAULT_BRIDGES,
   DEFAULT_SWAPS,
+  CHAIN_NAMES,
   SEPOLIA_CHAIN_ID,
   SWAP_PROTOCOL_WHITELIST,
   type TrackingPhase,
@@ -45,6 +47,7 @@ export function useTrackingFlow({
   onStepComplete,
   onExecuteStart,
 }: ProcessTrackingPanelProps) {
+  const { toast } = useToast();
   const chainId = SEPOLIA_CHAIN_ID;
   const [phase, setPhase] = useState<TrackingPhase>('steps');
   const [stepIndex, setStepIndex] = useState(0);
@@ -128,8 +131,8 @@ export function useTrackingFlow({
           liquidity: route.liquidityScore || 'N/A',
         }
       }))
-      : fallbackTop;
-  }, [report?.ranking, topRoutes, fallbackTop]);
+      : (report ? [] : fallbackTop);
+  }, [report, topRoutes, fallbackTop]);
 
   const protocolNames = useMemo(() => {
     if (report?.ranking && report.ranking.length > 0) {
@@ -138,6 +141,7 @@ export function useTrackingFlow({
     if (sortedRoutes.length) {
       return Array.from(new Set(sortedRoutes.map((route) => route.mainTool)));
     }
+    if (report) return [];
     const baseList = inferredType === 'bridge' ? DEFAULT_BRIDGES : DEFAULT_SWAPS;
     return baseList.filter((name) =>
       inferredType === 'swap' && enforceSwapWhitelist
@@ -245,18 +249,31 @@ export function useTrackingFlow({
           }
         }
         await delay(CRE_STREAM_DELAY_MS);
+
+        const hasRoutes = Array.isArray(report?.routes) && report.routes.length > 0;
+        if (!hasRoutes) {
+          setLogLines((prev) => [
+            ...prev,
+            `[${formatTime()}] Selection error: ${report?.summary ?? 'No valid routes were found.'}`,
+            `[${formatTime()}] No valid routes were found for this request.`,
+          ]);
+          setPhase('done');
+          onStepComplete();
+          return;
+        }
+
         setLogLines((prev) => [
           ...prev,
           `[${formatTime()}] Checking protocols.`,
           `[${formatTime()}] Analysing best protocol for this ${intentType} pair.`,
           `[${formatTime()}] Found the best one. Reason: ${selectionReason}.`,
         ]);
+        setPhase('choose');
       } catch {
         setLogLines((prev) => [...prev, `[${formatTime()}] CRE maima run failed (check CRE CLI and server).`]);
       } finally {
         setIsStreamingCreLog(false);
       }
-      setPhase('choose');
       onStepComplete();
     })();
   }, [open, report?.simulationMode, report?.intentType, report?.bestRoute, report?.selectionReason, prompt, onStepComplete]);
@@ -421,6 +438,34 @@ export function useTrackingFlow({
       return;
     }
 
+    let payloadLogs: string[] = [];
+    if (selectedRoute) {
+      const fromChainId = selectedRoute.fromToken?.chainId ?? 1;
+      const toChainId = selectedRoute.toToken?.chainId ?? 1;
+      const fromChain = CHAIN_NAMES[fromChainId] ?? String(fromChainId);
+      const toChain = CHAIN_NAMES[toChainId] ?? String(toChainId);
+      const fromAddress = selectedRoute.fromToken?.address ?? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+      const toAddress = selectedRoute.toToken?.address ?? '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+
+      payloadLogs = [
+        `[${formatTime()}] --- LI.FI Routing Payload ---`,
+        `[${formatTime()}] Source Chain: ${fromChain} (${fromChainId})`,
+        `[${formatTime()}] Dest Chain: ${toChain} (${toChainId})`,
+        `[${formatTime()}] Source Token: ${fromAddress}`,
+        `[${formatTime()}] Dest Token: ${toAddress}`,
+        `[${formatTime()}] Amount (wei): ${selectedRoute.fromAmount ?? '0'}`,
+        `[${formatTime()}] ---------------------------`
+      ];
+
+      if (report?.chainlink?.prices && report.chainlink.prices.length > 0) {
+        payloadLogs.push(`[${formatTime()}] --- Chainlink Oracle ---`);
+        report.chainlink.prices.forEach((p: { symbol: string; price: string }) => {
+          payloadLogs.push(`[${formatTime()}] Verified ${p.symbol}: ${p.price}`);
+        });
+        payloadLogs.push(`[${formatTime()}] ---------------------------`);
+      }
+    }
+
     setExecuteLogs((prev) => [
       ...prev,
       `[${formatTime()}] User chose ${protocol}. Execution process continues below.`,
@@ -429,6 +474,7 @@ export function useTrackingFlow({
       `[${formatTime()}] Fee: ${fee}`,
       `[${formatTime()}] Input: ${inputAmount}`,
       `[${formatTime()}] Output (estimated): ${outputAmount}`,
+      ...payloadLogs
     ]);
 
     // Execution block replaces the previous wagmi dependencies and purely simulates
@@ -438,11 +484,19 @@ export function useTrackingFlow({
     ]);
     setIsStreamingExecuteLog(true);
     const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const oraclePrices: { symbol: string; price: string }[] = [];
     try {
-      const res = await fetch('/api/cre', {
+      const res = await fetch('/api/maima', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: inferredType }),
+        body: JSON.stringify({
+          action: inferredType === 'bridge' ? 'run-bridge' : 'run-swap',
+          request: {
+            id: report?.requestId ?? `retry_${Date.now()}`,
+            prompt,
+            fromAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+          }
+        }),
       });
       const data = await res.json();
       const output = typeof data.output === 'string' ? data.output : '';
@@ -455,6 +509,11 @@ export function useTrackingFlow({
         for (const line of lines) {
           await delay(CRE_STREAM_DELAY_MS);
           setExecuteLogs((prev) => [...prev, line]);
+          // Parse oracle verification logs: [ORACLE] Verified ETH: $2645.12
+          const match = line.match(/\[ORACLE\] Verified ([A-Z]+): (\$?\d+\.?\d*)/);
+          if (match) {
+            oraclePrices.push({ symbol: match[1], price: match[2].startsWith('$') ? match[2] : `$${match[2]}` });
+          }
         }
       } else {
         setExecuteLogs((prev) => [...prev, '(no output from CRE workflow)']);
@@ -464,6 +523,20 @@ export function useTrackingFlow({
     } finally {
       setIsStreamingExecuteLog(false);
     }
+
+    // Compare with initial report prices
+    if (report?.chainlink?.prices && oraclePrices.length > 0) {
+      report.chainlink.prices.forEach(oldP => {
+        const newP = oraclePrices.find(p => p.symbol === oldP.symbol);
+        if (newP && oldP.price !== newP.price) {
+          toast({
+            title: 'Live Price Update',
+            description: `The Chainlink Oracle price for ${oldP.symbol} has changed from ${oldP.price} to ${newP.price} since analysis.`,
+          });
+        }
+      });
+    }
+
     const result = {
       protocol,
       pair,
@@ -472,6 +545,8 @@ export function useTrackingFlow({
       outputAmount,
       txHash: '0xsimulation',
       approvalHash: 'N/A',
+      accuracy: report?.accuracy ?? 'N/A',
+      executionVerifiedPrices: oraclePrices.length > 0 ? oraclePrices : undefined,
     };
     setFinalResult(result);
     setPhase('done');

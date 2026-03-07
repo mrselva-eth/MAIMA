@@ -1,12 +1,11 @@
 /**
  * Single MAIMA API route. All actions via ?action= (GET) or body.action (POST).
- * GET: queue | report | pending-swap | pending-bridge | chainlink-price | status
+ * GET: queue | report | pending-swap | pending-bridge | status
  * POST: analyze | cre-report | run-swap | run-bridge | quote | step
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { maimaRequests, maimaReports, pendingSwapQueue, pendingBridgeQueue, type MaimaRequest } from '@/lib/maima';
-import { getChainlinkPrice } from '@/lib/chainlink-oracle';
 import path from 'path';
 import { existsSync } from 'fs';
 import { spawn } from 'child_process';
@@ -20,7 +19,14 @@ function lifiHeaders(): Record<string, string> {
 }
 
 function inferType(promptText: string): 'swap' | 'bridge' {
-  return /bridge|cross[-\s]?chain|base\s*to\s*arbitrum|arbitrum\s*to\s*base/.test(promptText) ? 'bridge' : 'swap';
+  const p = promptText.toLowerCase();
+  const bridgeKeywords = [
+    'bridge', 'cross-chain', 'cross chain', 'transfer from', 'send from',
+    'to arbitrum', 'to base', 'to polygon', 'to optimism', 'to ethereum', 'to bsc', 'to avalanche',
+    'from base', 'from arbitrum', 'from polygon', 'from optimism', 'from ethereum', 'from bsc', 'from avalanche'
+  ];
+  if (bridgeKeywords.some(kw => p.includes(kw))) return 'bridge';
+  return 'swap';
 }
 
 function getCreCwd(): string {
@@ -40,50 +46,40 @@ function getWorkflowPath(workflow: CreWorkflow): string {
 }
 
 function resolveCreCommand(): string {
-  const envPath = process.env.CRE_CLI_PATH?.trim();
-  const isWindows = process.platform === 'win32';
-  const defaultCmd = isWindows ? 'cre.cmd' : 'cre';
-
-  if (!envPath) return 'npx';
-
-  // If it's an absolute path, use it directly
-  if (path.isAbsolute(envPath) && existsSync(envPath)) return envPath;
-
-  // Try resolving relative to CWD
-  const relativeToCwd = path.resolve(process.cwd(), envPath);
-  if (existsSync(relativeToCwd)) return relativeToCwd;
-
-  // Smart search in common locations
-  const binPath = path.resolve(process.cwd(), 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(binPath)) return binPath;
-
-  const frontendBinPath = path.resolve(process.cwd(), 'frontend', 'bin', isWindows ? 'cre.exe' : 'cre');
-  if (existsSync(frontendBinPath)) return frontendBinPath;
-
-  return envPath; // Fallback to whatever was provided
+  const envPathRaw = process.env.CRE_CLI_PATH?.trim();
+  if (!envPathRaw) return 'cre';
+  return process.platform === 'win32' ? envPathRaw.replace(/\//g, '\\') : envPathRaw;
 }
 
 function spawnCreWorkflow(workflow: CreWorkflow): void {
-  const isWindows = process.platform === 'win32';
   const cwd = getCreCwd();
   const workflowPath = getWorkflowPath(workflow);
   const cmd = resolveCreCommand();
+  const isWindows = process.platform === 'win32';
+  const isPathCommand = cmd.includes('\\') || cmd.includes('/') || path.isAbsolute(cmd);
 
   console.log('[maima] Spawning', workflow, 'cwd=', cwd, 'path=', workflowPath, 'cmd=', cmd);
 
-  const args = cmd === 'npx'
-    ? ['cre', 'workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0']
-    : ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
+  const args = ['workflow', 'simulate', workflowPath, '--target', 'staging-settings', '--non-interactive', '--trigger-index', '0'];
 
   const child = spawn(cmd, args, {
     cwd,
-    shell: isWindows,
+    shell: isWindows && !isPathCommand,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, CI: 'true' },
   });
   const tag = `[maima ${workflow}]`;
-  child.stdout?.on('data', (d) => console.log(tag, d.toString().trim()));
-  child.stderr?.on('data', (d) => console.warn(tag, d.toString().trim()));
+  let lastLine = '';
+  const emitUniqueLines = (chunk: Buffer, logFn: (prefix: string, line: string) => void) => {
+    const lines = chunk.toString().split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    for (const line of lines) {
+      if (line === lastLine) continue;
+      lastLine = line;
+      logFn(tag, line);
+    }
+  };
+  child.stdout?.on('data', (d: Buffer) => emitUniqueLines(d, console.log));
+  child.stderr?.on('data', (d: Buffer) => emitUniqueLines(d, console.warn));
   child.on('error', (err) => console.warn('[maima] spawn', workflow, err.message));
   child.on('exit', (code) => {
     if (code !== 0) console.warn('[maima]', workflow, 'exited with code', code);
@@ -138,14 +134,6 @@ export async function GET(req: NextRequest) {
         if (request) console.log('[maima] pending-bridge consumed', (request as MaimaRequest).id);
         return NextResponse.json({ success: true, request });
       }
-      case 'chainlink-price': {
-        const symbol = searchParams.get('symbol');
-        const chainId = Number(searchParams.get('chainId')) || 8453;
-        if (!symbol) return NextResponse.json({ error: 'symbol required' }, { status: 400 });
-        const result = await getChainlinkPrice(symbol, Number.isFinite(chainId) ? chainId : 8453);
-        if (!result) return NextResponse.json({ error: 'No price feed' }, { status: 404 });
-        return NextResponse.json({ symbol: result.pair?.split('/')[0], price: result.price, updatedAt: result.updatedAt, chainId: result.chainId });
-      }
       case 'status': {
         const txHash = searchParams.get('txHash');
         if (!txHash) return NextResponse.json({ error: 'txHash required' }, { status: 400 });
@@ -171,7 +159,7 @@ export async function GET(req: NextRequest) {
         });
       }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|chainlink-price|status' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use queue|report|pending-swap|pending-bridge|status' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima GET]', action, e);
@@ -206,7 +194,6 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'requestId and report required' }, { status: 400 });
         }
         maimaReports.set(requestId, report);
-        maimaRequests.delete(requestId);
         console.log('[maima] cre-report stored', requestId, 'Total reports:', maimaReports.size);
         return NextResponse.json({ success: true, requestId });
       }
@@ -229,16 +216,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, message: 'cre-bridge triggered' });
       }
-      case 'quote': {
-        const payload = body.payload ?? body;
-        console.log('[maima API] Requesting LI.FI quote with payload:', JSON.stringify(payload));
-        const res = await fetch(`${LIFI_BASE}/advanced/routes`, { method: 'POST', headers: lifiHeaders(), body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (!res.ok) console.error('[maima API] LI.FI Error:', data);
-        return NextResponse.json(data, { status: res.status });
-      }
       default:
-        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge|quote' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid action. Use analyze|cre-report|run-swap|run-bridge' }, { status: 400 });
     }
   } catch (e) {
     console.error('[maima POST]', action, e);

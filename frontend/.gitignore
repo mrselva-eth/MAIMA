@@ -80,3 +80,27 @@ sol/node_modules/
 sol/.env
 sol/cache/
 sol/artifacts/
+
+# ============================================
+# Bin executables — do not push
+# ============================================
+bin/
+
+
+frontend/bin/
+*.exe
+
+# CRE binaries
+frontend/bin/
+
+# executables
+*.exe
+
+# node
+node_modules/
+
+# env
+.env
+
+# logs
+*.log

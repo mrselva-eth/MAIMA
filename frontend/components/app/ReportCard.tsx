@@ -13,6 +13,8 @@ type FinalResultLike = {
   outputAmount: string;
   txHash: string;
   approvalHash: string;
+  accuracy?: string;
+  executionVerifiedPrices?: { symbol: string; price: string }[];
 };
 
 type ReportCardProps = {
@@ -91,9 +93,43 @@ export default function ReportCard({ report, executionPending, result }: ReportC
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-muted-foreground">No routes found.</p>
+          <div className="mt-3 p-3 rounded-lg border border-red-200 bg-red-50 flex items-start gap-2">
+            <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold text-red-700">No Routes Available</p>
+              <p className="mt-1 text-xs text-red-600/90">{report.summary || 'We could not find any live routes or quotes for your request.'}</p>
+            </div>
+          </div>
         )}
       </div>
+
+      {report.chainlink?.prices?.length ? (
+        <div className="rounded-lg border border-gray-200 bg-white p-2.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-foreground">Verified price feeds</p>
+            <span className="text-[10px] uppercase tracking-wide text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">
+              Chainlink Oracle
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {report.chainlink.prices.map((p, i) => (
+              <div key={i} className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50/30 px-2 py-1.5">
+                <span className="font-semibold text-blue-900">{p.symbol}</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-foreground font-mono">{p.price}</span>
+                  {p.updatedAt ? (
+                    <span className="text-[9px] text-muted-foreground">
+                      Updated: {new Date(p.updatedAt).toLocaleTimeString()}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {report.workflow?.length ? (
         <div className="rounded-lg border border-gray-200 bg-white p-2.5 space-y-2">
@@ -154,6 +190,19 @@ export default function ReportCard({ report, executionPending, result }: ReportC
           <p><strong>Input:</strong> {result.inputAmount} {'->'} <strong>Output:</strong> {result.outputAmount}</p>
           <p className="break-all"><strong>Tx:</strong> {result.txHash}</p>
           <p className="break-all"><strong>Approval:</strong> {result.approvalHash}</p>
+          {result.executionVerifiedPrices && (
+            <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+              <p className="text-[10px] uppercase font-bold text-blue-600 tracking-tight">Final Oracle Verification</p>
+              <div className="grid grid-cols-2 gap-2">
+                {result.executionVerifiedPrices.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between rounded bg-blue-50/50 px-2 py-1 border border-blue-100/50">
+                    <span className="font-bold text-blue-900">{p.symbol}</span>
+                    <span className="font-mono text-foreground">{p.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 

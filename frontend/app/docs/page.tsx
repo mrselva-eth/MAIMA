@@ -92,14 +92,13 @@ export default function DocsPage() {
                   Documentation
                 </h1>
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  MAIMA uses LI.FI to analyze swap and bridge requests. Describe what you want in plain language;
-                  you get a report with accuracy, gas estimate, and a ranked list of protocols. Use the process tracking panel to see protocols checked, then choose one and run it in the app.
+                  MAIMA is an AI-powered DeFi orchestration layer that converts natural language intents into optimized, verified, cross-chain execution plans. It leverages <strong>Chainlink CRE</strong> for trust-minimized logic and <strong>LI.FI</strong> for deep route aggregation across 20+ chains.
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground mb-8">
-                  <li>Chat interface: connect wallet, describe swap or bridge in plain language</li>
-                  <li>Report: LI.FI routes, ranked with accuracy, gas, and recommended protocol</li>
-                  <li>Process tracking: input checked, protocols listed and checked, top 4 choose one, then run simulation or sign in wallet</li>
-                  <li>CRE workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: cre-maima (main), cre-bridge, cre-swap; poll the app queue and can be deployed to Chainlink when ready</li>
+                  <li><strong>AI Intent Parsing</strong>: Describe what you want in plain language (e.g., "swap 100 USDC to ETH").</li>
+                  <li><strong>Oracle Verification</strong>: Every route is verified against <strong>Chainlink Price Feeds</strong> to ensure fair value.</li>
+                  <li><strong>Process Tracking</strong>: Real-time feedback as the system analyzes, ranks, and verifies protocols.</li>
+                  <li><strong>Transparent Reporting</strong>: Detailed JSON analysis reports available for download and audit.</li>
                 </ul>
               </section>
 
@@ -109,26 +108,25 @@ export default function DocsPage() {
                   Getting Started
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  Prerequisites: Node.js 18+, a Web3 wallet (e.g. MetaMask). Clone the repo and install:
+                  Prerequisites: Node.js 18+, pnpm, and a Web3 wallet. Clone the repository and install dependencies:
                 </p>
                 <pre className="bg-[#0f172a] text-gray-100 rounded-xl p-4 overflow-x-auto text-sm mb-4">
-{`git clone https://github.com/mrselva-eth/MAIMA.git
+                  {`git clone https://github.com/mrselva-eth/MAIMA.git
 cd MAIMA
-pnpm install`}
+pnpm install
+# Install module dependencies
+cd frontend && pnpm install
+cd ../cre/cre-maima && pnpm install`}
                 </pre>
                 <p className="text-muted-foreground mb-2">
-                  Copy <code className="bg-muted px-1.5 py-0.5 rounded text-sm">.env.example</code> to{' '}
-                  <code className="bg-muted px-1.5 py-0.5 rounded text-sm">.env.local</code> and set:
+                  Configure your <code className="bg-muted px-1.5 py-0.5 rounded text-sm">.env</code> in the <code className="bg-muted px-1 rounded text-sm">frontend/</code> directory:
                 </p>
                 <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
-                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — from WalletConnect Cloud (for App)</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID</code> — WalletConnect Cloud PID</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">OPENAI_API_KEY</code> — For AI intent parsing</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">LIFI_API_KEY</code> — For route aggregation</li>
+                  <li><code className="bg-muted px-1 rounded text-sm">CRE_CLI_PATH</code> — Path to <code className="bg-muted px-1 rounded text-sm">bin/cre.exe</code> for local simulation</li>
                 </ul>
-                <p className="text-muted-foreground">
-                  Run <code className="bg-muted px-1.5 py-0.5 rounded text-sm">pnpm dev</code> and open{' '}
-                  <a href="http://localhost:3000" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>
-                    http://localhost:3000
-                  </a>.
-                </p>
               </section>
 
               {/* App (Chat) */}
@@ -137,15 +135,14 @@ pnpm install`}
                   App (Chat)
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  Open <Link href="/app" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>App</Link> to use the chat interface. Examples:
+                  The <Link href="/app" className="text-primary underline underline-offset-2" style={{ color: THEME_COLOR }}>App</Link> interface provides a seamless chat experience:
                 </p>
-                <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-1">
-                  <li>&quot;Swap 100 USDC to ETH at best rate within 1 hour&quot;</li>
-                  <li>&quot;Bridge 500 USDT from Ethereum to Arbitrum&quot;</li>
+                <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-2">
+                  <li><strong>Interactive Chat</strong>: Simply type your intent. MAIMA handles the complexity of chain selection and gas optimization.</li>
+                  <li><strong>Tracking Panel</strong>: Watch as the intent is parsed, protocols are listed, and prices are verified via Chainlink.</li>
+                  <li><strong>Route Ranking</strong>: Select from the top recommended routes based on gas, protocol reliability, and speed.</li>
+                  <li><strong>Safety Notifications</strong>: Receive alerts if market prices shift significantly from the analyzed fair value before execution.</li>
                 </ul>
-                <p className="text-muted-foreground">
-                  MAIMA calls LI.FI, ranks routes, and returns a report with accuracy, gas estimate, and a ranked list of protocols. The tracking panel shows the flow, then you choose one protocol and run it (simulation or sign approval and swap in your wallet).
-                </p>
               </section>
 
               {/* API */}
@@ -153,16 +150,19 @@ pnpm install`}
                 <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
                   API Reference
                 </h2>
-                <p className="text-muted-foreground mb-4">Key endpoints:</p>
+                <p className="text-muted-foreground mb-4">The MAIMA API handles request queuing and report management:</p>
                 <ul className="space-y-3 text-muted-foreground mb-4">
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/analyze</code> — Send prompt; returns report (LI.FI routes ranked, accuracy, gas, recommended protocol)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima?action=analyze</code> — Enqueue a prompt and trigger CRE orchestrator.
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima/routing</code> — LI.FI proxy: <code className="bg-muted px-1 rounded text-sm">?action=quote</code> (used by analyze), <code className="bg-muted px-1 rounded text-sm">?action=step</code>, <code className="bg-muted px-1 rounded text-sm">?action=status</code> (used by app for execution)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">POST /api/maima?action=run-swap</code> — Trigger a specific swap analysis worker.
                   </li>
                   <li>
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima/queue</code> — Active requests (polled by CRE workflows)
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima?action=report&requestId=...</code> — Retrieve the final analysis report.
+                  </li>
+                  <li>
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm">GET /api/maima?action=diagnostic-status</code> — Inspect internal store states and environment variables.
                   </li>
                 </ul>
               </section>
@@ -170,22 +170,27 @@ pnpm install`}
               {/* Chainlink CRE */}
               <section id="cre" className="scroll-mt-24">
                 <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
-                  Chainlink CRE
+                  Chainlink CRE Workflows
                 </h2>
-                <p className="text-muted-foreground mb-4">
-                  Three workflows under <code className="bg-muted px-1 rounded text-sm">cre/</code>: <strong className="text-foreground">cre-maima</strong> (main), <strong className="text-foreground">cre-bridge</strong>, <strong className="text-foreground">cre-swap</strong>.
-                  Each runs on a schedule and polls <code className="bg-muted px-1 rounded text-sm">/api/maima/queue</code>. Use them for scheduled runs or deploy to Chainlink when ready.
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  MAIMA's intelligence runs inside decentralized <strong>CRE Workflows</strong>. These workflows perform asynchronous tasks like fetching routes, verifying prices, and ranking protocols without taxing the frontend.
                 </p>
+                <ul className="list-disc pl-6 text-muted-foreground space-y-1">
+                  <li><strong className="text-foreground">cre-maima</strong>: The master orchestrator.</li>
+                  <li><strong className="text-foreground">cre-swap</strong>: Specialized swap analyzer with Oracle integration.</li>
+                  <li><strong className="text-foreground">cre-bridge</strong>: Specialized cross-chain bridge analyzer.</li>
+                </ul>
               </section>
 
               {/* Security */}
               <section id="security" className="scroll-mt-24">
                 <h2 className="font-[family-name:var(--font-gagalin)] text-2xl text-foreground mt-12 mb-4">
-                  Security
+                  Security & Trust
                 </h2>
                 <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-8">
-                  <li>Wallet required for the app; no keys stored in the backend</li>
-                  <li>CRE workflows in <code className="bg-muted px-1 rounded text-sm">cre/</code> can be deployed to Chainlink when ready</li>
+                  <li><strong>Oracle Guard</strong>: Direct integration with Chainlink Price Feeds ensures that the routes presented are based on "fair market value."</li>
+                  <li><strong>Trust-Minimized Execution</strong>: Logic is isolated in CRE workflows, reducing reliance on centralized API proxies.</li>
+                  <li><strong>Wallet Security</strong>: Users retain full control of their funds; MAIMA only facilitates route analysis and signing preparation.</li>
                 </ul>
               </section>
             </div>

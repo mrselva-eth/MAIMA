@@ -20,9 +20,7 @@ export type IntentResult = {
 };
 
 const SYSTEM_PROMPT = `You are an intent parser for a DeFi application called MAIMA.
-The app currently supports two operations:
-1. SWAP: Swapping between ETH and USDC on Base network only.
-2. BRIDGE: Bridging ETH between Base and Arbitrum networks only.
+The app supports swapping and bridging across multiple EVM networks (Ethereum, Polygon, Arbitrum, Optimism, Base, BSC, Avalanche).
 
 Analyze the user's natural language prompt and extract their intent.
 Respond ONLY with a valid JSON object and nothing else. No markdown, no explanation.
@@ -30,26 +28,24 @@ Respond ONLY with a valid JSON object and nothing else. No markdown, no explanat
 JSON schema:
 {
   "type": "swap" | "bridge" | "unsupported",
-  "fromToken": string | null,   // e.g. "ETH", "USDC"
-  "toToken": string | null,     // e.g. "ETH", "USDC"
+  "fromToken": string | null,   // e.g. "ETH", "USDC", "USDT", "DAI", "LINK", "WBTC"
+  "toToken": string | null,     // e.g. "ETH", "USDC", "USDT", "DAI", "LINK", "WBTC"
   "amount": string | null,      // numeric string e.g. "100"
-  "fromChain": string | null,   // e.g. "base", "arbitrum"
-  "toChain": string | null,     // e.g. "base", "arbitrum"
-  "isValid": boolean,           // true only if this app can handle the request
+  "fromChain": string | null,   // e.g. "ethereum", "polygon", "arbitrum", "optimism", "base", "bsc", "avalanche"
+  "toChain": string | null,     // e.g. "ethereum", "polygon", "arbitrum", "optimism", "base", "bsc", "avalanche"
+  "isValid": boolean,           // true if this app can likely handle the request
   "reason": string,             // short human-readable summary of detected intent
   "errorMessage": string | null // friendly error if unsupported, else null
 }
 
 Rules:
-- IMPORTANT: We only support MAINNET operations. If the user mentions any testnet (sepolia, goerli, mumbai, fuji, "testnet", "test network"), set type="unsupported", isValid=false, errorMessage="MAIMA only supports mainnet. Please use Base mainnet for swaps or Base→Arbitrum mainnet for bridges."
-- type=swap: involves ETH<->USDC. Set isValid=true if user mentions ETH and USDC. Assume Base mainnet chain.
-- type=bridge: involves moving ETH cross-chain. We ONLY support Base<->Arbitrum mainnet, so:
-  * If user mentions Arbitrum (even without Base), infer fromChain=base, toChain=arbitrum, isValid=true
-  * If user mentions Base and implies cross-chain, infer toChain=arbitrum, isValid=true
-  * Phrases like "across to Arbitrum", "move to Arbitrum", "send to Arb", "bridge to Arbitrum" are ALL valid bridge requests
-- Only set isValid=false if: testnet is mentioned, OR the request involves completely different chains (Solana, BNB, Polygon, Ethereum mainnet), OR completely different tokens (BTC, LINK, etc.), OR you genuinely cannot detect any DeFi intent
-- Be lenient: "exchange"/"convert"/"swap" = swap intent; "transfer"/"move"/"send"/"bridge"/"across" = bridge intent
-- Always fill in what you can detect; use null for unknown fields`;
+- We support MAINNET operations on Ethereum, Polygon, Arbitrum, Optimism, Base, BSC, and Avalanche.
+- If the user mentions any testnet (sepolia, goerli, mumbai, fuji, "testnet", "test network"), set type="unsupported", isValid=false, errorMessage="MAIMA only supports mainnet networks."
+- type=swap: involves tokens on the SAME chain. Assume Base if no chain is specified but it looks like a swap.
+- type=bridge: involves moving tokens cross-chain. 
+- Only set isValid=false if: testnet is mentioned, OR the request involves completely unknown chains (Solana, Bitcoin), OR you genuinely cannot detect any DeFi intent.
+- Be lenient: "exchange"/"convert"/"swap" = swap intent; "transfer"/"move"/"send"/"bridge"/"across" = bridge intent.
+- Always fill in what you can detect; use null for unknown fields.`;
 
 export async function POST(req: NextRequest) {
     let body: { prompt?: string } = {};
@@ -122,36 +118,31 @@ function keywordFallback(prompt: string): IntentResult {
             type: 'unsupported', fromToken: null, toToken: null, amount: null,
             fromChain: null, toChain: null, isValid: false,
             reason: 'Testnet network detected',
-            errorMessage: 'MAIMA only supports mainnet. Please use Base mainnet for swaps or Base→Arbitrum mainnet for bridges.',
+            errorMessage: 'MAIMA only supports mainnet networks.',
         };
     }
     const isSwap = /swap|convert|exchange/.test(p);
     const isBridge = /bridge|cross.chain|transfer|move.*to|send.*to/.test(p);
-    const hasEth = p.includes('eth');
-    const hasUsdc = p.includes('usdc');
-    const hasBase = p.includes('base');
-    const hasArb = p.includes('arbitrum') || p.includes('arb');
+    const amount = prompt.match(/\d+(\.\d+)?/)?.[0] ?? null;
 
-    if (isSwap && hasEth && hasUsdc) {
-        return {
-            type: 'swap', fromToken: hasUsdc ? 'USDC' : 'ETH', toToken: hasUsdc ? 'ETH' : 'USDC',
-            amount: prompt.match(/\d+(\.\d+)?/)?.[0] ?? null,
-            fromChain: 'base', toChain: 'base', isValid: true,
-            reason: 'Swap ETH ↔ USDC on Base', errorMessage: null,
-        };
-    }
-    if (isBridge && hasBase && hasArb) {
+    if (isBridge) {
         return {
             type: 'bridge', fromToken: 'ETH', toToken: 'ETH',
-            amount: prompt.match(/\d+(\.\d+)?/)?.[0] ?? null,
-            fromChain: 'base', toChain: 'arbitrum', isValid: true,
-            reason: 'Bridge ETH from Base to Arbitrum', errorMessage: null,
+            amount, fromChain: 'ethereum', toChain: 'polygon', isValid: true,
+            reason: 'Bridge detection (fallback)', errorMessage: null,
+        };
+    }
+    if (isSwap) {
+        return {
+            type: 'swap', fromToken: 'ETH', toToken: 'USDC',
+            amount, fromChain: 'base', toChain: 'base', isValid: true,
+            reason: 'Swap detection (fallback)', errorMessage: null,
         };
     }
     return {
         type: 'unsupported', fromToken: null, toToken: null, amount: null,
         fromChain: null, toChain: null, isValid: false,
         reason: 'Could not determine intent',
-        errorMessage: "I didn't recognize that request. Try: 'Swap 100 USDC to ETH' or 'Bridge 1 ETH from Base to Arbitrum'.",
+        errorMessage: "I didn't recognize that request. Try: 'Swap 10 USDC to ETH on Polygon' or 'Bridge 1 ETH from Ethereum to Base'.",
     };
 }

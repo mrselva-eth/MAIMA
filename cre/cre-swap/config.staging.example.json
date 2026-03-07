@@ -1,0 +1,6 @@
+{
+    "schedule": "*/30 * * * * *",
+    "apiBaseUrl": "http://127.0.0.1:3000/",
+    "simulationMode": true,
+    "lifiApiKey": "YOUR_LIFI_API_KEY_HERE"
+}
